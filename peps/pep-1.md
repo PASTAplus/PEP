@@ -76,14 +76,22 @@ _One issue to be aware of here is that persistent identifiers (e.g. DOI) are typ
 
 Adopting this proposal may require adjustments to some EDI applications and processes:
 
-1. **Data Package Best Practices:** Integrate this practice into existing best practices, outlining its usage to inform data submitters and curators. Note, while Schema.org isn't a formal standard in the strictest sense (it's more like a widely adopted and community-driven schema vocabulary), it functions similarly due to its:
+### Data Package Best Practices
 
-   1. Collaborative Development: Major search engines and organizations collaborate on its development.
-   2. Widespread Adoption: It's the most widely used schema vocabulary for structured data on the web.
-   3. Alignment with Semantic Web Principles: It promotes interoperability and machine-readable data. 
+Integrate this practice into existing best practices, outlining its usage to inform data submitters and curators. Note, while Schema.org isn't a formal standard in the strictest sense (it's more like a widely adopted and community-driven schema vocabulary), it functions similarly due to its:
 
-2. **ezEML Annotation:** Develop a feature enabling the declaration of this annotation within data package metadata for user convenience.
+- Collaborative Development: Major search engines and organizations collaborate on its development. 
+- Widespread Adoption: It's the most widely used schema vocabulary for structured data on the web. 
+- Alignment with Semantic Web Principles: It promotes interoperability and machine-readable data. 
 
-3. **Data Portal Rendering:** Update XSLT stylesheets to display the annotation information prominently for data consumers.
+### ezEML Annotation
 
-4. **"Mutable Series" Consideration:** A potential challenge arises when the valueURI is a data package DOI, and pointing to the latest version within a mutable data package series. This can lead to conflicting interpretations of the relationship between data packages. For instance, if `schema:sameAs` expresses a relationship between two data packages, but a significantly different version of the object (data package in the other repository) is published, the relationship becomes inaccurate. Notably, [DataONE](https://www.dataone.org/) employs this practice for harvested data packages presented to users.
+Develop a feature enabling the declaration of this annotation within data package metadata for user convenience.
+
+### Data Portal Rendering
+
+Update XSLT stylesheets to display the annotation information prominently for data consumers.
+
+### Mutable Series Consideration
+
+A potential challenge arises when the valueURI is a data package DOI, and pointing to the latest version within a mutable data package series. This can lead to conflicting interpretations of the relationship between data packages. For instance, if `schema:sameAs` expresses a relationship between two data packages, but a significantly different version of the object (data package in the other repository) is published, the relationship becomes inaccurate. Notably, [DataONE](https://www.dataone.org/) employs this practice for harvested data packages presented to users.
