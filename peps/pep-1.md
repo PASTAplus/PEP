@@ -35,6 +35,10 @@ The current EDI Data Repository lacks a mechanism to indicate the replication of
 
 The [Ecological Metadata Language](https://eml.ecoinformatics.org/eml-ecological-metadata-language) (EML v2.2.0) offers a semantic annotation feature suitable for defining data replication, applicable to both entire data packages and specific data entities within a package. This proposal leverages this functionality alongside the [schema:sameAs](https://schema.org/sameAs) property to indicate replicated data resources. This approach aligns with [Science-On-Schema.Org](https://github.com/ESIPFed/science-on-schema.org/blob/master/guides/Dataset.md) conventions, promoting dataset discovery and interoperability.
 
+[Schema.org](https://schema.org/), a collaborative initiative led by Google, Microsoft, Yahoo, and Yandex, serves as a resource for creating and promoting standardized schemas for structured data on the web. In   2013, a schema specifically designed for the "[Dataset](https://schema.org/Dataset)" type was introduced. Recognizing the significant benefits of this initiative, the research community actively incorporates this markup within dataset landing pages hosted on various data repositories. This integration facilitates the harvesting and utilization of datasets by applications such as [Google's Dataset Search](https://datasetsearch.research.google.com/). However, the research community also acknowledged limitations in the level of detail provided by the initial Dataset Schema. To address this, extensions were subsequently developed through community projects such as the Earth Cube [p418Vocabulary](https://github.com/earthcubearchitecture-project418/p418Vocabulary?tab=readme-ov-file#about) and later by the [Science-On-Schema.Org](https://github.com/ESIPFed/science-on-schema.org) project.
+
+Presently, no viable alternatives to Schema.org exist, and its widespread adoption solidifies its position as the optimal solution for this proposal. By leveraging established standards and facilitating interoperability, this approach fosters a more efficient and interconnected research ecosystem.
+
 EML provides two locations to express `schema:sameAs` relationships through annotations, within a [DatasetType](https://eml.ecoinformatics.org/schema/eml-dataset_xsd#DatasetType), and an [EntityGroup](https://eml.ecoinformatics.org/schema/eml-entity_xsd.html#EntityGroup).
 
 
@@ -72,7 +76,11 @@ _One issue to be aware of here is that persistent identifiers (e.g. DOI) are typ
 
 Adopting this proposal may require adjustments to some EDI applications and processes:
 
-1. **Data Package Best Practices:** Integrate this practice into existing best practices, outlining its usage to inform data submitters and curators.
+1. **Data Package Best Practices:** Integrate this practice into existing best practices, outlining its usage to inform data submitters and curators. Note, while Schema.org isn't a formal standard in the strictest sense (it's more like a widely adopted and community-driven schema vocabulary), it functions similarly due to its:
+
+   1. Collaborative Development: Major search engines and organizations collaborate on its development.
+   2. Widespread Adoption: It's the most widely used schema vocabulary for structured data on the web.
+   3. Alignment with Semantic Web Principles: It promotes interoperability and machine-readable data. 
 
 2. **ezEML Annotation:** Develop a feature enabling the declaration of this annotation within data package metadata for user convenience.
 
