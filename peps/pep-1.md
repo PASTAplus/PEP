@@ -82,7 +82,9 @@ Integrate this practice into existing best practices, outlining its usage to inf
 
 - Collaborative Development: Major search engines and organizations collaborate on its development. 
 - Widespread Adoption: It's the most widely used schema vocabulary for structured data on the web. 
-- Alignment with Semantic Web Principles: It promotes interoperability and machine-readable data. 
+- Alignment with Semantic Web Principles: It promotes interoperability and machine-readable data.
+
+Note, the details of this implementation are best presented as a web page under EDI's [Resources for Information Managers](https://edirepository.org/resources/resources-for-information-managers), which can then be referenced from related resources like EDI's [EML Best Practices](https://ediorg.github.io/data-package-best-practices/eml-best-practices.html).
 
 ### ezEML Annotation
 
