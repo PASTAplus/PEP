@@ -95,3 +95,5 @@ Update XSLT stylesheets to display the annotation information prominently for da
 ### Mutable Series Consideration
 
 A potential challenge arises when the valueURI is a data package DOI, and pointing to the latest version within a mutable data package series. This can lead to conflicting interpretations of the relationship between data packages. For instance, if `schema:sameAs` expresses a relationship between two data packages, but a significantly different version of the object (data package in the other repository) is published, the relationship becomes inaccurate. Notably, [DataONE](https://www.dataone.org/) employs this practice for harvested data packages presented to users.
+
+A solution to this issue is that we never use a URI in an annotation that points to a mutable object, even if it means ignoring a DOI in favor of another style of PID. This way, the object being referenced would always be traceable through the PID (not the DOI) even if the DOI is transferred to reference the latest version of the object.
