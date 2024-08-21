@@ -1,7 +1,7 @@
 # PEP-3: Transition proprietary PASTA token format to JSON Web Tokens (JWT)
 
 - Author(s): Roger Dahl
-- Contact: dahl@unm.edu
+- Contact: dahl at unm edu
 - Status: Draft
 - Type: Application
 - Created: 2024-06-18

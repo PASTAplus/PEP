@@ -1,7 +1,7 @@
 # PEP-2: Add level of abstraction between ACLs and IdPs using user random IDs (URIDs)
 
 - Author(s): Roger Dahl
-- Contact: dahl@unm.edu
+- Contact: dahl at unm edu
 - Status: Draft
 - Type: Application
 - Created: 2024-06-17

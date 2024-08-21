@@ -1,8 +1,4 @@
-
-
 # PEP-1: Defining Data Package Replication Using Semantic Annotation
-
-
 
 * Author(s): Colin Smith, Mark Servilla, Greg Maurer, Kyle Zollo-Venecek
 * Contact: colin.smith@wisc.edu
@@ -21,7 +17,6 @@ Ensuring data consumers are aware of replicated data across repositories is cruc
 ## Issue Statement
 
 The current EDI Data Repository lacks a mechanism to indicate the replication of data packages or data entities (both "data resources"), whether within the repository itself or across other repositories. This can lead to challenges:
-
 
 
 1. **Data Consumer Confusion:** Unidentified replication can cause confusion for data consumers, hindering their ability to accurately interpret and utilize the information.
