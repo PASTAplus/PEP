@@ -1,4 +1,4 @@
-# PEP-N: Upgrading the EDI Access Control Model
+# PEP-7: Upgrading the EDI Access Control Model
 
 Author(s): Mark Servilla  
 Contact: [mark.servilla@gmail.com](mailto:mark.servilla@gmail.com)	  

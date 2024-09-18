@@ -9,3 +9,5 @@
 | [PEP-4](peps/pep-4.md) | Expanding the List of Supported Date and Time Formats for ECC and ezEML Congruence Checks | Colin Smith, Jon Ide | Draft  |       |
 | [PEP-5](peps/pep-5.md) | Transition from Flask to FastAPI                                                          | Roger Dahl           | Draft  |       |
 | [PEP-6](peps/pep-6.md) | Displaying EML Annotations in the EDI Data Portal                                         | Colin Smith          | Draft  |       |
+| [PEP-7](peps/pep-7.md) | Upgrading the EDI Access Control Model                                                    | Mark Servilla        | Draft  |       |
+| [PEP-8](peps/pep-8.md) | Unified congruency checker                                                                | Roger Dahl           | Draft  |       |
