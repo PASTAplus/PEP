@@ -2,11 +2,11 @@
 
 * Author(s): Colin Smith, Mark Servilla, Greg Maurer, Kyle Zollo-Venecek
 * Contact: colin.smith@wisc.edu
-* Status: Review
+* Status: Implemented
 * Type: Policy 
 * Created: 2024-05-08
 * Reviewed: 2024-08-01
-* Final:
+* Final: 2024-10-09
 
 
 ## Introduction
