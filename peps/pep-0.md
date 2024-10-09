@@ -2,11 +2,11 @@
 
 - Author(s): Mark Servilla
 - Contact: servilla@edirepository.org
-- Status: Draft
+- Status: Implemented
 - Type: Process
 - Created: 2024-05-20
 - Reviewed: 2024-06-11
-- Final:
+- Final: 2024-10-09
 
 ## What is a PEP?
 
