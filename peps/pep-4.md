@@ -42,7 +42,7 @@ The quality checking services currently adhere to a limited subset of the intern
 1. **Data Package with Declared Format String:** If a data package being evaluated has a format string specified within its metadata, and the format is recognized by the checker, regular expression matching is run on the corresponding data values. Any discrepancies between the declared format and the data itself are flagged as errors. This allows users to rectify these issues before uploading the data package to the repository.
 
 
-2. **Data Package with Unrecognized Format:** However, if the data package uses a date and time format not included in the preferred list, the entire data package is bypassed for evaluation, and only a warning is issued regarding the unsupported format. This approach leads to a few issues:
+2. **Data Package with Unrecognized Format:** However, if the data package uses a date and time format not included in the preferred list, the entire column of date and time values is bypassed for evaluation, and only a warning is issued regarding the unsupported format. This approach leads to a few issues:
 
    - **Inaccurate/Illegible Data Uploads:** Data packages with unsupported date and time formats can still be uploaded to the repository, potentially containing imprecise or unreadable date and time values. Warnings issued by the checker do not prevent upload.
    
