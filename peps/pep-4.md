@@ -20,8 +20,8 @@ A date and time format is considered unambiguous if it has a single, clear inter
 
 
 
-* **Year Representation:** Four-digit years (YYYY) are always used to avoid potential confusion arising from double-digit years.
-* **Month and Day:**  Months (MM) and days (DD) are represented with two digits each.
+
+* **Calendar Date Representation:** Four-digit years (YYYY) are always used to avoid potential confusion arising from double-digit years. Month and Day: Months (MM) and days (DD) are represented with two digits each.
 * **Delimiters:**  Year, month, and day components can be optionally separated by common delimiters such as hyphens (-) or forward slashes (/).
 * **Order Flexibility:**  The order of year, month, and day components can vary (e.g., MM/DD/YYYY and DD/MM/YYYY are both acceptable).
 * **Time Format:**  The 24-hour format (e.g. hh:mm:ss) is used to represent time, with the specific level of precision dictated by the data itself.
