@@ -26,6 +26,7 @@ A date and time format is considered unambiguous if it has a single, clear inter
 * **Order Flexibility:**  The order of year, month, and day components can vary (e.g., MM/DD/YYYY and DD/MM/YYYY are both acceptable).
 * **Time Format:**  The 24-hour format (e.g. hh:mm:ss) is used to represent time, with the specific level of precision dictated by the data itself.
 * **Timezone Offset:**  Whenever possible, the time format should include a timezone offset, but is not required
+* **Case Sensitivity:** Date components will be represented using capital letters (e.g., YYYY, MM, DD), while time components will be lowercase (e.g., hh, mm, ss). This aligns with widely recognized standards like ISO 8601 and promotes consistency in data package authoring.
 
 
 ### Common Date and Time Formats
