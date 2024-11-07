@@ -25,7 +25,7 @@ A date and time format is considered unambiguous if it has a single, clear inter
 * **Time Representation:** The 24-hour format is used to represent time, with the specific level of precision dictated by the data itself. Hours (hh), minutes (mm), and seconds (ss) are represented with two digits each.
 * **Delimiters:** Year, month, and day components can be optionally separated by common delimiters such as hyphens (-) or forward slashes (/). Time components can be optionally separated with colons (:).
 * **Order Flexibility:**  The order of year, month, and day components can vary (e.g., MM/DD/YYYY and DD/MM/YYYY are both acceptable).
-* **Timezone Offset:**  Whenever possible, the time format should include a timezone offset, but is not required
+* **Timezone Offset:** Whenever possible, the time format should include a timezone offset, but is not required. Follow the ISO 8601 format specification for timezone offsets.
 * **Case Sensitivity:** Date components will be represented using capital letters (e.g., YYYY, MM, DD), while time components will be lowercase (e.g., hh, mm, ss). This aligns with widely recognized standards like ISO 8601 and promotes consistency in data package authoring.
 
 
