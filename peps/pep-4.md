@@ -87,6 +87,8 @@ Adoption of the proposed changes may impact a few EDI applications:
 3. **Data Explorer (DEX):** Date and time parsing operations that rely on the declared formats may require adjustments.
 4. **List of Supported Formats:**
    1. Remove `YYYY` from the list of supported date and time formats. A year is considered a single component and should be described using the `nominalYear` term from the EML standard unit dictionary.
+5. **Date/Time Checking Library:** Develop a library to validate date and time formats against our preferred list, and to ensure consistency between date/time formats and corresponding data values within data entities. See https://github.com/PASTAplus/PEP/issues/7 for more.
+
 
 _Note, distinguishing between ISO 8601 formats and the expanded list, to enable feedback to the data submitter on date and time best practices, will require modifications to the code that processes this list as well as the list itself. Therefore, the scope of this PEP is not purely "Policy" but "Application" as well. Which applications will be affected, and how they will be modified to accommodate the proposed changes in this PEP are to be determined._
 
