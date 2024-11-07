@@ -94,6 +94,10 @@ Adoption of the proposed changes may impact a few EDI applications:
    | ------------------ | ------------------------------- |
    | YYYY-MM-DD       |   %Y-%m-%d %H:%M:%S         |
 
+7. **Zero-padding:** Zero-padding will not be required, as most programming languages can interpret these date and time formats accurately without it. However, this may affect regex-based congruence checks (ezEML) and PostgreSQL-based congruence checks (ECC).
+   1. Determine effect on regex-based congruence checks
+   2. Determine effect on postgreSQL-based congruence checks
+
 
 
 _Note, distinguishing between ISO 8601 formats and the expanded list, to enable feedback to the data submitter on date and time best practices, will require modifications to the code that processes this list as well as the list itself. Therefore, the scope of this PEP is not purely "Policy" but "Application" as well. Which applications will be affected, and how they will be modified to accommodate the proposed changes in this PEP are to be determined._
