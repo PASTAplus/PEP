@@ -29,6 +29,10 @@ A date and time format is considered unambiguous if it has a single, clear inter
 * **Case Sensitivity:** Date components will be represented using capital letters (e.g., YYYY, MM, DD), while time components will be lowercase (e.g., hh, mm, ss). This aligns with widely recognized standards like ISO 8601 and promotes consistency in data package authoring.
 
 
+### EML Standard Unit Dictionary for Components
+
+Data entities containing attributes representing single date or time components (e.g., year, month, day, hour, minute, second) should not be defined using the `dateTime` type in EML. Instead, they should be specified as numeric `AttributeType/measurementScale` attributes, allowing the use of standard units from the EML unit dictionary (e.g., `nominalYear`, `nominalHour`). This approach avoids confusion as these components don’t inherently constitute a full date or time.
+
 ### Common Date and Time Formats
 
 Common date and time formats are those frequently encountered within data packages stored in the repository. These will be identified through an analysis. Additionally, "common" means the format can be easily parsed by programming languages commonly used by data consumers (e.g. R, Python).
