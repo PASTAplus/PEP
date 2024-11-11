@@ -78,7 +78,7 @@ can be rendered as:
 
 We recommend introducing a new "Annotation" field in the data portal to group these annotations, much like existing metadata fields. Since annotations can vary widely, a generic "Annotation" field avoids complications that might arise from prescribing their specific meaning. For example:
 
-![image info](/peps/images/annotation_pattern.png)
+![image info](images/pep6-annotation_pattern.png)
 
 This general pattern can be applied to group annotations near the related metadata in the portal.
 
@@ -92,15 +92,15 @@ Below are mockups demonstrating the display of annotations for the elements we p
 
 **Dataset**
 
-![image info](/peps/images/dataset_annotation_display.png)
+![image info](images/pep6-dataset_annotation_display.png)
 
 **DataEntity**
 
-![image info](/peps/images/data_entity_annotation_display.png)
+![image info](images/pep6-data_entity_annotation_display.png)
 
 **Attribute**
 
-![image info](/peps/images/attribute_annotation_display.png)
+![image info](images/pep6-attribute_annotation_display.png)
 
 ## Open issue(s)
 
