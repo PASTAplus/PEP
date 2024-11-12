@@ -26,24 +26,56 @@ EDI’s access control model for the EDI data repository is based on the choreog
 ```
 mark@gmail.com*https://pasta.edirepository.org/authentication*1531891534443*authenticated
 ```
-
 **Listing 1**: Example of decoded EDI authentication token. Ordered values, user identifier, system namespace, time-to-live, and groups are separated with “\*” asterisks.
 
 The EDI authentication service accepts a different type of unique identifier from each of the five identity providers (Table 1). As noted above, this unique identifier is embedded into the authentication token and passed to the data repository’s authorization service when determining resource accessibility. Data resources must have a corresponding user identifier (or group) associated with it that permits access to the resource. For system resources (e.g., REST API endpoint methods), this association is captured in a static XML file that is
 
-![image](images/pep7-IdP_identifiers.png)
+| Identity Provider | Unique Identifier  | Example                                     |
+|-------------------|--------------------|---------------------------------------------|
+| EDI LDAP          | Distinguished Name | uid=Mark,o=EDI,dc=edirepository,dc=org      |
+| GitHub            | Namespace          | https:\/\/github.com/mark                   |
+| Google            | Email              | mark@gmail.com                              |
+| Microsoft         | Unique Identifer   | wdKzhHw0bxfW4dT5RNhpXz0h-s7NGR2K54155VI0Wpk |
+| Orcid             | Orcid Identifier   | https:\/\/orcid.org/0005-0327-2290-9230     |
+
 **Table 1**: Types of unique user identities returned by identity providers.
 
-loaded into memory when the service is initially started. For data resources, the association is captured in the EML metadata document within the “\<access\>” elements. After the metadata is uploaded, the access control rules for data resources are transferred into an RDBMS table (Table 2\) for faster “read” performance. Both system and data resource access control rules have a similar XML form (Listing 2).
+```xml
+<access authSystem="https://pasta.edirepository.org/authentication" order="allowFirst" scope="document">
+  <allow>
+    <principal>uid=ucarroll,o=EDI,dc=edirepository,dc=org</principal>
+    <principal>uid=bwilliams,o=EDI,dc=edirepository,dc=org</principal>
+    <permission>all</permission>
+  </allow>
+  <allow>
+    <principal>public</principal>
+    <permission>read</permission>
+  </allow>
+</access>
+```
+**Listing 2**: Example access control rule that may be applied to a system 
+or data resource.
 
-![image](images/pep7-XML_access_control_rule.png)
+| Data Resource                                                                            | Identity                                | Access Type | Access Order | Permission       |
+|------------------------------------------------------------------------------------------|-----------------------------------------|-------------|--------------|------------------|
+| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/79e0ef272ea569ae12a531306bda59fd | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/f65f76748fcbbfdac1d48a476ae86794 | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/d58ab68c88a86a28fc5e46bf05f7edfb | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/report/eml/edi/1220/6                                | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/eml/edi/1220/6                                       | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/report/eml/edi/1220/6                                | public                                  | allow       | allowFirst   | read             |
+| https:\/\/pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | public                                  | allow       | allowFirst   | read             |
+| https:\/\/pasta.lternet.edu/package/eml/edi/1220/6                                       | public                                  | allow       | allowFirst   | read             |
+| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/f65f76748fcbbfdac1d48a476ae86794 | public                                  | allow       | allowFirst   | read             |
+| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/d58ab68c88a86a28fc5e46bf05f7edfb | public                                  | allow       | allowFirst   | read             |
+| https:\/\/pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | uid=EDI,o=EDI,dc=edirepository,dc=org   | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/report/eml/edi/1220/6                                | uid=EDI,o=EDI,dc=edirepository,dc=org   | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/eml/edi/1220/6                                       | uid=EDI,o=EDI,dc=edirepository,dc=org   | allow       | allowFirst   | changePermission |
 
-<img src="images/pep7-XML_access_control_rule.png" height="200px" wdith="600px" align="center">
-
-**Listing 2**: Example access control rule that may be applied to a system or data resource.
-
-![image](images/pep7-access_control_rule_DB.png)  
 **Table 2**: A snippet of the RDBMS table showing access control rules for data resources. The identity column shows personally identifiable unique identifiers in various formats.
+
+loaded into memory when the service is initially started. For data resources, the association is captured in the EML metadata document within the “\<access\>” elements. After the metadata is uploaded, the access control rules for data resources are transferred into an RDBMS table (Table 2\) for faster “read” performance. Both system and data resource access control rules have a similar XML form (Listing 2).
 
 The authorization workflow within the EDI data repository follows a typical pattern:
 
@@ -94,7 +126,22 @@ We will introduce a new user profile object to capture the salient information r
 
 See this EDI PEP for more information about the user profile and URID in the EDI ecosystem: https://github.com/PASTAplus/PEP/blob/main/peps/pep-2.md.
 
-![image](images/pep7-access_control_rule_DB_unified_identifiers.png)
+| Data Resource                                                                            | Identity                         | Access Type | Access Order | Permission       |
+|------------------------------------------------------------------------------------------|----------------------------------|-------------|--------------|------------------|
+| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/79e0ef272ea569ae12a531306bda59fd | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/f65f76748fcbbfdac1d48a476ae86794 | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/d58ab68c88a86a28fc5e46bf05f7edfb | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/report/eml/edi/1220/6                                | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/eml/edi/1220/6                                       | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/report/eml/edi/1220/6                                | PASTA-82c934a09235d8903249b8cd92 | allow       | allowFirst   | read             |
+| https:\/\/pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | PASTA-82c934a09235d8903249b8cd92 | allow       | allowFirst   | read             |
+| https:\/\/pasta.lternet.edu/package/eml/edi/1220/6                                       | PASTA-82c934a09235d8903249b8cd92 | allow       | allowFirst   | read             |
+| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/f65f76748fcbbfdac1d48a476ae86794 | PASTA-82c934a09235d8903249b8cd92 | allow       | allowFirst   | read             |
+| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/d58ab68c88a86a28fc5e46bf05f7edfb | PASTA-82c934a09235d8903249b8cd92 | allow       | allowFirst   | read             |
+| https:\/\/pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | PASTA-65a821324c98234d98238a5559 | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/report/eml/edi/1220/6                                | PASTA-65a821324c98234d98238a5559 | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu/package/eml/edi/1220/6                                       | PASTA-65a821324c98234d98238a5559 | allow       | allowFirst   | changePermission |
 
 **Table 3**: A snippet of the RDBMS table showing access control rules for data resources, but with unified identities that do not disclose personal information.
 
@@ -108,7 +155,7 @@ Similar to other repository resources, groups will also be managed as an access-
 
 We will provide a mechanism by which a user with at least one valid user profile can link unique identifiers from other identity providers to that profile, thereby recognizing the same user in the EDI ecosystem regardless of their authentication pathway (Figure 1). This process will require first signing in with the identity provider used to create the target profile, then signing in with another identity provider, at which point the two unique identifiers would map to the same target profile. If the newly linked identifier is already associated with another user profile, that other profile will be removed during the mapping process, and any access control rules associated with the now defunct profile will be reassigned with the target profile URID. We will also allow a user to “unlink” an identifier from a profile. This will enable the user to create a new user profile from the unlinked identifier when the user signs in again with that identity provider.
 
-![image](images/pep7-nomapped_and_mapped_identities.png)
+<img src="images/pep7-nomapped_and_mapped_identities.png" height="900" />
 
 **Figure 1**: Conceptual comparison between the access control model without identity mapping and with identity mapping. Using unique identifiers creates multiple personas in the EDI ecosystem, leading to confusion with access control rules and how user content is stored in applications like ezEML. In contrast, user profiles and identity mapping allow the EDI ecosystem to recognize “Mark Sidari” as a single person based on a single profile identifier, eliminating confusion. 
 
@@ -116,8 +163,23 @@ We will provide a mechanism by which a user with at least one valid user profile
 
 We will replace the PASTA authentication token with a JSON Web Token (JWT). JWTs are an industry standard recognized by the JWT specification, RFC 7519\. Since the JWT is a JSON data structure, values are defined using key-value pair notation, eliminating the ambiguity found with the positional values of the PASTA authentication token. JWTs have a standard set of key-value pairs called “registered claims,” including definitions for identifying the identity provider, user, audience, and the token time-to-live. JWTs also have “private claims,” allowing EDI to add key-value pairs specific to our needs. The following (Listing 3\) is an example of a JWT payload:
 
-![image](images/pep7-JWT_example.png)
-
+```json
+{
+    "iss": "https://authn.edirepository.org",
+    "sub": "PASTA-d8e8ba7d848141b3a864cfc6daf97b89",
+    "at_hash": HK6E-P6Dh8y93mRNtsDB1Q",
+    "email": "mark.sidari@gmail.com",
+    "email_verified": "true",
+    "iat": 1353601026,
+    "exp": 135e604926,
+    "hd": "edirepository.org",
+    "idp": "google.com",
+    "uid": "mark,sidari@gmail.com",
+    "gn": "Mark",
+    "sn": "Sidari",
+    "cn": "Mark Sidari"
+}
+```
 **Listing 3**: Example JSON web token payload that could be used as a replacement for the PASTA authentication token. Lines 2 through 10 are “registered claims,” and 11 through 15 are “private claims.”
 
 An additional benefit of JWTs is that they avoid issues with Cross-Origin Resource Sharing (CORS) restrictions when sent through the HTTP Authorization header as a “Bearer” token.
