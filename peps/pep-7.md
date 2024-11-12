@@ -33,10 +33,10 @@ The EDI authentication service accepts a different type of unique identifier fro
 | Identity Provider | Unique Identifier  | Example                                     |
 |-------------------|--------------------|---------------------------------------------|
 | EDI LDAP          | Distinguished Name | uid=Mark,o=EDI,dc=edirepository,dc=org      |
-| GitHub            | Namespace          | https:\/\/github.com/mark                   |
+| GitHub            | Namespace          | <span>https://</span>github.com/mark                     |
 | Google            | Email              | mark@gmail.com                              |
 | Microsoft         | Unique Identifer   | wdKzhHw0bxfW4dT5RNhpXz0h-s7NGR2K54155VI0Wpk |
-| Orcid             | Orcid Identifier   | https:\/\/orcid.org/0005-0327-2290-9230     |
+| Orcid             | Orcid Identifier   | <span>https://</span>orcid.org/0005-0327-2290-9230       |
 
 **Table 1**: Types of unique user identities returned by identity providers.
 
