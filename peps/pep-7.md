@@ -36,7 +36,9 @@ The EDI authentication service accepts a different type of unique identifier fro
 
 loaded into memory when the service is initially started. For data resources, the association is captured in the EML metadata document within the “\<access\>” elements. After the metadata is uploaded, the access control rules for data resources are transferred into an RDBMS table (Table 2\) for faster “read” performance. Both system and data resource access control rules have a similar XML form (Listing 2).
 
-![image](images/pep7-XML_access_control_rule.png)  
+![image](images/pep7-XML_access_control_rule.png)
+
+<img src="images/pep7-XML_access_control_rule.png">
 **Listing 2**: Example access control rule that may be applied to a system or data resource.
 
 ![image](images/pep7-access_control_rule_DB.png)  
