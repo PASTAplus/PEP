@@ -1,4 +1,4 @@
-# PEP-7: Upgrading the EDI Access Control Model
+# PEP-7: Upgrading the EDI Identity and Access Management (IAM) Model
 
 Author(s): Mark Servilla  
 Contact: [mark.servilla@gmail.com](mailto:mark.servilla@gmail.com)	  
@@ -56,22 +56,22 @@ The EDI authentication service accepts a different type of unique identifier fro
 **Listing 2**: Example access control rule that may be applied to a system 
 or data resource.
 
-| Data Resource                                                                            | Identity                                | Access Type | Access Order | Permission       |
-|------------------------------------------------------------------------------------------|-----------------------------------------|-------------|--------------|------------------|
-| https:\/\/pasta.lternet.edu\/package\/data\/eml\/edi\/1220\/6\/79e0ef272ea569ae12a531306bda59fd | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/f65f76748fcbbfdac1d48a476ae86794 | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/d58ab68c88a86a28fc5e46bf05f7edfb | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/report/eml/edi/1220/6                                | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/eml/edi/1220/6                                       | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/report/eml/edi/1220/6                                | public                                  | allow       | allowFirst   | read             |
-| https:\/\/pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | public                                  | allow       | allowFirst   | read             |
-| https:\/\/pasta.lternet.edu/package/eml/edi/1220/6                                       | public                                  | allow       | allowFirst   | read             |
-| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/f65f76748fcbbfdac1d48a476ae86794 | public                                  | allow       | allowFirst   | read             |
-| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/d58ab68c88a86a28fc5e46bf05f7edfb | public                                  | allow       | allowFirst   | read             |
-| https:\/\/pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | uid=EDI,o=EDI,dc=edirepository,dc=org   | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/report/eml/edi/1220/6                                | uid=EDI,o=EDI,dc=edirepository,dc=org   | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/eml/edi/1220/6                                       | uid=EDI,o=EDI,dc=edirepository,dc=org   | allow       | allowFirst   | changePermission |
+| Data Resource                                                                          | Identity                              | Access Type | Access Order | Permission       |
+|----------------------------------------------------------------------------------------|---------------------------------------|-------------|--------------|------------------|
+| <span>https://</span>pasta.lternet.edu/package/data/eml/edi/1220/6/79e0ef272ea569ae12a531306bda59fd | <span>https://</span>orcid.org/0000-0001-6443-XXXX | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/data/eml/edi/1220/6/f65f76748fcbbfdac1d48a476ae86794 | <span>https://</span>orcid.org/0000-0001-6443-XXXX | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/data/eml/edi/1220/6/d58ab68c88a86a28fc5e46bf05f7edfb | <span>https://</span>orcid.org/0000-0001-6443-XXXX | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | <span>https://</span>orcid.org/0000-0001-6443-XXXX | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/report/eml/edi/1220/6                                | <span>https://</span>orcid.org/0000-0001-6443-XXXX | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/eml/edi/1220/6                                       | <span>https://</span>orcid.org/0000-0001-6443-XXXX | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/report/eml/edi/1220/6                                | public                                | allow       | allowFirst   | read             |
+| <span>https://</span>pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | public                                | allow       | allowFirst   | read             |
+| <span>https://</span>pasta.lternet.edu/package/eml/edi/1220/6                                       | public                                | allow       | allowFirst   | read             |
+| <span>https://</span>pasta.lternet.edu/package/data/eml/edi/1220/6/f65f76748fcbbfdac1d48a476ae86794 | public                                | allow       | allowFirst   | read             |
+| <span>https://</span>pasta.lternet.edu/package/data/eml/edi/1220/6/d58ab68c88a86a28fc5e46bf05f7edfb | public                                | allow       | allowFirst   | read             |
+| <span>https://</span>pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | uid=EDI,o=EDI,dc=edirepository,dc=org | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/report/eml/edi/1220/6                                | uid=EDI,o=EDI,dc=edirepository,dc=org | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/eml/edi/1220/6                                       | uid=EDI,o=EDI,dc=edirepository,dc=org | allow       | allowFirst   | changePermission |
 
 **Table 2**: A snippet of the RDBMS table showing access control rules for data resources. The identity column shows personally identifiable unique identifiers in various formats.
 
@@ -126,22 +126,22 @@ We will introduce a new user profile object to capture the salient information r
 
 See this EDI PEP for more information about the user profile and URID in the EDI ecosystem: https://github.com/PASTAplus/PEP/blob/main/peps/pep-2.md.
 
-| Data Resource                                                                            | Identity                         | Access Type | Access Order | Permission       |
-|------------------------------------------------------------------------------------------|----------------------------------|-------------|--------------|------------------|
-| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/79e0ef272ea569ae12a531306bda59fd | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/f65f76748fcbbfdac1d48a476ae86794 | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/d58ab68c88a86a28fc5e46bf05f7edfb | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/report/eml/edi/1220/6                                | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/eml/edi/1220/6                                       | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/report/eml/edi/1220/6                                | PASTA-82c934a09235d8903249b8cd92 | allow       | allowFirst   | read             |
-| https:\/\/pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | PASTA-82c934a09235d8903249b8cd92 | allow       | allowFirst   | read             |
-| https:\/\/pasta.lternet.edu/package/eml/edi/1220/6                                       | PASTA-82c934a09235d8903249b8cd92 | allow       | allowFirst   | read             |
-| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/f65f76748fcbbfdac1d48a476ae86794 | PASTA-82c934a09235d8903249b8cd92 | allow       | allowFirst   | read             |
-| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/d58ab68c88a86a28fc5e46bf05f7edfb | PASTA-82c934a09235d8903249b8cd92 | allow       | allowFirst   | read             |
-| https:\/\/pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | PASTA-65a821324c98234d98238a5559 | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/report/eml/edi/1220/6                                | PASTA-65a821324c98234d98238a5559 | allow       | allowFirst   | changePermission |
-| https:\/\/pasta.lternet.edu/package/eml/edi/1220/6                                       | PASTA-65a821324c98234d98238a5559 | allow       | allowFirst   | changePermission |
+| Data Resource                                                                          | Identity                         | Access Type | Access Order | Permission       |
+|----------------------------------------------------------------------------------------|----------------------------------|-------------|--------------|------------------|
+| <span>https://</span>pasta.lternet.edu/package/data/eml/edi/1220/6/79e0ef272ea569ae12a531306bda59fd | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/data/eml/edi/1220/6/f65f76748fcbbfdac1d48a476ae86794 | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/data/eml/edi/1220/6/d58ab68c88a86a28fc5e46bf05f7edfb | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/report/eml/edi/1220/6                                | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/eml/edi/1220/6                                       | PASTA-a8809d422e455f9843b9024ed4 | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/report/eml/edi/1220/6                                | PASTA-82c934a09235d8903249b8cd92 | allow       | allowFirst   | read             |
+| <span>https://</span>pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | PASTA-82c934a09235d8903249b8cd92 | allow       | allowFirst   | read             |
+| <span>https://</span>pasta.lternet.edu/package/eml/edi/1220/6                                       | PASTA-82c934a09235d8903249b8cd92 | allow       | allowFirst   | read             |
+| <span>https://</span>pasta.lternet.edu/package/data/eml/edi/1220/6/f65f76748fcbbfdac1d48a476ae86794 | PASTA-82c934a09235d8903249b8cd92 | allow       | allowFirst   | read             |
+| <span>https://</span>pasta.lternet.edu/package/data/eml/edi/1220/6/d58ab68c88a86a28fc5e46bf05f7edfb | PASTA-82c934a09235d8903249b8cd92 | allow       | allowFirst   | read             |
+| <span>https://</span>pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | PASTA-65a821324c98234d98238a5559 | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/report/eml/edi/1220/6                                | PASTA-65a821324c98234d98238a5559 | allow       | allowFirst   | changePermission |
+| <span>https://</span>pasta.lternet.edu/package/eml/edi/1220/6                                       | PASTA-65a821324c98234d98238a5559 | allow       | allowFirst   | changePermission |
 
 **Table 3**: A snippet of the RDBMS table showing access control rules for data resources, but with unified identities that do not disclose personal information.
 
