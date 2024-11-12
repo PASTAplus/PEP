@@ -38,7 +38,7 @@ loaded into memory when the service is initially started. For data resources, th
 
 ![image](images/pep7-XML_access_control_rule.png)
 
-<img src="images/pep7-XML_access_control_rule.png" height="100px" wdith="300px">
+<img src="images/pep7-XML_access_control_rule.png" height="200px" wdith="600px" align="center">
 
 **Listing 2**: Example access control rule that may be applied to a system or data resource.
 
