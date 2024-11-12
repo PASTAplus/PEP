@@ -30,13 +30,13 @@ mark@gmail.com*https://pasta.edirepository.org/authentication*1531891534443*auth
 
 The EDI authentication service accepts a different type of unique identifier from each of the five identity providers (Table 1). As noted above, this unique identifier is embedded into the authentication token and passed to the data repository’s authorization service when determining resource accessibility. Data resources must have a corresponding user identifier (or group) associated with it that permits access to the resource. For system resources (e.g., REST API endpoint methods), this association is captured in a static XML file that is
 
-| Identity Provider | Unique Identifier  | Example                                     |
-|-------------------|--------------------|---------------------------------------------|
-| EDI LDAP          | Distinguished Name | uid=Mark,o=EDI,dc=edirepository,dc=org      |
-| GitHub            | Namespace          | <span>https://</span>github.com/mark                     |
-| Google            | Email              | mark@gmail.com                              |
-| Microsoft         | Unique Identifer   | wdKzhHw0bxfW4dT5RNhpXz0h-s7NGR2K54155VI0Wpk |
-| Orcid             | Orcid Identifier   | <span>https://</span>orcid.org/0005-0327-2290-9230       |
+| Identity Provider | Unique Identifier  | Example                                            |
+|-------------------|--------------------|----------------------------------------------------|
+| EDI LDAP          | Distinguished Name | uid=Mark,o=EDI,dc=edirepository,dc=org             |
+| GitHub            | Namespace          | <span>https://</span>github.com/mark               |
+| Google            | Email              | mark<span>@</span>gmail.com                        |
+| Microsoft         | Unique Identifer   | wdKzhHw0bxfW4dT5RNhpXz0h-s7NGR2K54155VI0Wpk        |
+| Orcid             | Orcid Identifier   | <span>https://</span>orcid.org/0005-0327-2290-9230 |
 
 **Table 1**: Types of unique user identities returned by identity providers.
 
