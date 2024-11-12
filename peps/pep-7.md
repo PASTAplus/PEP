@@ -58,7 +58,7 @@ or data resource.
 
 | Data Resource                                                                            | Identity                                | Access Type | Access Order | Permission       |
 |------------------------------------------------------------------------------------------|-----------------------------------------|-------------|--------------|------------------|
-| https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/79e0ef272ea569ae12a531306bda59fd | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
+| https:\/\/pasta.lternet.edu\/package\/data\/eml\/edi\/1220\/6\/79e0ef272ea569ae12a531306bda59fd | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
 | https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/f65f76748fcbbfdac1d48a476ae86794 | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
 | https:\/\/pasta.lternet.edu/package/data/eml/edi/1220/6/d58ab68c88a86a28fc5e46bf05f7edfb | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
 | https:\/\/pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | https:\/\/orcid.org/0000-0001-6443-3487 | allow       | allowFirst   | changePermission |
