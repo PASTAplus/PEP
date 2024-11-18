@@ -58,6 +58,10 @@ Understanding the EDI IAM model requires a brief overview of the EDI data reposi
 
 The IAM life-cycle for an EDI resource relies on interactions between a user, an identity provider (IdP), and the PASTA IAM services. Multiple IdPs for user authentication are supported (Table 2), including EDI's internal LDAP and four external identity providers: GitHub, Google, Microsoft, and Orcid. Authentication begins when a user provides secret credentials, like a username and password, to an IdP, proving who they claim to be. In turn, the IdP affirms the user's identity by returning a unique IdP user identifier to the authentication service. The authentication service then bundles this unique identifier into a PASTA authentication token, along with the system namespace, a token validity time-to-live (TTL), and a list of groups the user is a member of (Listing 2). When a user requests access to a protected resource (i.e., PASTA web service or data resource), PASTA sends the authentication token and the requested resource identifier to the authorization service. When received, the authorization service decodes the authentication token to reveal the user's identity, including any groups memberships, and then evaluates the request to determine if the user (or groups) has the requisite permission to access the resource. It is important to note that the PASTA authentication token is uniquely designed to operate within the EDI ecosystem and is not a standard token like a JSON Web Token (JWT). See Figure 1 for a UML sequence diagram representation of the legacy PASTA IAM model workflow. 
 
+![Figure 1](./images/pep7-IAM_Legacy_PASTA.png){ width=50% }
+
+**Figure 1**: Legacy PASTA IAM model workflow for user authentication and resource authorization.
+
 | Identity Provider | Unique Identifier  | Example                                            |
 |-------------------|--------------------|----------------------------------------------------|
 | EDI LDAP          | Distinguished Name | uid=mark,o=EDI,dc=edirepository,dc=org             |
@@ -71,11 +75,7 @@ The IAM life-cycle for an EDI resource relies on interactions between a user, an
 ```
 mark@gmail.com*https://pasta.edirepository.org/authentication*1531891534443*authenticated
 ```
-**Listing 2**: Example of a decoded EDI authentication token with ordered values separated by "*" asterisks. Values are ordered by user identifier, system namespace, time-to-live, and groups. 
-
-<img src="images/pep7-IAM_Legacy_PASTA.png" height="500px" />
-
-**Figure 1**: Legacy PASTA IAM model workflow for user authentication and resource authorization.
+**Listing 2**: Example of a decoded EDI authentication token with ordered values separated by "*" asterisks. Values are ordered by user identifier, system namespace, time-to-live, and groups.
 
 # Issue Statement
 
@@ -143,7 +143,7 @@ Similar to other repository resources, groups will also be managed as an access-
 
 We will provide a mechanism by which a user with at least one valid user profile can link unique identifiers from other identity providers to that profile, thereby recognizing the same user in the EDI ecosystem regardless of their authentication pathway (Figure 2). This process will require first signing in with the identity provider used to create the target profile, then signing in with another identity provider, at which point the two unique identifiers would map to the same target profile. If the newly linked identifier is already associated with another user profile, that other profile will be removed during the mapping process, and any access control rules associated with the now defunct profile will be reassigned with the target profile URID. We will also allow a user to "unlink" an identifier from a profile. This will enable the user to create a new user profile from the unlinked identifier when the user signs in again with that identity provider.
 
-<img src="images/pep7-nomapped_and_mapped_identities.png" height="700px" />
+![Figure 2](pep7-nomapped_and_mapped_identities.png){ width=75% }
 
 **Figure 2**: Conceptual comparison between the IAM model without identity mapping and with identity mapping. Using unique identifiers creates multiple personas in the EDI ecosystem, leading to confusion with access control rules and how user content is stored in applications like ezEML. In contrast, user profiles and identity mapping allow the EDI ecosystem to recognize "Mark Sidari" as a single person based on a single profile identifier, eliminating confusion. 
 
