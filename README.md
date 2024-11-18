@@ -18,6 +18,8 @@ The best solution to create a printable PDF document of the PEP is to use the un
 
 ```bash
 pandoc pep-N.md -o pep-N.pdf \
+      --resource-path ./images \
+      -f markdown-implicit_figures \
       -V geometry:"margin=1in" \
       -V fontsize="12pt" \
       -V colorlinks
