@@ -143,7 +143,7 @@ Similar to other repository resources, groups will also be managed as an access-
 
 We will provide a mechanism by which a user with at least one valid user profile can link unique identifiers from other identity providers to that profile, thereby recognizing the same user in the EDI ecosystem regardless of their authentication pathway (Figure 2). This process will require first signing in with the identity provider used to create the target profile, then signing in with another identity provider, at which point the two unique identifiers would map to the same target profile. If the newly linked identifier is already associated with another user profile, that other profile will be removed during the mapping process, and any access control rules associated with the now defunct profile will be reassigned with the target profile URID. We will also allow a user to "unlink" an identifier from a profile. This will enable the user to create a new user profile from the unlinked identifier when the user signs in again with that identity provider.
 
-![Figure 2](pep7-nomapped_and_mapped_identities.png){ width=75% }
+![Figure 2](./images/pep7-nomapped_and_mapped_identities.png){ width=75% }
 
 **Figure 2**: Conceptual comparison between the IAM model without identity mapping and with identity mapping. Using unique identifiers creates multiple personas in the EDI ecosystem, leading to confusion with access control rules and how user content is stored in applications like ezEML. In contrast, user profiles and identity mapping allow the EDI ecosystem to recognize "Mark Sidari" as a single person based on a single profile identifier, eliminating confusion. 
 
