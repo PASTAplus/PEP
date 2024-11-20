@@ -1,0 +1,26 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+title "IAM Legacy PASTA"
+
+actor client
+participant authN
+participant service
+participant authZ
+participant IdP
+
+autonumber
+
+client->authN: sign-on
+authN->IdP: authenticate
+IdP->client: sign-on UI
+client->IdP: credentials
+IdP->authN: identifier
+authN->authN: generate token
+authN->client: token
+client->service: request(resource, token)
+service->authZ: isAuthorized(token)
+authZ->service: authorized
+service->client: resource
+
+@enduml

@@ -10,18 +10,18 @@ Final:
 
 # Introduction
 
-The Environmental Data Initiative (EDI) wishes to upgrade its Identity and Access Management (IAM) model across all its applications. Identity and access management is a framework of policies and technologies for ensuring that only users with the appropriate permissions have access to repository services and data resources. For years, EDI has relied on its own internal identity provider, an LDAP person registry, to authenticate and authorize users who interact directly with the EDI data repository. More recently, EDI has embraced external identity providers to provide a more fundamental level of authentication with fewer privileges. Although this approach has worked well over the years, adopting a modern IAM model will greatly improve usability and security throughout EDI in the following areas:
+The Environmental Data Initiative (EDI) proposes to upgrade its Identity and Access Management (IAM) model across all its applications. Identity and access management is a framework of policies and technologies ensuring that only users with the appropriate permissions can access repository services and data resources. For years, EDI has relied on a local LDAP user registry as its internal identity provider (IdP) for users interacting directly with the EDI data repository. More recently, EDI has embraced single sign-on (SSO) authentication using external IdPs, providing users with more straightforward options for identity verification, albeit with fewer privileges in EDI applications. Although this approach has worked well over the years, EDI believes that adopting a modern IAM model will significantly improve usability and security throughout EDI in the following areas:
 
-* User management - enforce the separation of user authentication from authorization by inserting a new "user profile" class between authentication processes and resource authorization actions.  
-* Group management - add the ability for users to create and manage "user" groups so that access control rules may be applied to the group, forgoing the need to use access control rules for large sets of individual users.  
-* Identity mapping - add the ability for users to sign in and authenticate through multiple identity providers and be recognized in the EDI ecosystem as the same user by mapping identity provider identifiers to a single user profile.
-* Transitioning to JWT - move to industry-standard JSON Web Tokens instead of PASTA authentication tokens.  
-* User-managed access control rules - add the ability for users to create and modify access control rules for data resources they manage at any time after the addition of the data resource.  
-* Deprecation of the EML 2.2.0 "\<access\>" element - recognise data package and data object access control rules in the "\<additionalMetadata\>" section of the EML metadata document.
+1. User management - create a distinct "user profile" class for use within EDI applications that does not rely on IdP identifiers.  
+1. Group management - allow users to create and manage their own "user" groups.  
+1. Identity mapping - allow users to map IdP identities to a single "user profile".
+1. Transition to JWT - adopt industry-standard JSON Web Tokens to convey identity and group information.  
+1. User-managed access control rules - allow users to create and modify data resource access control rules.  
+1. Update use of the EML 2.2.0 `<access>` element - recognise EML `<access>` element content in EML `<additionalMetadata>`.
 
 # Background
 
-Identity and access management in the present EDI data repository begins with identifying the resources requiring protection. EDI considers these resources to be PASTA web services or the components of a data package (i.e., science data and metadata and the data package quality report). Users who interact with PASTA web services must have permission to execute certain services. Similarly, users who request access to a data resource must have permission to read or modify the resource. The permissions associated with web services or data resources must be codified before any user initially requests the resource. Permissions are declared using an XML structure called an `<access>` element (Listing 1 is an example of an access element). The information in the XML access element is translated into a logical format that can programmatically determine if a user can access the resource. The XML access element for PASTA web services is translated dynamically from an XML file that is loaded into memory when the service is initially started. It is dynamic because permissions may change during the lifetime of the web services.
+Understanding the EDI IAM model requires a brief overview of the EDI data repository and its components. The repository is a web-based system that stores and manages ecological data packages, including science data, metadata, and quality reports. The repository is built on the PASTA software stack, which includes web services that interact with the repository's data resources. The repository's web service methods and data resources are protected by an access control system that enforces permissions based on the user's identity requesting access. The access control system uses rules that explicitly state which users may access a web service method or a data resource. These access control rules (ACLs) are codified using an XML structure, called an `<access>` element (Listing 1), defined in the Ecological Metadata Language (EML) schema to declare the permissions related to a web service method and data resources. ACLs for web service methods are stored in a system XML file and loaded into memory when the system starts. ACLs for data resources are defined in each data package's EML metadata file and stored in a relational database management system (RDBMS) table, the `access_matrix` for fast access. The `access_matrix` contains multiple fields, but the "data resource," "identity," and "permission" fields are critical for interpreting the access control rules. The "data resource" column identifies the specific resource being protected, while the "identity" and "permission" columns define who can access the resource and how. Table 1 illustrates how a single data package can have different access permissions for various users, including those identified by an Orcid identifier, the anonymous "public" identifier, and an authenticated user identifier.
 
 ```xml
 <access authSystem="https://pasta.edirepository.org/authentication" order="allowFirst" scope="document">
@@ -35,9 +35,7 @@ Identity and access management in the present EDI data repository begins with id
   </allow>
 </access>
 ```
-**Listing 1**: Example of an access control rule that may be applied to a system or data resource.
-
-In contrast, the XML access element for a data resource is fixed by the data author and embedded within the data package's EML metadata. In this case, the permissions for data resources are immutable for the life of the resource. Data resource permissions are translated from their XML format and stored in a database table (for faster "read" performance) called an “access matrix” (Table 1). The `access matrix` contains multiple fields, but the "data resource", "identity", and "permission" are essential to understand the access control process. The “data resource” column identifies the specific resource being addressed, while the “identity” and “permission” columns define who and how the resource may be accessed. In Table 1, data resources of a single data package show different access permissions for three different users identified by an Orcid identifier, a "public" group identifier, and an individual user identifier.
+**Listing 1**: Example of an EML `<access>` element that may be applied to a system or data resource.
 
 | Data Resource                                                                                       | Identity                                           | Access Type | Access Order | Permission |
 |-----------------------------------------------------------------------------------------------------|----------------------------------------------------|-------------|--------------|------------|
@@ -56,37 +54,28 @@ In contrast, the XML access element for a data resource is fixed by the data aut
 | <span>https://</span>pasta.lternet.edu/package/report/eml/edi/1220/6                                | uid=mark,o=EDI,dc=edirepository,dc=org             | allow       | allowFirst   | all        |
 | <span>https://</span>pasta.lternet.edu/package/eml/edi/1220/6                                       | uid=mark,o=EDI,dc=edirepository,dc=org             | allow       | allowFirst   | all        |
 
-**Table 1**: A snippet of the RDBMS `access matrix` table showing access control rules for data resources. The identity column shows unique user identifiers in various formats.
+**Table 1**: A snippet of the "access matrix" table showing access control rules for data resources from the same data package. The "Data Resource" column contains unique resource identifiers (those in need of protection); the "identity" column contains user identifiers in various formats, including an Orcid identifier, anonymous "public" identifier, and an authenticated user identifier with the uid of "mark"; the "Access Type" column contains the type of access applied to the permission: either "allow" or "deny"; the "Access Order" column contains the order in which an access type is applied: either "allowFirst" or "denyFirst"; and the "Permission" column contains the permission applied to the identity for the access type.  
 
-The authorization life-cycle for EDI resources relies on an IAM model based on a choreographed interaction between a user, an identity provider (IdP), and the PASTA authentication and authorization services. PASTA's authentication service supports user identification through multiple IdPs (Table 2), including EDI's internal LDAP and one of four external identity providers: GitHub, Google, Microsoft, and Orcid. Identity verification begins when a user provides special credentials, like a username and password, to an IdP, thereby proving who they claim to be. In turn, the IdP responds with an affirmation of the user's identity and returns a unique user identifier (different for each IdP) to the authentication service. The authentication service then bundles this unique identifier into a PASTA authentication token (below) for use with the authorization service. When a user requests access to a protected resource (i.e., PASTA web service or data resource), PASTA sends the authentication token, along with an identifier of the requested resource, to the authorization service. When received, the authorization service decodes the authentication token to reveal the user's identity, including any groups memberships, and then evaluates the request to determines if the user (or groups) has the requisite permission to access the resource.
+The IAM life-cycle for an EDI resource relies on interactions between a user, an identity provider (IdP), and the PASTA IAM services. Multiple IdPs for user authentication are supported (Table 2), including EDI's internal LDAP and four external identity providers: GitHub, Google, Microsoft, and Orcid. Authentication begins when a user provides secret credentials, like a username and password, to an IdP, proving who they claim to be. In turn, the IdP affirms the user's identity by returning a unique IdP user identifier to the authentication service. The authentication service then bundles this unique identifier into a PASTA authentication token, along with the system namespace, a token validity time-to-live (TTL), and a list of groups the user is a member of (Listing 2). When a user requests access to a protected resource (i.e., PASTA web service or data resource), PASTA sends the authentication token and the requested resource identifier to the authorization service. When received, the authorization service decodes the authentication token to reveal the user's identity, including any groups memberships, and then evaluates the request to determine if the user (or groups) has the requisite permission to access the resource. It is important to note that the PASTA authentication token is uniquely designed to operate within the EDI ecosystem and is not a standard token like a JSON Web Token (JWT). See Figure 1 for a UML sequence diagram representation of the legacy PASTA IAM model workflow. 
+
+![Figure 1](./images/pep7-IAM_Legacy_PASTA.png){ width=50% }
+
+**Figure 1**: Legacy PASTA IAM model workflow for user authentication and resource authorization.
 
 | Identity Provider | Unique Identifier  | Example                                            |
 |-------------------|--------------------|----------------------------------------------------|
 | EDI LDAP          | Distinguished Name | uid=mark,o=EDI,dc=edirepository,dc=org             |
 | GitHub            | Namespace          | <span>https://</span>github.com/mark               |
 | Google            | Email              | mark<span>@</span>gmail.com                        |
-| Microsoft         | Unique Identifer   | wdKzhHw0bxfW4dT5RNhpXz0h-s7NGR2K54155VI0Wpk        |
+| Microsoft         | Unique Identifier  | wdKzhHw0bxfW4dT5RNhpXz0h-s7NGR2K54155VI0Wpk        |
 | Orcid             | Orcid Identifier   | <span>https://</span>orcid.org/0005-0327-2290-9230 |
 
 **Table 2**: Identity providers and the different types of unique user identifiers returned by each.
 
-The authentication token is a digitally signed, base64 encoded string passed from the client to the repository in the Cookie header of an HTTP request. Decoded, the authentication token (Listing 2) contains a set of ordered values, including 1) the user’s unique identifier as provided by the identity provider, 2) a namespace of the system realm, 3) a time-to-live value indicating the expiration of token validity, and 4) a list of assigned groups of which the user is a member. The cardinality of each value is one, except for the last value, group(s), which has a cardinality of 0 to infinity. Presently, only two groups are permitted: "vetted" and "authenticated." These are assigned by the authentication service and determined by the identity provider: users who authenticate with EDI’s LDAP will be assigned to both the "vetted" and "authenticated" groups, while those who authenticate with external identity providers will be assigned only to the "authenticated" group. The "vetted" group has greater system privileges, like uploading data packages to the repository. Anonymous or "public" users also receive an authentication token with the user identity set to "public" and the absence of both groups.
-
 ```
 mark@gmail.com*https://pasta.edirepository.org/authentication*1531891534443*authenticated
 ```
-**Listing 2**: Example of a decoded EDI authentication token with ordered values separated by "*" asterisks. Values are ordered by user identifier, system namespace, time-to-live, and groups. 
-
-The authorization workflow within the EDI data repository follows a typical pattern:
-
-1. The user signs in to the EDI data repository using the authentication service through the user’s web browser.  
-2. The authentication service uses an identity provider to authenticate the user’s identity.  
-3. After successful authentication, the authentication service generates a new authentication token and returns it to the user’s web browser, which stores it for later use.  
-4. The user requests access to "read" a data resource in the EDI data repository through the user’s web browser.  
-5. The web browser retrieves the stored authentication token and passes it to the repository’s authorization service.  
-6. The authorization service checks if the user (or their groups) can invoke the "read_data" REST API method.  
-7. The authorization service determines if the user (or their groups) can read the requested data resource.  
-8. Assuming steps 5 and 6 are successful, the user’s request to read a data resource would have been fulfilled.
+**Listing 2**: Example of a decoded EDI authentication token with ordered values separated by "*" asterisks. Values are ordered by user identifier, system namespace, time-to-live, and groups.
 
 # Issue Statement
 
@@ -94,7 +83,7 @@ EDI’s IAM model works as expected but can be improved. Its original design was
 
 **1. Inconsistent format of unique identities**
 
-The different modalities used for unique identifiers returned by each identity provider complicate matching users with access control rules in several ways. First, users need to know the exact identifier in the authentication token, which must be added into the access control rule of the EML "\<access\>" element. This is error-prone since the identifier string in both locations must be identical. Moreover, Orcid, and especially Microsoft, identifiers consist of alpha-numeric values that are more difficult to copy and use. To a lesser concern, the unique identifiers are visible to users and expose a level of personal information in the EML metadata and the event logs of EDI’s audit service. 
+The different modalities used for unique identifiers returned by each identity provider complicate matching users with access control rules in several ways. First, users need to know the exact identifier in the authentication token, which must be added into the access control rule of the EML `<access>` element. This is error-prone since the identifier string in both locations must be identical. Moreover, Orcid, and especially Microsoft, identifiers consist of alpha-numeric values that are more difficult to copy and use. To a lesser concern, the unique identifiers are visible to users and expose a level of personal information in the EML metadata and the event logs of EDI’s audit service. 
 
 **2. Inability to create, update, or delete user-owned groups.**
 
@@ -110,11 +99,11 @@ Dependence on conveying identity information from the authentication service to 
 
 **5. Inability to create, update, or delete user-defined access control rules.**
 
-For data resources, all access control rules must be in EML metadata "\<access\>" elements before publishing the data package. As a result, the user cannot change or modify access rules after the data package is published. Scenarios where users require temporary embargoes on data when publishing an associated journal article or if new users require update privileges to a data package after publication are not possible in the EDI ecosystem.
+For data resources, all access control rules must be in EML metadata `<access>` elements before publishing the data package. As a result, the user cannot change or modify access rules after the data package is published. Scenarios where users require temporary embargoes on data when publishing an associated journal article or if new users require update privileges to a data package after publication are not possible in the EDI ecosystem.
 
 **6. Deprecation of the \<access\> element in EML 2.2.0.**
 
-The EML 2.2.0 standard used by the EDI data repository and ezEML has officially deprecated the EML metadata "\<access\>" element. This XML element will eventually be removed from the schema, resulting in validation errors if not removed from the EML metadata document. EDI must provide an alternative mechanism to meet the goal of data resource authorization.
+The EML 2.2.0 standard used by the EDI data repository and ezEML has officially deprecated the EML metadata `<access>` element. This XML element will eventually be removed from the schema, resulting in validation errors if not removed from the EML metadata document. EDI must provide an alternative mechanism to meet the goal of data resource authorization.
 
 # Proposed Solution
 
@@ -142,7 +131,7 @@ See this EDI PEP for more information about the user profile and URID in the EDI
 | <span>https://</span>pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | PASTA-65a821324c98234d98238a5559 | allow       | allowFirst   | all        |
 | <span>https://</span>pasta.lternet.edu/package/report/eml/edi/1220/6                                | PASTA-65a821324c98234d98238a5559 | allow       | allowFirst   | all        |
 | <span>https://</span>pasta.lternet.edu/package/eml/edi/1220/6                                       | PASTA-65a821324c98234d98238a5559 | allow       | allowFirst   | all        |
-**Table 3**: A snippet of the RDBMS table showing access control rules for data resources, but with unified identities that do not disclose personal information.
+**Table 3**: A snippet of the RDBMS table showing access control rules for data resources, but with unified identities that do not disclose personal information. Note that column definitions are identical to Table 1.
 
 **2. Group management**
 
@@ -152,11 +141,11 @@ Similar to other repository resources, groups will also be managed as an access-
 
 **3. Identity mapping**
 
-We will provide a mechanism by which a user with at least one valid user profile can link unique identifiers from other identity providers to that profile, thereby recognizing the same user in the EDI ecosystem regardless of their authentication pathway (Figure 1). This process will require first signing in with the identity provider used to create the target profile, then signing in with another identity provider, at which point the two unique identifiers would map to the same target profile. If the newly linked identifier is already associated with another user profile, that other profile will be removed during the mapping process, and any access control rules associated with the now defunct profile will be reassigned with the target profile URID. We will also allow a user to "unlink" an identifier from a profile. This will enable the user to create a new user profile from the unlinked identifier when the user signs in again with that identity provider.
+We will provide a mechanism by which a user with at least one valid user profile can link unique identifiers from other identity providers to that profile, thereby recognizing the same user in the EDI ecosystem regardless of their authentication pathway (Figure 2). This process will require first signing in with the identity provider used to create the target profile, then signing in with another identity provider, at which point the two unique identifiers would map to the same target profile. If the newly linked identifier is already associated with another user profile, that other profile will be removed during the mapping process, and any access control rules associated with the now defunct profile will be reassigned with the target profile URID. We will also allow a user to "unlink" an identifier from a profile. This will enable the user to create a new user profile from the unlinked identifier when the user signs in again with that identity provider.
 
-<img src="images/pep7-nomapped_and_mapped_identities.png" height="700px" />
+![Figure 2](./images/pep7-nomapped_and_mapped_identities.png){ width=75% }
 
-**Figure 1**: Conceptual comparison between the IAM model without identity mapping and with identity mapping. Using unique identifiers creates multiple personas in the EDI ecosystem, leading to confusion with access control rules and how user content is stored in applications like ezEML. In contrast, user profiles and identity mapping allow the EDI ecosystem to recognize "Mark Sidari" as a single person based on a single profile identifier, eliminating confusion. 
+**Figure 2**: Conceptual comparison between the IAM model without identity mapping and with identity mapping. Using unique identifiers creates multiple personas in the EDI ecosystem, leading to confusion with access control rules and how user content is stored in applications like ezEML. In contrast, user profiles and identity mapping allow the EDI ecosystem to recognize "Mark Sidari" as a single person based on a single profile identifier, eliminating confusion. 
 
 **4. Transitioning to JSON Web Tokens (JWT)**
 
@@ -189,9 +178,9 @@ See this EDI PEP for more information about JSON Web Tokens in the EDI ecosystem
 
 We will provide a mechanism by which the owner of a data resource or any user who has permission to modify access control rules of a data resource can create, modify, and delete access control rules for that data resource post-publication of the data package. This mechanism will allow that user to search for other users with a valid user profile or a group owned by a user with a valid user profile and create a new access control rule that will assign permission to "read," "update," or "all/change_permissions" to that data resource using the URID or the GRID of the other users or groups, respectively. This mechanism will also allow that user to modify the permissions of an existing access control rule for a data resource or delete the access control rule for a data resource. The benefit of allowing post-publication user-managed access control rules is that users can decide who and when access should be permitted to their data resources.
 
-**6. Addressing deprecation of EML 2.2.0 "\<access\>" element**
+**6. Addressing deprecation of EML 2.2.0 `<access>` element**
 
-We will modify the process by which EML 2.2.0 (or greater) parses and extracts access control rules from the EML metadata "\<access\>" element to one that identifies similar access control rule schemas within the "\<additionalMetadata\>" element of the EML document (the "\<additionalMetadata\>" element of the EML metadata schema permits any valid XML content that is not within the EML schema namespace). We will continue to extract access control rules using the existing "\<access\>" elements of the EML metadata for EML versions before and up to 2.2.0, but be ready for versions greater than 2.2.0 if the "\<access\>" element is no longer schema-valid. We believe access control rules within the EML metadata are important for scenarios where users would like a default set of access control rules added as part of the publication workflow.
+We will modify the process by which EML 2.2.0 (or greater) parses and extracts access control rules from the EML metadata `<access>` element to one that identifies similar access control rule schemas within the `<additionalMetadata>` element of the EML document (the `<additionalMetadata>` element of the EML metadata schema permits any valid XML content that is not within the EML schema namespace). We will continue to extract access control rules using the existing `<access>` elements of the EML metadata for EML versions before and up to 2.2.0, but be ready for versions greater than 2.2.0 if the `<access>` element is no longer schema-valid. We believe access control rules within the EML metadata are important for scenarios where users would like a default set of access control rules added as part of the publication workflow.
 
 # Open issue(s)
 
