@@ -11,3 +11,4 @@
 | [PEP-6](peps/pep-6.md) | Displaying EML Annotations in the EDI Data Portal                                         | Colin Smith          | Draft       |            |
 | [PEP-7](peps/pep-7.md) | Upgrading the EDI Identity and Access Management (IAM) Model                              | Mark Servilla        | Draft       |            |
 | [PEP-8](peps/pep-8.md) | Unified congruency checker                                                                | Roger Dahl           | Draft       |            |
+| [PEP-9](peps/pep-9.md) | Implementing Authorization of the IAM Model                                               | Mark Servilla        | Draft       |            |
