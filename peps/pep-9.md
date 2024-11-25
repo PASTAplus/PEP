@@ -37,16 +37,116 @@ This PEP proposes to improve authorization within the EDI application ecosystem 
 The current EDI authorization system should be improved for the following reasons:
 
 1. IdP user identifiers and group identifiers are embedded in ACRs, which are visible to the public by reviewing raw data package metadata. This potentially discloses private or sensitive information, including names, email addresses, and alternative identifiers (i.e., Orcid identifiers). These identifiers also become a permanent record in the EDI data repository audit log, which is another potential exposure route of sensitive information.
-2. Data package ACRs become immutable once the data package is published in the EDI data repository. This poses significant hardship for data package creators or owners who wish to apply a temporary embargo to data resources during manuscript review or to modify, add, or delete ACRs when managing personnel change over time.
+2. Data package resource ACRs become immutable once the data package is published in the EDI data repository. This poses significant hardship for data package creators or owners who wish to apply a temporary embargo to data resources during manuscript review or to modify, add, or delete ACRs when managing personnel change over time.
 3. Outside the EDI data repository and the PASTA architecture, authorization processing of ACRs is not supported. This significantly limits reusability of authorization technology and the scalability of the IAM model for other EDI applications in general.
 
 ## Proposed Solution
 
-...
+We propose to implement a stand-alone authorization service, **AuthZ**, that will manage ACRs for all applications in the EDI ecosystem, including the EDI data repository and ezEML, and complement the new authentication service, **AuthN**, by working seamlessly with PASTA unique identifiers used for users and groups (Figure 2). AuthZ will provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs for data package resources. It will also provide a mechanism for managing ACRs for PASTA API methods. AuthZ will be designed as microservice, augmented with a web UI frontend, that integrate with the existing EDI architecture and will be implemented in Python using the FastAPI web framework.
+
+This service will be responsible for the following:
+1. Implement a secure and verifiable authorization algorithm that will process ACRs for EDI related resources.
+2. Be extensible to support all applications in the EDI ecosystem.
+3. Maintain a secure and private ACR registry with the necessary attributes to perform authorization based on #1.
+4. Provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs.
+5. Provide a web UI frontend for managing ACRs for both EDI administrators and users.
+
+![Figure 2](./images/pep9-EDI_app_ecosystem.png)
+
+**Figure 2:** Proposed EDI application ecosystem with the addition of the AuthZ service.
+
+### Use Case and REST API Method Definitions
+
+#### 1. Add ACL
+
+Goal: To parse a valid EML document and add its ACRs to the AuthZ ACR registry.
+
+Use case:
+1. A user uploads a data package with an EML metadata document.
+2. PASTA creates a Level-1 EML metadata document and sends the EML to AuthZ to register package ACRs.
+3. AuthZ parses the EML and extracts the ACRs.
+4. AuthZ adds the ACRs to the ACR registry.
+5. AuthZ returns a success message to PASTA.
+
+Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section.
+
+```http
+addACL(eml: string)
+    eml: valid EML document as a string
+    return:
+        200 OK if successful
+        400 Bad Request if EML is invalid
+```
+
+#### 2. Add ACL
+
+Goal: To parse a valid `<access>` element and add its ACRs to the AuthZ ACR registry.
+
+Use case:
+1. An EDI application creates an `<access>` element ACL for an EDI resource.
+2. The application sends the `<access>` element ACL to AuthZ to register the ACR.
+3. AuthZ parses the `<access>` element ACL and extracts the ACRs.
+4. AuthZ adds the ACRs to the ACR registry.
+5. AuthZ returns a success message to the EDI application.
+
+Notes: None
+
+```http
+addACL(access: string)
+    access: valid <access> element as a string
+    return:
+        200 OK if successful
+        400 Bad Request if <access> element is invalid
+```
+
+#### 3. Add ACR
+
+Goal: To add an individual ACR as defined by ACR attributes (TBD) to the AuthZ ACR registry.
+
+Use case:
+1. An EDI application creates an ACR for an EDI resource.
+2. The application sends the ACR to AuthZ to register the ACR.
+3. AuthZ validates and adds the ACR to the ACR registry.
+4. AuthZ returns a success message to the EDI application.
+
+Notes: None
+
+```http
+addACR(resource: string, principal: string, permission: string)
+    resource: the resource to be protected by the ACR as a string
+    principal: the principal of the ACR as a string
+    permission: the permission of the ACR as a string
+    return:
+        200 OK if successful
+        400 Bad Request if ACR is invalid
+```
+
+#### 4. Is Authorized
+
+Goal: To determine if a principal is authorized to access a resource.
+
+Use case:
+
+
+```http
+isAuthorized(auth_token: token, access: string, permission: string)
+    auth_token: a valid authentication token
+    access: valid <access> element as a string
+    permission: the permission to be checked as a string
+    return:
+        200 OK if authorized
+        403 Forbidden if not authorized
+```
 
 ## Open issue(s)
 
-...
+### 1. Will AuthZ support "deny" verbs in ACRs?
+
+Because the "deny" verb is rarely used in practice, it will not be supported in the initial implementation of the AuthZ service. However, this feature may be added in a future release.
+
+### 2. How will the current `DataPackageManager.access_matrix` table be exported to the AuthZ service?
+
+### 3. How will ezEML interact with the AuthZ service?
 
 ## References
 
