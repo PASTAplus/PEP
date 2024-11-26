@@ -10,13 +10,13 @@
 
 ## Introduction
 
-Authorization within the EDI application ecosystem is a critical component of the Identity and Access Management (IAM) model (see [PEP-7](./pep-7.md)). The current authorization system uses a simplified attribute-based access control (ABAC) model where an individual's identity or group membership ("group" and "role" are used interchangeably) dictates whether they are sufficiently privileged to execute a PASTA API method or to upload, access, or remove a data package, or its individual data resources (i.e., metadata, data, and quality report), from the EDI data repository. Privileges are declared in access control rules (ACRs) using the `<access>` element (Figure 1) syntax defined in the [Ecological Metadata Language](https://eml.ecoinformatics.org/schema/eml_xsd#eml_access) (EML) XML schema. The *principal* (or subject) of an access control rule is the unique user identity assigned by an Identity Provider (IdP) or an arbitrary group identifier (e.g., "authenticated") assigned by the system.  The *permissions* (or privileges) of an ACR are defined as "read," "write," or "changePermission." These map to the following: "read" to "read;" "write" collectively to "create, read, update, delete;" and "changePermission" to everything in "write," in addition to changing permissions for data resources ("all" may be substituted for "changePermission" in ACRs). These permissions are not part of the EML `<access>` element scheme; they are legacy and were defined by the Long Term Ecological Research (LTER) Network information management community.
+Authorization within the EDI application ecosystem is a critical component of the Identity and Access Management (IAM) model (see [PEP-7](./pep-7.md)). The current authorization system uses a simplified attribute-based access control (ABAC) model where an individual's identity or group membership ("group" and "role" are used interchangeably) dictates whether they are sufficiently privileged to execute a PASTA API method or to upload, access, or remove a data package, or its individual data resources (i.e., metadata, data, and quality report), from the EDI data repository. Privileges are declared in an access control rule (ACR) using the `<access>` element (Figure 1) syntax defined in the [Ecological Metadata Language](https://eml.ecoinformatics.org/schema/eml_xsd#eml_access) (EML) XML schema. The *principal* (or subject) of an access control rule is the unique user identity assigned by an Identity Provider (IdP) or an arbitrary group identifier (e.g., "authenticated") assigned by the system.  The *permissions* (or privileges) of an ACR are defined as "read," "write," or "changePermission." These map to the following: "read" to "read;" "write" collectively to "create, read, update, delete;" and "changePermission" to everything in "write," in addition to changing permissions for data resources ("all" may be substituted for "changePermission" in ACRs). These permissions are not part of the EML `<access>` element scheme; they are legacy and were defined by the Long Term Ecological Research (LTER) Network information management community.
 
 ![Figure 1](./images/pep9-EML_access_element.png)
 
 **Figure 1:** XML schema diagram for an Ecological Metadata Language `<access>` element.
 
-To understand an ACR, it may be read as an [RDF triple](https://www.w3.org/TR/rdf11-concepts/#section-triples), where the *principal* is the **subject**, the combination of either "allow" or "deny", along with the *permission*, is the **predicate**, and the resource under the protection of the ACR is the **object**. For example, the following `<access>` element (Listing 1) in a metadata document describing data contained in the file `table.csv` can be read informally as "the user, `uid=mark,o=EDI,dc=edirepository,dc=org`, *has permission to read* the the data contained within `table.csv`." Although a "deny" verb is permitted in an `<access>` element to revoke a privilege on a resource, it is rarely used in practice. ACRs are are often combined into an Access Control List (ACL) within the `<access>` element (as permitted by the XML schema) where multiple subjects and predicates are related to a single resource object.
+To understand an ACR, it may be read as an [RDF triple](https://www.w3.org/TR/rdf11-concepts/#section-triples), where the *principal* is the **subject**, the combination of either "allow" or "deny", along with the *permission*, is the **predicate**, and the resource under the protection of the ACR is the **object**. For example, the following `<access>` element (Listing 1) in a metadata document describing data contained in the file `table.csv` can be read informally as "the user, `uid=mark,o=EDI,dc=edirepository,dc=org`, *has permission to read* the data contained within `table.csv`." Although a "deny" verb is permitted in an `<access>` element to revoke a privilege on a resource, it is rarely used in practice. Two or more ACRs can be combined within the `<access>` element (as permitted by the XML schema) to form an Access Control List (ACL), where multiple subjects and predicates are related to a single resource object.
 
 ```xml
 <access>
@@ -57,7 +57,7 @@ This service will be responsible for the following:
 
 ### Use Case and REST API Method Definitions
 
-#### 1. Add ACL
+#### 1a. Add ACL
 
 Goal: To parse a valid EML document and add its ACRs to the AuthZ ACR registry.
 
@@ -78,7 +78,7 @@ addACL(eml: string)
         400 Bad Request if EML is invalid
 ```
 
-#### 2. Add ACL
+#### 1b. Add ACL
 
 Goal: To parse a valid `<access>` element and add its ACRs to the AuthZ ACR registry.
 
@@ -89,7 +89,7 @@ Use case:
 4. AuthZ adds the ACRs to the ACR registry.
 5. AuthZ returns a success message to the EDI application.
 
-Notes: None
+Notes: This use case supports adding ACLs for PASTA API methods through the `service.xml` file. In this case, the `service.xml` file is not a complete EML document; they consist of ACLs in the form of `<access>` elements.
 
 ```http
 addACL(access: string)
@@ -99,7 +99,7 @@ addACL(access: string)
         400 Bad Request if <access> element is invalid
 ```
 
-#### 3. Add ACR
+#### 2. Add ACR
 
 Goal: To add an individual ACR as defined by ACR attributes (TBD) to the AuthZ ACR registry.
 
@@ -109,7 +109,7 @@ Use case:
 3. AuthZ validates and adds the ACR to the ACR registry.
 4. AuthZ returns a success message to the EDI application.
 
-Notes: None
+Notes: This use case supports adding individual ACRs for applications that do not use EML or `<access>` elements.
 
 ```http
 addACR(resource: string, principal: string, permission: string)
@@ -121,16 +121,20 @@ addACR(resource: string, principal: string, permission: string)
         400 Bad Request if ACR is invalid
 ```
 
-#### 4. Is Authorized
+#### 3a. Is Authorized
 
 Goal: To determine if a principal is authorized to access a resource.
 
 Use case:
+1. An EDI application collects the user's authentication token, the `<access>` element for the protected resource, and the requested permission.
+2. The application sends the token, `<access>` element, and permission to AuthZ to determine if the user is authorized.
+3. AuthZ processes the request and returns a success message if the user is authorized.
 
+Notes: This use case supports the authorization process for PASTA API methods if the ACLs in `service.xml` file are not registered in AuthZ's ACR registry.
 
 ```http
-isAuthorized(auth_token: token, access: string, permission: string)
-    auth_token: a valid authentication token
+isAuthorized(token: string, access: string, permission: string)
+    token: a valid PASTA authentication token as a string
     access: valid <access> element as a string
     permission: the permission to be checked as a string
     return:
