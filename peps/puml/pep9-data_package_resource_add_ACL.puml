@@ -1,0 +1,110 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+title Data Package Life Cycle Authorization
+
+actor client
+participant DataPackageManagerResource
+participant Creator
+participant DataPackageManager
+participant DataManagerClient
+participant EMLDataManager
+participant DataManager
+participant EMLDataPackage
+participant EML200 as "EML200DataPackageParser\n(GenericDataPackageParser)"
+participant DocumentBuilder
+participant DataPackage
+participant QualityReport
+participant QualityCheck
+participant SolrMetadataCatalog
+boundary AuthZ #red
+
+autonumber
+
+client->DataPackageManagerResource: createDataPackage()
+DataPackageManagerResource->Creator: run()
+Creator->DataPackageManager: createDataPackage()
+group createDataPackage()
+    DataPackageManager->DataPackageManager: createDataPackage(EML)
+    group parseEML(EML)
+        DataPackageManager->DataPackageManager: parseEML(EML)
+        DataPackageManager->DataManager: parseMetadata()
+        DataManager->EML200: parse(EML)
+        group parse(EML)
+            EML200->EML200: parse()
+            EML200->DocumentBuilder: parse()
+            note right: Validate EML XML
+            EML200<--DocumentBuilder: Doc
+            EML200->DataPackage: <<instance>>
+            EML200<--DataPackage: DataPackage
+            EML200->EML200: parseDocument(Doc)
+            note right: parseDocument(EML):\nThe EML document is\nparsed, setting EML\nvalues into the\nDataPackage object and\nperforming all ECC quality\nchecks
+        end
+        DataManager->EML200: getDataPackage()
+        DataManager<--EML200: DataPackage
+        group dataPackageQuality(DataPackage)
+            DataManager->DataManager: dataPackageQuality(DataPackage)
+            DataManager->QualityReport: getQualityCheckTemplate(duplicateEntityQualityCheck)
+            DataManager<--QualityReport: QualityCheckTemplate
+            DataManager->QualityCheck:<<instance>>(QualityCheckTemplate)
+            DataManager<--QualityCheck: QualityCheck
+        end
+        note right: Checks to see if duplicate\nentity names exist
+        DataPackageManager<--DataManager: DataPackage
+    end
+    DataPackageManager->EMLDataPackage: <<instance>>(DataPackage)
+    DataPackageManager<--EMLDataPackage: EMLDataPackage
+    DataPackageManager->DataPackageManager: EMLDataPackage.hasEntity()
+    DataPackageManager->DataPackageManager: isDeactivatedDataPackage
+    DataPackageManager->DataPackageManager: hasDataPackage
+    note right: Is DataPackage already\nin Resource Registry
+    DataPackageManager->DataPackageManager: checkWorkingOn
+    note right: Is DataPackage actively\nbeing processed
+    group createDataPackageAux()
+        DataPackageManager->DataPackageManager: createDataPackageAux(EML, EMLDataPackage, ...)
+        DataPackageManager->DataPackageManager: workingOn.addDataPackage()
+        DataPackageManager->DataPackageManager: checkForConflictingReservation
+        DataPackageManager->EMLDataPackage: isMetadataValid()
+        DataPackageManager<--EMLDataPackage: boolean
+        note right: Confirm only schema valid\nand contains data entities
+        DataPackageManager->EMLDataPackage: getDataPackage()
+        DataPackageManager<--EMLDataPackage: DataPackage
+        DataPackageManager->DataManagerClient: createDataEntities(DataPackage)
+        DataManagerClient->EMLDataManager: createDataEntities(DataPackage)
+        loop for all online entities
+            EMLDataManager->EMLDataManager: downloadEntity
+            group loadEntity()
+                EMLDataManager->EMLDataManager: loadEntity()
+                note right: If tabular, load into\ndatabase
+                EMLDataManager->DataManager: loadDataToDB(entity)
+                EMLDataManager<--DataManager: boolean
+            end
+        end
+        EMLDataManager->EMLDataPackage: <<instance>>(DataPackage)
+        EMLDataManager<--EMLDataPackage: EMLDataPackage
+        DataManagerClient<--EMLDataManager: entityIdNamePairs
+        DataPackageManager<--DataManagerClient: entityIdNamePairs
+        DataPackageManager->SolrMetadataCatalog: <<instance>>
+        DataPackageManager<--SolrMetadataCatalog: solrCatalog
+        DataPackageManager->DataPackageManager: toLevelOneEML
+        DataPackageManager->DataPackageManager: storeMetadata(levelOneEML)
+        DataPackageManager->DataPackageManager: parseEML(levelOneEML)
+        note right: see "parseEML" above
+        DataPackageManager->DataPackageManager: generateDublinCore(levelOneEML)
+        DataPackageManager->DataPackageManager: insertSolr(levelOneEML)
+        DataPackageManager->DataPackageManager: insertProvenanceRecord
+        note right: only if provenance information\nexists in the metadata
+        DataPackageManager->DataPackageManager: insertIntoResourceRegistryDB
+        DataPackageManager[#red]->AuthZ: <font color=red>AuthZ.addACL(Level-1 EML)
+        AuthZ[#red]-->DataPackageManager: <font color=red>OK(200) or Accepted(202)
+        DataPackageManager->DataPackageManager: registerDOI
+        note right: The levelOneEML is regenerated\nwith the DOI as alternate\nidentifier and the Dublin\nCore metadata is regenerated\n(this is not optimal)
+        DataPackageManager->DataPackageManager: removeFromWorkingOn(packageId)
+    end
+end
+Creator<--DataPackageManager: map
+note right: resource map
+DataPackageManagerResource<--Creator:
+client<--DataPackageManagerResource:
+
+@enduml
