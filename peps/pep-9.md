@@ -12,7 +12,7 @@
 
 Authorization within the EDI application ecosystem is a critical component of the Identity and Access Management (IAM) model (see [PEP-7](./pep-7.md)). The current authorization system uses a simplified attribute-based access control (ABAC) model where an individual's identity or group membership ("group" and "role" are used interchangeably) dictates whether they are sufficiently privileged to execute a PASTA API method or to upload, access, or remove a data package, or its individual data resources (i.e., metadata, data, and quality report), from the EDI data repository. Privileges are declared in an access control rule (ACR) using the `<access>` element (Figure 1) syntax defined in the [Ecological Metadata Language](https://eml.ecoinformatics.org/schema/eml_xsd#eml_access) (EML) XML schema. The *principal* (or subject) of an access control rule is the unique user identity assigned by an Identity Provider (IdP) or an arbitrary group identifier (e.g., "authenticated") assigned by the system.  The *permissions* (or privileges) of an ACR are defined as "read," "write," or "changePermission." These map to the following: "read" to "read;" "write" collectively to "create, read, update, delete;" and "changePermission" to everything in "write," in addition to changing permissions for data resources ("all" may be substituted for "changePermission" in ACRs). These permissions are not part of the EML `<access>` element scheme; they are legacy and were defined by the Long Term Ecological Research (LTER) Network information management community.
 
-![Figure 1](./images/pep9-EML_access_element.png)
+![](./images/pep9-EML_access_element.png){ width=50% }
 
 **Figure 1:** XML schema diagram for an Ecological Metadata Language `<access>` element.
 
@@ -45,65 +45,123 @@ The current EDI authorization system should be improved for the following reason
 We propose to implement a stand-alone authorization service, **AuthZ**, that will manage ACRs for all applications in the EDI ecosystem, including the EDI data repository and ezEML, and complement the new authentication service, **AuthN**, by working seamlessly with PASTA unique identifiers used for users and groups (Figure 2). AuthZ will provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs for data package resources. It will also provide a mechanism for managing ACRs for PASTA API methods. AuthZ will be designed as microservice, augmented with a web UI frontend, that integrate with the existing EDI architecture and will be implemented in Python using the FastAPI web framework.
 
 This service will be responsible for the following:
+
 1. Implement a secure and verifiable authorization algorithm that will process ACRs for EDI related resources.
 2. Be extensible to support all applications in the EDI ecosystem.
 3. Maintain a secure and private ACR registry with the necessary attributes to perform authorization based on #1.
 4. Provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs.
 5. Provide a web UI frontend for managing ACRs for both EDI administrators and users.
 
-![Figure 2](./images/pep9-EDI_app_ecosystem.png)
+![](./images/pep9-EDI_app_ecosystem.png){ width=50% }
 
 **Figure 2:** Proposed EDI application ecosystem with the addition of the AuthZ service.
 
+### AuthZ Access Control Rule Registry
+
+The AuthZ ACR registry will be implemented as an RDBMS table with the following schema (Listing 2):
+
+```sql
+CREATE TABLE acr_registry (
+    id SERIAL PRIMARY KEY,
+    resource VARCHAR() NOT NULL,
+    principal VARCHAR() NOT NULL,
+    permission ENUM('read', 'write', 'changePermission') NOT NULL
+);
+```
+
+**Listing 2:** AuthZ ACR registry table schema.
+
+The primary function of the `acr_registry` is to store ACRs for all applications in the EDI ecosystem. The `id` field is an auto-incrementing integer that uniquely identifies each ACR. The `resource` field is a string containing a unique, and possibly namespace qualified, resource identifier. The `principal` field is a string containing the PASTA-UID, uniquely identifying the user profile or group profile. The `permission` field is an enumeration of possible values that represents the access permission of the principal to the resource.
+
+### AuthZ authorization algorithm
+
+Premises for the AuthZ authorization algorithm are as follows:
+
+1. All principals are denied access to all resources unless an ACR exists that explicitly allows access.
+2. An ACR only defines "allow" access to a resource. "Deny" access is not supported.
+3. If multiple ACRs exist for a resource that affect the same user, the most permissive ACR is applied. For example, if one ACR allows read access and another allows write access, the write access is applied. Similarly, if one ACR allows read access for a user and another allows write access for a group to which the user belongs, the write access is applied.
+
+The AuthZ authorization algorithm requires three parameters:
+
+1. The resource identifier to be accessed.
+2. The set of principals attempting to access the resource.
+3. The requested permission for the resource. The permission is an integer value that represents the access level requested by the principal (read = 1, write = 2, changePermission = 3).
+
+The algorithm is as follows:
+```python
+def is_authorized(resource: str, principals: set, permission: int) -> bool:
+    authorized = False
+    acrs = getACRs(resource)
+    for principal in principals:
+        for acr in acrs:
+            if acr.principal == principal:
+                if acr.permission <= permission:
+                    authorized = True
+    return authorized
+```
+### PASTA Integration
+
+There are three primary integration points between AuthZ and PASTA:
+
+1. Data package resource ACR registration.
+2. Service method authorization.
+3. Data package resource authorization.
+
+
 ### Use Case and REST API Method Definitions
 
-#### 1a. Add ACL
+**1a. Add ACL**
 
 Goal: To parse a valid EML document and add its ACRs to the AuthZ ACR registry.
 
 Use case:
+
 1. A user uploads a data package with an EML metadata document.
 2. PASTA creates a Level-1 EML metadata document and sends the EML to AuthZ to register package ACRs.
 3. AuthZ parses the EML and extracts the ACRs.
 4. AuthZ adds the ACRs to the ACR registry.
 5. AuthZ returns a success message to PASTA.
 
-Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section.
+Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the ACR registry. This should, however, change for consistency: the principal owner should be added into the ACR registry with the "changePermission" permission.
 
 ```http
-addACL(eml: string)
+addACL(owner: string, eml: string)
+    owner: owner of data package resources (derived from "sub" of JWT) as a string
     eml: valid EML document as a string
     return:
         200 OK if successful
         400 Bad Request if EML is invalid
 ```
 
-#### 1b. Add ACL
+**1b. Add ACL**
 
 Goal: To parse a valid `<access>` element and add its ACRs to the AuthZ ACR registry.
 
 Use case:
+
 1. An EDI application creates an `<access>` element ACL for an EDI resource.
 2. The application sends the `<access>` element ACL to AuthZ to register the ACR.
 3. AuthZ parses the `<access>` element ACL and extracts the ACRs.
 4. AuthZ adds the ACRs to the ACR registry.
 5. AuthZ returns a success message to the EDI application.
 
-Notes: This use case supports adding ACLs for PASTA API methods through the `service.xml` file. In this case, the `service.xml` file is not a complete EML document; they consist of ACLs in the form of `<access>` elements.
+Notes: This use case supports adding ACLs for PASTA API methods through the `service.xml` file. In this case, the `service.xml` file is not a complete EML document; they consist of ACLs in the form of `<access>` elements. The principal owner of the service method (or other resource) should be added into the ACR registry with the "changePermission" permission; in the case of service methods, the principal owner will be "pasta."
 
 ```http
-addACL(access: string)
+addACL(owner: string, access: string)
+    owner: owner of resource (derived from "sub" of JWT) as a string
     access: valid <access> element as a string
     return:
         200 OK if successful
         400 Bad Request if <access> element is invalid
 ```
 
-#### 2. Add ACR
+**2. Add ACR**
 
 Goal: To add an individual ACR as defined by ACR attributes (TBD) to the AuthZ ACR registry.
 
 Use case:
+
 1. An EDI application creates an ACR for an EDI resource.
 2. The application sends the ACR to AuthZ to register the ACR.
 3. AuthZ validates and adds the ACR to the ACR registry.
@@ -121,16 +179,17 @@ addACR(resource: string, principal: string, permission: string)
         400 Bad Request if ACR is invalid
 ```
 
-#### 3a. Is Authorized
+**3a. Is Authorized**
 
 Goal: To determine if a principal is authorized to access a resource.
 
 Use case:
+
 1. An EDI application collects the user's authentication token, the `<access>` element for the protected resource, and the requested permission.
 2. The application sends the token, `<access>` element, and permission to AuthZ to determine if the user is authorized.
 3. AuthZ processes the request and returns a success message if the user is authorized.
 
-Notes: This use case supports the authorization process for PASTA API methods if the ACLs in `service.xml` file are not registered in AuthZ's ACR registry.
+Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in AuthZ's ACR registry.
 
 ```http
 isAuthorized(token: string, access: string, permission: string)
@@ -151,6 +210,10 @@ Because the "deny" verb is rarely used in practice, it will not be supported in 
 ### 2. How will the current `DataPackageManager.access_matrix` table be exported to the AuthZ service?
 
 ### 3. How will ezEML interact with the AuthZ service?
+
+### 4. Will the data package "principal" owner be represented in the ACR registry?
+
+Currently, the data package owner is passed to the "isAuthorized" method through a separate parameter, `principalOwner`, which is obtained by querying the data package manager resource registry. The `principalOwner` is compared to the submitter of the resource access request to determine if the submitter is the owner of the data package, and if so, the submitter is granted "changePermission" access to the data resource in question without the need for an ACR. This is an implicit ACR that is not stored in the ACR registry.
 
 ## References
 
