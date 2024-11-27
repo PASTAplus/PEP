@@ -125,7 +125,7 @@ Use case:
 
 Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the ACR registry. This should, however, change for consistency: the principal owner should be added into the ACR registry with the "changePermission" permission.
 
-```http
+```
 addACL(owner: string, eml: string)
     owner: owner of data package resources (derived from "sub" of JWT) as a string
     eml: valid EML document as a string
@@ -148,7 +148,7 @@ Use case:
 
 Notes: This use case supports adding ACLs for PASTA API methods through the `service.xml` file. In this case, the `service.xml` file is not a complete EML document; they consist of ACLs in the form of `<access>` elements. The principal owner of the service method (or other resource) should be added into the ACR registry with the "changePermission" permission; in the case of service methods, the principal owner will be "pasta."
 
-```http
+```
 addACL(owner: string, access: string)
     owner: owner of resource (derived from "sub" of JWT) as a string
     access: valid <access> element as a string
@@ -170,7 +170,7 @@ Use case:
 
 Notes: This use case supports adding individual ACRs for applications that do not use EML or `<access>` elements.
 
-```http
+```
 addACR(resource_id: string, principal: string, permission: string)
     resource_id: the resource identifier of the resource to be protected by the ACR as a string
     principal: the principal of the ACR as a string
@@ -193,7 +193,7 @@ Use case:
 
 Notes:
 
-```http
+```
 deleteACR(acr_id: int)
     acr_id: the ACR identifier of the ACR to be removed as an integer
     return:
@@ -214,7 +214,7 @@ Use case:
 
 Notes: This use case can also be accomplished by deleting the ACR and adding a new ACR with the same ACR attributes; however, doing so would require two API calls and result in a new ACR identifier.
 
-```http
+```
 updateACR(acr_id: int, resource_id: string, principal: string, permission: string)
     acr_id: the ACR identifier of the ACR to be removed as an integer
     resource_id: the resource identifier of the resource to be protected by the ACR as a string
@@ -226,7 +226,7 @@ updateACR(acr_id: int, resource_id: string, principal: string, permission: strin
         404 Bad Request if ACR is not found in the ACR registry
 ```
 
-**3a. Is Authorized**
+**5a. Is Authorized**
 
 Goal: To determine if a principal is authorized to access a resource.
 
@@ -238,7 +238,7 @@ Use case:
 
 Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in AuthZ's ACR registry.
 
-```http
+```
 isAuthorized(token: string, access: string, permission: string)
     token: a valid PASTA authentication token as a string
     access: a valid <access> element as a string
@@ -248,7 +248,7 @@ isAuthorized(token: string, access: string, permission: string)
         403 Forbidden if not authorized
 ```
 
-**3b. Is Authorized**
+**5b. Is Authorized**
 
 Goal: To determine if a principal is authorized to access a resource.
 
@@ -260,7 +260,7 @@ Use case:
 
 Notes: This use case supports the authorization process for data package resources where it is assumed that ACRs exist in the ACR registry.
 
-```http
+```
 isAuthorized(token: string, resource_id: string, permission: string)
     token: a valid PASTA authentication token as a string
     resource_id: the resource identifier of the resource to be accessed as a string
@@ -270,7 +270,7 @@ isAuthorized(token: string, resource_id: string, permission: string)
         403 Forbidden if not authorized
 ```
 
-**3c. Is Authorized**
+**5c. Is Authorized**
 
 Goal: To determine if a principal is authorized to access a resource.
 
@@ -282,7 +282,7 @@ Use case:
 
 Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in AuthZ's ACR registry.
 
-```http
+```
 isAuthorized(jwt: string, access: string, permission: string)
     jwt: a valid JSON Web Token as a string
     access: a valid <access> element as a string
@@ -292,11 +292,9 @@ isAuthorized(jwt: string, access: string, permission: string)
         403 Forbidden if not authorized
 ```
 
-**3d. Is Authorized**
+**5d. Is Authorized**
 
 Goal: To determine if a principal is authorized to access a resource.
-
-Use case:
 
 Use case:
 
@@ -306,7 +304,7 @@ Use case:
 
 Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in AuthZ's ACR registry.
 
-```http
+```
 isAuthorized(jwt: string, access: string, permission: string)
     jwt: a valid JSON Web Token as a string
     resource_id: the resource identifier of the resource to be accessed as a string
