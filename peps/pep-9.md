@@ -50,7 +50,8 @@ This service will be responsible for the following:
 2. Be extensible to support all applications in the EDI ecosystem.
 3. Maintain a secure and private ACR registry with the necessary attributes to perform authorization based on #1.
 4. Provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs.
-5. Provide a web UI frontend for managing ACRs for both EDI administrators and users.
+5. Self-authorize requests to the REST API using a JSON Web Token (JWT) issued by the AuthN service.
+5. (TBD) Provide a web UI frontend for managing ACRs for both EDI administrators and users.
 
 ![](./images/pep9-EDI_app_ecosystem.png)<!--{ width=50% }-->
 
@@ -132,6 +133,8 @@ addACL(owner: string, eml: string)
     return:
         200 OK if successful
         400 Bad Request if EML is invalid
+    permissions:
+        system: changePermission
 ```
 
 **1b. Add ACL**
@@ -155,6 +158,8 @@ addACL(owner: string, access: string)
     return:
         200 OK if successful
         400 Bad Request if <access> element is invalid
+    permissions:
+        system: changePermission
 ```
 
 **2. Add ACR**
@@ -178,6 +183,9 @@ addACR(resource_id: string, principal: string, permission: string)
     return:
         200 OK if successful
         400 Bad Request if ACR is invalid
+    permissions:
+        system: changePermission
+        vetted: write
 ```
 
 **3. Delete ACR**
@@ -199,6 +207,9 @@ deleteACR(acr_id: int)
     return:
         200 OK if successful
         404 Bad Request if ACR is not found in the ACR registry
+    permissions:
+        system: changePermission
+        vetted: write
 ```
 
 **4. Update ACR**
@@ -220,13 +231,39 @@ updateACR(acr_id: int, resource_id: string, principal: string, permission: strin
     resource_id: the resource identifier of the resource to be protected by the ACR as a string
     principal: the principal of the ACR as a string
     permission: the permission of the ACR as a string
-
     return:
         200 OK if successful
         404 Bad Request if ACR is not found in the ACR registry
+    permissions:
+        system: changePermission
+        vetted: write
 ```
 
-**5a. Is Authorized**
+**5. Read ACR**
+
+Goal: To read the attributes of an individual ACR in the AuthZ ACR registry based on the resource identifier.
+
+Use case:
+
+1. A client application selects an ACR by providing a resource identifier.
+2. The application sends the resource identifier to AuthZ.
+3. AuthZ verifies the client application has privileges to read the ACR.
+4. AuthZ returns the attributes of the ACR based on the resource identifier.
+
+Notes: None
+
+```
+readACR(resource_id: string)
+    resource_id: the resource identifier of the resource to be protected by the ACR as a string
+    return:
+        200 OK if successful
+        404 Bad Request if ACR is not found in the ACR registry
+    permissions:
+        system: changePermission
+        vetted: write
+```
+
+**6a. Is Authorized**
 
 Goal: To determine if a principal is authorized to access a resource.
 
@@ -246,9 +283,11 @@ isAuthorized(token: string, access: string, permission: string)
     return:
         200 OK if authorized
         403 Forbidden if not authorized
+    permissions:
+        system: changePermission
 ```
 
-**5b. Is Authorized**
+**6b. Is Authorized**
 
 Goal: To determine if a principal is authorized to access a resource.
 
@@ -268,9 +307,11 @@ isAuthorized(token: string, resource_id: string, permission: string)
     return:
         200 OK if authorized
         403 Forbidden if not authorized
+    permissions:
+        system: changePermission
 ```
 
-**5c. Is Authorized**
+**6c. Is Authorized**
 
 Goal: To determine if a principal is authorized to access a resource.
 
@@ -290,9 +331,11 @@ isAuthorized(jwt: string, access: string, permission: string)
     return:
         200 OK if authorized
         403 Forbidden if not authorized
+    permissions:
+        system: changePermission
 ```
 
-**5d. Is Authorized**
+**6d. Is Authorized**
 
 Goal: To determine if a principal is authorized to access a resource.
 
@@ -312,6 +355,8 @@ isAuthorized(jwt: string, access: string, permission: string)
     return:
         200 OK if authorized
         403 Forbidden if not authorized
+    permissions:
+        system: changePermission
 ```
 
 ## Open issue(s)
@@ -328,7 +373,9 @@ Because the "deny" verb is rarely used in practice, it will not be supported in 
 
 Currently, the data package owner is passed to the "isAuthorized" method through a separate parameter, `principalOwner`, which is obtained by querying the data package manager resource registry. The `principalOwner` is compared to the submitter of the resource access request to determine if the submitter is the owner of the data package, and if so, the submitter is granted "changePermission" access to the data resource in question without the need for an ACR. This is an implicit ACR that is not stored in the ACR registry.
 
-### 7. How will legacy `<access>` elements that contain IdP user identifiers and group identifiers work within the AuthZ service?
+### 5. How will legacy `<access>` elements that contain IdP user identifiers and group identifiers work within the AuthZ service?
+
+### 6. Should AuthZ expose a UI for managing ACRs or should each client application provide its own UI?
 
 ## References
 
