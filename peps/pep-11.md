@@ -15,7 +15,7 @@ The PASTA software stack currently uses block storage for all data resources pub
 
 ## Issue Statement
 
-...
+The EDI data repository, which uses the PASTA software stack for repository services, has operated on premise at the University of New Mexico since January 2013. Published data in the repository has always utilized local data storage arrays mounted to servers as block storage devices. Data resources of the data pu
 
 ## Proposed Solution
 
