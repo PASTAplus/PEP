@@ -11,7 +11,7 @@
 
 ## Introduction
 
-The PASTA software stack currently uses block storage for all data resources published to the Environmental Data Initiative (EDI) data repository. EDI is migrating PASTA services (virtual machines, system storage, and data storage) to Amazon Web Services (AWS). As part of this move, EDI plans to utilize AWS's Scalable Storage System (S3) for all published data resources. The following proposal outlines the organization and storage classification of data resources using objects within S3 buckets.
+The PASTA software stack currently uses block storage for all data resources published to the Environmental Data Initiative (EDI) data repository. EDI is migrating PASTA services (virtual machines, system storage, and data storage) to Amazon Web Services (AWS). As part of this move, EDI plans to utilize AWS's Simple Storage Service (S3) for all published data resources. The following proposal outlines the organization and storage classification of data resources using objects within S3 buckets.
 
 ## Issue Statement
 
@@ -27,7 +27,13 @@ For reasons beyond the scope of this proposal, EDI has decided to migrate it ser
 
 ## Proposed Solution
 
-...
+We propose to replace the hierarchical structure of the current EDI data resource block storage organization with a similar structure within multiple AWS S3 buckets. Buckets are logical containers for data objects residing in AWS S3 and are analogous to a mounted file system in modern desktop or server computers. In general, buckets have few constraints (see [working with buckets](https://docs.aws.amazon.com/AmazonS3/latest/userguide/creating-buckets-s3.html)) and support the concept of folders (i.e., directories), which can be nested within other folders, providing the same hierarchical layering available in a block storage device. We plan to organize buckets around EDI services, naming them with some element of the service being represented. Because buckets names must be unique across all of AWS (see [bucket name rules](https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html) for more information), we will use a combination of the EDI service name prefixed to a UUID, creating unique EDI bucket names. For example, EDI maintains three separate physical tiers of the PASTA software, one each for development, staging, and production uses, respectively. Corresponding buckets names would be:
+
+1. `edi-pasta-development-0c8c25f7-82f9-4350-99d8-9cd4579c8b92`
+2. `edi-pasta-staging-28a0a25b-33d0-4560-afb2-abd6745aae67`
+3. `edi-pasta-production-bb417e09-4b3f-46be-8138-f5f83da77493`
+
+Similarly, we would create a bucket named `edi-ezeml-307e0697-c244-4730-904b-4bacd92fc2eb` for "ezEML" storage needs.
 
 ## Open issue(s)
 
