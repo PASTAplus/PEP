@@ -47,7 +47,31 @@ We plan to organize buckets around EDI services, naming them with some element o
 2. `edi-pasta-staging-28a0a25b-33d0-4560-afb2-abd6745aae67`
 3. `edi-pasta-production-bb417e09-4b3f-46be-8138-f5f83da77493`
 
-Similarly, we would create a bucket named `edi-ezeml-307e0697-c244-4730-904b-4bacd92fc2eb` for "ezEML" storage needs.
+Similarly, we can create a bucket named `edi-ezeml-307e0697-c244-4730-904b-4bacd92fc2eb` for "ezEML" storage needs.
+
+### Object Organization in an "edi-pasta" Bucket
+
+As mentioned above, S3 buckets support the "notion" of hierarchical folders where slashes in an object name are inferred to denote a hierarchical structure. The slash notation, however, does not create physical folders (i.e., directories) in the bucket; instead, the forward slash character "`/`" only creates the visual representation of a folder in the S3 object "key" name (see below). We plan to use this feature to replicate the directory structure within the existing block storage devices used by PASTA's *Data Package Manager* service (see above in *Issue Statement*) to organize data packages and related data resources in S3 buckets. This means that within each S3 bucket, a "logical" data package folder will be created with its package identifier as the folder name. The data resources will then be added to this folder by prepending the folder name to the resource's object "key" name. This will result in the following perceived structure:
+
+```
+knb-lter-nin.2.1
+├── 673770d3d0507bc0c2cac3eaccd71e70
+├── Level-0-EML.xml
+├── Level-1-DC.xml
+├── Level-1-EML.xml
+└── quality_report.xml
+```
+along with the actual data resource object "key" names:
+
+```
+knb-lter-nin.2.1/673770d3d0507bc0c2cac3eaccd71e70
+knb-lter-nin.2.1/Level-0-EML.xml
+knb-lter-nin.2.1/Level-1-DC.xml
+knb-lter-nin.2.1/Level-1-EML.xml
+knb-lter-nin.2.1/quality_report.xml
+```
+
+### Object Storage Classification
 
 ### Bucket and Object Access
 
