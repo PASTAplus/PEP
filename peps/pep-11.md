@@ -41,7 +41,7 @@ This proposal presents an approach for organizing data resources in S3, includin
 
 We propose to replace the hierarchical structure of the current EDI data resource block storage organization with a similar structure within multiple AWS S3 buckets. Buckets are logical containers for data objects residing in AWS S3 and are analogous to a mounted file system in modern desktop or server computers. In general, buckets have few constraints (see [working with buckets](https://docs.aws.amazon.com/AmazonS3/latest/userguide/creating-buckets-s3.html)) and support the concept of folders (i.e., directories), which can be nested within other folders, providing the same hierarchical layering available in a block storage device.
 
-We plan to organize buckets around EDI services, naming them with some element of the service being represented. Because buckets names must be unique across all of AWS (see [bucket name rules](https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html) for more information), we will use a combination of the EDI service name prefixed to a UUID, creating unique EDI bucket names. For example, EDI maintains three separate physical tiers of the PASTA software, one each for development, staging, and production uses, respectively. Corresponding buckets names would be:
+We plan to organize buckets around EDI services, naming them with some element of the service being represented. Because buckets names must be unique across all of AWS (see [bucket name rules](https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html) for more information), we will use a combination of the EDI service name prefixed to a UUID to create unique EDI bucket names. For example, EDI maintains three separate physical tiers of the PASTA software, one each for development, staging, and production uses, respectively. Corresponding buckets names would be:
 
 1. `edi-pasta-development-0c8c25f7-82f9-4350-99d8-9cd4579c8b92`
 2. `edi-pasta-staging-28a0a25b-33d0-4560-afb2-abd6745aae67`
@@ -49,7 +49,13 @@ We plan to organize buckets around EDI services, naming them with some element o
 
 Similarly, we would create a bucket named `edi-ezeml-307e0697-c244-4730-904b-4bacd92fc2eb` for "ezEML" storage needs.
 
-### Bucket and Object Access
+### Bucket Storage Class
+
+We will consider two different [AWS S3 storage classes](https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html) for EDI: **S3 Standard** and **S3 Intelligent-Tiering**. The S3 Standard class is the default storage class used for new objects when creating a S3 bucket. The S3 Standard class provides optimal performance for frequently accessed objects, providing millisecond access, while ensuring that objects are stored redundantly within and across at least 3 Availability Zones. S3 Intelligent-Tiering is best used for objects with unknown access patterns and is designed to optimize storage costs by moving objects from more expensive storage classes to those that are less expensive when those objects are infrequently accessed. Although there are cost savings for objects using the S3 Intelligent-Tiering storage class, AWS applies a monitoring fee for all objects in this class to determine when a storage class transition in necessary. A singular drawback to S3 Intelligent-Tiering is that the AWS Mountpoint service cannot access objects in the lowest cost "Archive Instant Access" storage class used by Intelligent-Tiering.
+
+We believe that data resources should be separated into S3 Standard and Intelligent-Tiering storage classes to optimize cost savings, while preserving access performance, depending on the type of data resource. Science metadata and quality reports should use S3 Standard because of they are both small and frequently accessed through the Data Portal as part of the data package landing page. Science data, in contrast, can go for long periods before being accessed, and therefore, should use S3 Intelligent-Tiering.  
+
+### Bucket and Object Integration with PASTA
 
 To facilitate the use of existing code-bases, we plan to use a [FUSE file system](https://en.wikipedia.org/wiki/Filesystem_in_Userspace), "[AWS Mountpoint](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mountpoint.html)", that will provide similar, but not complete, use of POSIX-style commands. 
 
