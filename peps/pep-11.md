@@ -104,6 +104,7 @@ mount-s3 edi-pasta-development-39956da3-00c4-4ec7-9359-def131baa313 ./s3 --allow
 1. The following actions will affect how often science data objects will be accessed:
     * Scraping of data by users not identified as robots
     * DataONE requests for performing integrity checks
+    * Performing continuous integrity checks of science data objects
 2. It is not clear if the AWS S3 Mountpoint service, because of its archive-level constraint, can be used with AWS IT.
 
 ...
