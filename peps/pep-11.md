@@ -47,7 +47,43 @@ We plan to organize buckets around EDI services, naming them with some element o
 2. `edi-pasta-staging-28a0a25b-33d0-4560-afb2-abd6745aae67`
 3. `edi-pasta-production-bb417e09-4b3f-46be-8138-f5f83da77493`
 
-Similarly, we would create a bucket named `edi-ezeml-307e0697-c244-4730-904b-4bacd92fc2eb` for "ezEML" storage needs.
+Similarly, we can create a bucket named `edi-ezeml-307e0697-c244-4730-904b-4bacd92fc2eb` for "ezEML" storage needs.
+
+### Object Organization in an "edi-pasta" Bucket
+
+As mentioned above, S3 buckets support the "notion" of hierarchical folders where slashes in an object name are inferred to denote a hierarchical structure. The slash notation, however, does not create physical folders (i.e., directories) in the bucket; instead, the forward slash character "`/`" only creates the visual representation of a folder in the S3 object "key" name (see below). We plan to use this feature to replicate the directory structure within the existing block storage devices used by PASTA's *Data Package Manager* service (see above in *Issue Statement*) to organize data packages and related data resources in S3 buckets. This means that within each S3 bucket, a "logical" data package folder will be created with its package identifier as the folder name. The data resources will then be added to this folder by prepending the folder name to the resource's object "key" name. This will result in the following perceived structure:
+
+```
+knb-lter-nin.2.1
+├── 673770d3d0507bc0c2cac3eaccd71e70
+├── Level-0-EML.xml
+├── Level-1-DC.xml
+├── Level-1-EML.xml
+└── quality_report.xml
+```
+along with the actual data resource object "key" names:
+
+```
+knb-lter-nin.2.1/673770d3d0507bc0c2cac3eaccd71e70
+knb-lter-nin.2.1/Level-0-EML.xml
+knb-lter-nin.2.1/Level-1-DC.xml
+knb-lter-nin.2.1/Level-1-EML.xml
+knb-lter-nin.2.1/quality_report.xml
+```
+
+### Object Storage Classification
+
+AWS S3 supports different [storage classes](https://aws.amazon.com/s3/storage-classes/) that determine object access performance (latency and throughput) and cost - we would like to maximize the former while minimizing the latter. There are two storage classes that will be evaluated for EDI data resource purposes: S3 Standard and S3 Intelligent-Tiering (IT). The S3 Standard class is designed for frequently accessed objects , providing low latency (millisecond access time), reliability, and high throughput, but does result in a premium storage cost. S3 Intelligent-Tiering, on the other hand, lowers storage costs by automatically adjusting the class from Frequent (Standard), Infrequent, to Archive based on how often an object is accessed. S3 IT does incur a monitoring and automation fee. Fees as of December 2024 for S3 Standard and Intelligent-Tiering applicable to EDI are below:
+
+| S3 Storage Class  | Cost                      |
+|-------------------|---------------------------|
+| Standard          | $0.023 per GB             |
+| IT Monitoring Fee | $0.0025 per 1,000 objects |
+| IT Frequent       | $0.023 per GB             |
+| IT Infrequent     | $0.0125 per GB            |
+| IT Archive        | $0.004 per GB             |
+
+We recommend placing `Level-1-EML.xml` and `quality_report.xml` data resources into the S3 Standard class because of their high-frequency access through the data package landing page. We recommend placing all other data resources, including science data, into S3 Intelligent-Tiering. The `Level-0-EML.xml` file is not accessible through any API, but is critical for historical purposes. The `Level-1-DC.xml` file is accessible through a single API, but is rarely requested. Access patterns for science data vary considerably, but we believe only a small percentage are accessed frequently, while most are rarely requested. A cost-benefit analysis should be performed based on current access statistics to determine if S3 IT is a cost-effective option.
 
 ### Bucket Storage Class
 
@@ -57,9 +93,18 @@ We believe that data resources should be separated into S3 Standard and Intellig
 
 ### Bucket and Object Integration with PASTA
 
-To facilitate the use of existing code-bases, we plan to use a [FUSE file system](https://en.wikipedia.org/wiki/Filesystem_in_Userspace), "[AWS Mountpoint](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mountpoint.html)", that will provide similar, but not complete, use of POSIX-style commands. 
+To facilitate the use of existing code-bases, we plan to use a [FUSE file system](https://en.wikipedia.org/wiki/Filesystem_in_Userspace), "[AWS Mountpoint](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mountpoint.html)", that will provide similar, but not complete, use of POSIX-style commands for existing code-bases that rely on block storage attached file systems.
+
+```
+mount-s3 edi-pasta-development-39956da3-00c4-4ec7-9359-def131baa313 ./s3 --allow-delete --allow-other --dir-mode 0775
+```
 
 ## Open issue(s)
+
+1. The following actions will affect how often science data objects will be accessed:
+    * Scraping of data by users not identified as robots
+    * DataONE requests for performing integrity checks
+2. It is not clear if the AWS S3 Mountpoint service, because of its archive-level constraint, can be used with AWS IT.
 
 ...
 
