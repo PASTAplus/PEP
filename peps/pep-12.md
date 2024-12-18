@@ -71,7 +71,7 @@ There are several issues regarding Shadow Metadata that will need to be resolved
 
 * **Policies and Practices:** Formulating policies and practices for generating shadow metadata to ensure effective and responsible implementation.
 * **Generation:** Generating shadow metadata content using methods that minimize the risk of inaccurate and misleading information.
-* **Storage:** Storing shadow metadata and relevant ancillary information in a flexible and scalable manner.
+* **Storage:** Storing shadow metadata and relevant ancillary information in a flexible and scalable manner. See [PEP-13: Shadow Metadata Storage](peps/pep-13.md).
 * **Schema:** Creating or adopting a schema for the shadow metadata that enables its intended use cases and goals.
 * **Integration:** Integrating shadow metadata system components and processes into the existing EDI technology ecosystem.
 * **Presentation: **Presenting shadow metadata to the end user in a way that avoids misrepresentation of the original author's intent, clearly indicates the provenance of the shadow metadata, and explains how to interpret its veracity.
@@ -80,6 +80,8 @@ There are several issues regarding Shadow Metadata that will need to be resolved
 
 
 ## References
+
+- [PEP-13: Shadow Metadata Storage](peps/pep-13.md)
 
 ## Rejection
 
