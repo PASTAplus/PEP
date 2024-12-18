@@ -14,3 +14,4 @@
 | [PEP-9](peps/pep-9.md)   | Implementing Authorization of the IAM Model                                               | Mark Servilla        | Draft       |            |
 | [PEP-10](peps/pep-10.md) | Improve Data Package License Machine Readability with SPDX                                | Colin Smith          | Draft       |            |
 | [PEP-11](peps/pep-11.md) | AWS S3 Plan for EDI Data Resources                                                        | Mark Servilla        | Draft       |            |
+| [PEP-12](peps/pep-12.md) | Shadow Metadata Overview                                                                  | Colin Smith | Draft       |            |
