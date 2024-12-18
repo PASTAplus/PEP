@@ -15,3 +15,4 @@
 | [PEP-10](peps/pep-10.md) | Improve Data Package License Machine Readability with SPDX                                | Colin Smith          | Draft       |            |
 | [PEP-11](peps/pep-11.md) | AWS S3 Plan for EDI Data Resources                                                        | Mark Servilla        | Draft       |            |
 | [PEP-12](peps/pep-12.md) | Shadow Metadata Overview                                                                  | Colin Smith | Draft       |            |
+| [PEP-13](peps/pep-13.md) | Shadow Metadata Storage                                                                   | Colin Smith | Draft       |            |
