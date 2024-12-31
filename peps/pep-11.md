@@ -75,7 +75,7 @@ knb-lter-nin.2.1/quality_report.xml
 
 AWS S3 supports different [storage classes](https://aws.amazon.com/s3/storage-classes/) that determine object access performance (latency and throughput) and cost - we would like to maximize the former while minimizing the latter. There are two storage classes that will be evaluated for EDI data resource purposes: S3 Standard and S3 Intelligent-Tiering (IT). The S3 Standard class is designed for frequently accessed objects , providing low latency (millisecond access time), reliability, and high throughput, but does result in a premium storage cost. S3 Intelligent-Tiering, on the other hand, lowers storage costs by automatically adjusting the class from Frequent (Standard), Infrequent, to Archive based on how often an object is accessed. S3 IT does incur a monitoring and automation fee. Fees as of December 2024 for S3 Standard and Intelligent-Tiering applicable to EDI are below:
 
-| S3 Storage Class  | Cost                      |
+| S3 Storage Class  | Cost (monthly)            |
 |-------------------|---------------------------|
 | Standard          | $0.023 per GB             |
 | IT Monitoring Fee | $0.0025 per 1,000 objects |
@@ -96,7 +96,13 @@ We believe that data resources should be separated into S3 Standard and Intellig
 To facilitate the use of existing code-bases, we plan to use a [FUSE file system](https://en.wikipedia.org/wiki/Filesystem_in_Userspace), "[AWS Mountpoint](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mountpoint.html)", that will provide similar, but not complete, use of POSIX-style commands for existing code-bases that rely on block storage attached file systems.
 
 ```
-mount-s3 edi-pasta-development-39956da3-00c4-4ec7-9359-def131baa313 ./s3 --allow-delete --allow-other --dir-mode 0775
+mount-s3 edi-pasta-development-0c8c25f7-82f9-4350-99d8-9cd4579c8b92 \
+/home/pasta/local/s3 \
+--allow-delete \
+--allow-overwrite \
+--allow-other \
+--dir-mode 0775 \
+--file-mode 0664
 ```
 
 ## Open issue(s)
