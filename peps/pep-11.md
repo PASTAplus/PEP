@@ -111,7 +111,7 @@ mount-s3 edi-pasta-development-0c8c25f7-82f9-4350-99d8-9cd4579c8b92 \
     * Scraping of data by users not identified as robots
     * DataONE requests for performing integrity checks
     * Performing continuous integrity checks of science data objects
-2. It is not clear if the AWS S3 Mountpoint service, because of its archive-level constraint, can be used with AWS IT.
+2. It is not clear if the AWS S3 Mountpoint service, because of its archive-level constraint, can be used with AWS S3 IT.
 
 ...
 
