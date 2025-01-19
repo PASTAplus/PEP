@@ -37,9 +37,9 @@ This proposal presents an approach for organizing data resources in S3, includin
 
 ## Proposed Solution
 
-### Bucket Organization
-
 We propose to replace the hierarchical structure of the current EDI data resource block storage organization with a similar structure within multiple AWS S3 buckets. Buckets are logical containers for data objects residing in AWS S3 and are analogous to a mounted file system in modern desktop or server computers. In general, buckets have few constraints (see [working with buckets](https://docs.aws.amazon.com/AmazonS3/latest/userguide/creating-buckets-s3.html)) and support the concept of folders (i.e., directories), which can be nested within other folders, providing the same hierarchical layering available in a block storage device.
+
+### Bucket Organization
 
 We plan to organize buckets around EDI services, naming them with some element of the service being represented. Because buckets names must be unique across all of AWS (see [bucket name rules](https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html) for more information), we will use a combination of the EDI service name prefixed to a UUID to create unique EDI bucket names. For example, EDI maintains three separate physical tiers of the PASTA software, one each for development, staging, and production uses, respectively. Corresponding buckets names would be:
 
