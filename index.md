@@ -17,3 +17,4 @@
 | [PEP-12](peps/pep-12.md) | Shadow Metadata Overview                                                                  | Colin Smith          | Draft       |            |
 | [PEP-13](peps/pep-13.md) | Shadow Metadata Storage                                                                   | Colin Smith          | Draft       |            |
 | [PEP-14](peps/pep-14.md) | Requiring Authentication for Data Access                                                  | Mark Servilla        | Draft       |            |
+| [PEP-15](peps/pep-15.md) | Authentication with API Keys                                                              | Mark Servilla        | Draft       |            |
