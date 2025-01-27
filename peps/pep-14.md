@@ -31,10 +31,7 @@ Existing workflows that rely on non-authenticated access to data downloads will 
 1. EDI credentials are not optimal for temporary users, such as reviewers who need access to data only during manuscript reviews. Creating temporary credentials and adding these to the HTTP request for a reviewer would be time-consuming, error-prone, and just arduous. 
 2. PASTA authentication tokens are short-lived and would require continual refresh by the client software, especially if the applications are autonomous such workflows that are executed on a timed or event basis. 
 
-For these reasons, EDI will explore the use of API keys that can be assigned to an autonomous service in lieu of a human user. The API key can be long-lived, requiring a refresh at periods determined by the client's needs (EDI may still limit API keys from indefinite life). The API key could be conveyed in either a custom header or as a query parameter at the end of REST API URL. In either case, the API key would need to be removed from the request by the PASTA Gatekeeper and validated for authenticity through, perhaps, a digital signature. The API key should contain sufficient information to determine the user profile of its owner. An invalid API key may result from one or more of the following:
-1. An incorrect digital signature,
-2. An expired time-to-live, or
-3. A revocation
+For these reasons, EDI will explore the use of API keys that can be assigned to an autonomous service in lieu of a human user. See [PEP-15](./pep-15.md) for a detailed discussion about the use API Keys for the EDI IAM model.
 
 ## References
 
