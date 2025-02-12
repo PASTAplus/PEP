@@ -28,13 +28,13 @@ An ACR may be read as an [RDF triple](https://www.w3.org/TR/rdf11-concepts/#sect
 ```
 **Listing 1:** Example of an Ecological Metadata Language `<access>` element. 
 
-ACLs for PASTA API methods are declared in a standalone XML document file, `service.xml`, one each for the Data Package Manager and Audit services. These ACLs are read into the system during the PASTA boostrap process and can be modified as necessary by editing the file and restarting the system. ACLs for data package resources are declared in the data package's EML metadata document and are translated into an RDBS table when first uploaded; these ACRs cannot be modified once they are read into the table. Both the `service.xml` file and the EML metadata use the same ACR structure, allowing use of the same ACR processor to determine authorization. 
+ACLs for PASTA API methods are declared in a standalone XML document file, `service.xml`, one each for the Data Package Manager and Audit services. These ACLs are read into the system during the PASTA bootstrap process and can be modified as necessary by editing the file and restarting the system. ACLs for data package resources are declared in the data package's EML metadata document and are translated into an RDBS table when first uploaded; these ACRs cannot be modified once they are read into the table. Both the `service.xml` file and the EML metadata use the same ACR structure, allowing use of the same ACR processor to determine authorization. 
 
 This PEP proposes to improve authorization for applications in the EDI ecosystem by replacing IdP user identifiers and group identifiers with PASTA-based unique identifiers ([see PEP-2](./pep-2.md)) and allowing data package resource ACRs to be modified, including the addition or deletion of ACRs, anytime after the data package is initially upload and published in the EDI data repository.
 
 ## Issue Statement
 
-The current EDI authorization system should be improved for the following reasons:
+The current EDI authorization system has the following issues:
 
 1. IdP user identifiers and group identifiers are embedded in ACRs, which are visible to the public by reviewing the data package XML metadata. This can disclose private or sensitive information, including names, email addresses, and alternative identifiers (i.e., Orcid identifiers). These identifiers also become a permanent record in the EDI data repository audit log, which is another potential exposure route of sensitive information.
 2. Data package resource ACRs become immutable once the data package is published in the EDI data repository. This poses significant hardship for data package creators or owners who wish to apply a temporary embargo to data resources during manuscript review or to modify, add, or delete ACRs when managing personnel change over time.
@@ -42,7 +42,7 @@ The current EDI authorization system should be improved for the following reason
 
 ## Proposed Solution
 
-We propose to implement a stand-alone authorization service, **AuthZ**, that will manage ACRs for all applications in the EDI ecosystem, including the EDI data repository and ezEML, and complement the new authentication service, **AuthN**, by working seamlessly with PASTA unique identifiers assigned to users and groups (Figure 2). AuthZ will provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs for data package resources. It will also provide a mechanism for managing PASTA service API method ACRs. AuthZ will be designed as microservice, augmented with a web UI frontend, that integrate with the existing EDI architecture and will be implemented in Python using the FastAPI web framework.
+We propose to implement a stand-alone authorization service, **AuthZ**, that will manage ACRs for all applications in the EDI ecosystem, including the EDI data repository and ezEML, and complement the new authentication service, **AuthN**, by working seamlessly with PASTA unique identifiers assigned to users and groups (Figure 2). AuthZ will provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs for data package resources. It will also provide a mechanism for managing PASTA service API method ACRs. AuthZ will be designed as microservice, augmented with a web UI frontend, that integrates with the existing EDI architecture and will be implemented in Python using the FastAPI web framework.
 
 This service will be responsible for the following:
 
@@ -194,7 +194,7 @@ Goal: To delete an individual ACR from the AuthZ ACR registry.
 
 Use case:
 
-1. An EDI application selects an ACR identifier, identifying an ACR that should be deteleted from the ACR registry.
+1. An EDI application selects an ACR identifier, identifying an ACR that should be deleted from the ACR registry.
 2. The application sends the ACR identifier to AuthZ to delete the ACR.
 3. AuthZ deletes the ACR from the ACR registry.
 4. AuthZ returns a success message to the EDI application.
@@ -358,6 +358,10 @@ isAuthorized(jwt: string, access: string, permission: string)
     permissions:
         system: changePermission
 ```
+### Implementation Strategy for PASTA
+
+The **AuthZ** service must integrate seamlessly into PASTA's current authorization workflow. In essence, this means replacing the existing `access_matrix` database table, whcih contains all active ACRs, with a corresponding table on the **AuthZ** service. It also means identity provider identifiers contained in the new `access_matrix` table must be replaced with the new PASTA identifiers. This process begins when a client sends an HTTP request to the PASTA API with either credentials, a PASTA authentication token, or nothing at all. In each case, an internal PASTA authentication token (herein, *token*) is generated by the Gatekeeper service, which is then forwarded to the target PASTA service (most often, the Data Package Manager (DMP)). The internal token contains both the user's identity provider identifier (e.g., an LDAP distinguished name or an OAuth provider UID) and a list of zero or more groups that the system may have assigned the user to.
+
 
 ## Open issue(s)
 
