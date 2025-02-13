@@ -59,20 +59,27 @@ This service will be responsible for the following:
 
 ### AuthZ Access Control Rule Registry
 
-The AuthZ ACR registry will be implemented as an RDBMS table with the following schema (Listing 2):
+The AuthZ ACR registry will be implemented as RDBMS tables with the following schema (Listing 2):
 
-```sql
-CREATE TABLE acr_registry (
-    id SERIAL PRIMARY KEY,
-    resource_id VARCHAR() NOT NULL,
-    principal VARCHAR() NOT NULL,
-    permission ENUM('read', 'write', 'changePermission') NOT NULL
-);
-```
+![pep9-acl-tables.png](images/pep9-acl-tables.png)
 
-**Listing 2:** AuthZ ACR registry table schema.
+**Figure 3:** AuthZ ACR registry table schema.
 
-The primary function of the `acr_registry` is to store ACRs for all applications in the EDI ecosystem. The `id` field is an auto-incrementing integer that uniquely identifies each ACR. The `resource_id` field is a string containing a unique, and possibly namespace qualified, resource identifier. The `principal` field is a string containing the PASTA-UID, uniquely identifying the user profile or group profile. The `permission` field is an enumeration of possible values that represents the access permission of the principal to the resource.
+The primary function of the ACR Registry is to store ACRs for all applications in the EDI ecosystem. We use a structure with collections, resources and permissions. A collection contains zero to many resources, and a resource contain zero to many permissions. Each permission provides read, write or changePermission to either a user profile, a user group, or to the public user.
+
+- `id` - Auto-incrementing integers that uniquely identify each table row.
+- `collection.label` - A human-readable name to display for the collection.
+- `collection.type` - A string that describes the type of the collection.
+- `resource.collection_id` - Reference to the collection to which the resource belongs.
+- `resource.label` - A human-readable name to display for the resource.
+- `resource.type` - A string that describes the type of the resource.
+- `permission.resource_id` - Reference to the resource to which the permission belongs.
+- `permission.grantee_id` - Reference to the user profile or user group to which the permission is granted. If the grantee is public, the grantee_id is NULL.
+- `permission.grantee_type` - An enumeration of possible values that represent the type of grantee, one of, 'PROFILE', 'GROUP' or 'PUBLIC'.
+- `permission.level` - An enumeration of possible values that represent the permission level, one of, 'READ', 'WRITE' or 'CHANGE'.
+
+E.g., if we are tracking permissions for a data package with data and metadata entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.label` with an entity name or package URL, and a `resource.type` of either `data` or `metadata`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.grantee_id` of a user profile, group profile or NULL (for the public user), and a `permission.grantee_type` of either `PROFILE`, `GROUP` or `PUBLIC`. The `permission.level` would specify the level of access granted to the grantee, and would be one of `READ`, `WRITE` or `CHANGE`.
+
 
 ### AuthZ authorization algorithm
 
