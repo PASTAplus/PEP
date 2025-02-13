@@ -15,7 +15,7 @@ Currently, the EDI data portal has limited functionality for displaying EML anno
 
 ## Issue Statement
 
-The EDI data portal currently only displays EML annotations for data entity attributes. However, the EML schema includes many other elements that can be annotated and that could be supported in the future. Some of these elements are already being used, or will soon be adopted, by data authors. Additionally, the current display format assigns meaning to annotations through a field labeled "External Measurement Definition, Link," which presumes a property value of `containsMeasurementsOfType`. This can create confusion when attribute annotations have different property values, such as `has unit`, which conflicts with the implied meaning of the field.
+The EDI data portal currently displays EML annotations at the dataset level, and for data entity attributes. However, the EML schema includes many other elements that can be annotated and that could be supported in the future. Some of these elements are already being used, or will soon be adopted, by data authors. Additionally, the current display format for attributes assigns meaning to annotations through a field labeled "External Measurement Definition, Link," which presumes a property value of `containsMeasurementsOfType`. This can create confusion when attribute annotations have different property values, such as `has unit`, which conflicts with the implied meaning of the field.
 
 This PEP proposes a comprehensive, modular, and extensible approach to rendering EML annotations for data packages in the EDI data portal. It recommends immediate support for elements that are currently in use, while allowing for future expansion to other elements as needed.
 
