@@ -59,7 +59,7 @@ This service will be responsible for the following:
 
 ### AuthZ Access Control Rule Registry
 
-The AuthZ ACR registry will be implemented as RDBMS tables with the following schema (Listing 2):
+The AuthZ ACR registry will be implemented as RDBMS tables with the following schema (Figure 3):
 
 ![pep9-acl-tables.png](images/pep9-acl-tables.png)
 
@@ -78,7 +78,7 @@ The primary function of the ACR Registry is to store ACRs for all applications i
 - `permission.grantee_type` - An enumeration of possible values that represent the type of grantee, one of, 'PROFILE', 'GROUP' or 'PUBLIC'.
 - `permission.level` - An enumeration of possible values that represent the permission level, one of, 'READ', 'WRITE' or 'CHANGE'.
 
-E.g., if we are tracking permissions for a data package with data and metadata entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.label` with an entity name or package URL, and a `resource.type` of either `data` or `metadata`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.grantee_id` of a user profile, group profile or NULL (for the public user), and a `permission.grantee_type` of either `PROFILE`, `GROUP` or `PUBLIC`. The `permission.level` would specify the level of access granted to the grantee, and would be one of `READ`, `WRITE` or `CHANGE`.
+E.g., if we are tracking permissions for a data package with data and metadata entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.collection_id` referencing the `knb-lter-bes.1234.5` collection, a `resource.label` with an entity name or package URL, and a `resource.type` of either `data` or `metadata`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.grantee_id` of a user profile, group or NULL (for the public user), and a `permission.grantee_type` of either `PROFILE`, `GROUP` or `PUBLIC`. The `permission.level` would specify the level of access granted to the grantee, and would be one of `READ`, `WRITE` or `CHANGE`.
 
 
 ### AuthZ authorization algorithm
