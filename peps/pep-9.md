@@ -48,21 +48,20 @@ The current use of authorization within EDI applications has the following issue
 
 1. IdP user identifiers and group identifiers are embedded in ACRs, which are visible to the public by reviewing the data package XML metadata. This can disclose private or sensitive information, including names, email addresses, and alternative identifiers (e.g., Orcid identifiers). These identifiers also become a permanent record in the EDI data repository audit log, which is another potential exposure route of sensitive information.
 2. Data package resource ACRs become immutable once the data package is published in the EDI data repository. This poses significant hardship for data package creators or owners who wish to apply a temporary embargo to data resources during manuscript review or to modify, add, or delete ACRs when managing personnel change over time.
-3. Outside of the EDI data repository, authorization processing of ACRs is not supported. This significantly limits reusability of authorization technology and the scalability of the IAM model for other EDI applications in general.
+3. Outside of the EDI data repository, processing of ACRs is not supported. This significantly limits reusability of authorization technology and the scalability of the IAM model for other EDI applications.
 4. Because of the DAC model used by ezEML, sharing access to resources is only possible through an internal system that must be invoked on an ad-hoc basis.
 
 ## Proposed Solution
 
-We propose to implement a stand-alone authorization service, **AuthZ**, that will manage ACRs for all applications in the EDI ecosystem, including the EDI data repository and ezEML, and complement the new authentication service, **AuthN**, by working seamlessly with PASTA unique identifiers assigned to users and groups (Figure 2). AuthZ will provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs for data package resources. It will also provide a mechanism for managing PASTA service API method ACRs. AuthZ will be designed as microservice, augmented with a web UI frontend, that integrates with the existing EDI architecture and will be implemented in Python using the FastAPI web framework.
+We propose to implement a stand-alone authorization service, **AuthZ**, that will manage ACRs for all applications in the EDI ecosystem, including the EDI data repository and ezEML, and complement the new authentication service, **AuthN**, by working seamlessly with PASTA unique identifiers assigned to users and groups (Figure 2). AuthZ will provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs for resources by users. It will also provide a mechanism for managing PASTA service API method ACRs. AuthZ will be designed as microservice, augmented with a web UI frontend, that integrates with the existing EDI application ecosystem and will be implemented in Python using the FastAPI web framework.
 
 This service will be responsible for the following:
 
-1. Implement a secure and verifiable authorization algorithm that will process ACRs for EDI related resources.
-2. Be extensible to support all applications in the EDI ecosystem.
+1. Implement a secure and verifiable authorization algorithm that will process ACRs for EDI resources.
+2. Support all applications in the EDI ecosystem.
 3. Maintain a secure and private ACR registry with the necessary attributes to perform authorization based on #1.
-4. Provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs.
-5. Self-authorize requests to the REST API using a JSON Web Token (JWT) issued by the AuthN service.
-5. (TBD) Provide a web UI frontend for managing ACRs for both EDI administrators and users.
+4. Provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs by users.
+5. Provide a web UI frontend for managing ACRs for both EDI administrators and users.
 
 ![](./images/pep9-EDI_app_ecosystem.png)<!--{ width=50% }-->
 
@@ -76,7 +75,7 @@ The AuthZ ACR registry will be implemented as RDBMS tables with the following sc
 
 **Figure 3:** AuthZ ACR registry table schema.
 
-The primary function of the ACR Registry is to store ACRs for all applications in the EDI ecosystem. We use a structure with collections, resources and permissions. A collection contains zero to many resources, and a resource contain zero to many permissions. Each permission provides read, write or changePermission to either a user profile, a user group, or to the public user.
+The primary function of the ACR Registry is to store ACRs for all applications in the EDI ecosystem. We use a structure with collections, resources, and permissions. A collection contains zero to many resources, and a resource contains zero to many permissions. Each permission provides read, write or changePermission to either a user profile, a user group, or to the public user.
 
 - `id` - Auto-incrementing integers that uniquely identify each table row.
 - `collection.label` - A human-readable name to display for the collection.
@@ -89,7 +88,7 @@ The primary function of the ACR Registry is to store ACRs for all applications i
 - `permission.grantee_type` - An enumeration of possible values that represent the type of grantee, one of, 'PROFILE', 'GROUP' or 'PUBLIC'.
 - `permission.level` - An enumeration of possible values that represent the permission level, one of, 'READ', 'WRITE' or 'CHANGE'.
 
-E.g., if we are tracking permissions for a data package with data and metadata entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.collection_id` referencing the `knb-lter-bes.1234.5` collection, a `resource.label` with an entity name or package URL, and a `resource.type` of either `data` or `metadata`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.grantee_id` of a user profile, group or NULL (for the public user), and a `permission.grantee_type` of either `PROFILE`, `GROUP` or `PUBLIC`. The `permission.level` would specify the level of access granted to the grantee, and would be one of `READ`, `WRITE` or `CHANGE`.
+For example, if we are tracking permissions for a data package with metadata, a quality report, and data entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.collection_id` referencing the `knb-lter-bes.1234.5` collection, a `resource.label` with an entity name or package URL, and a `resource.type` of either `metadata`, `report`, or `data`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.grantee_id` of a user profile, group or NULL (for the public user), and a `permission.grantee_type` of either `PROFILE`, `GROUP` or `PUBLIC`. The `permission.level` would specify the level of access granted to the grantee, and would be one of `READ`, `WRITE` or `CHANGE`.
 
 
 ### AuthZ authorization algorithm
@@ -378,9 +377,11 @@ isAuthorized(jwt: string, access: string, permission: string)
 ```
 ### Implementation Strategy for PASTA
 
-The **AuthZ** service must integrate seamlessly into PASTA's current authorization workflow. Two aspects of this integration must be addressed: (1) the existing `access_matrix` database table must be migrated and updated with PASTA identifiers and (2) the PASTA Data Package Manager (DPM) service will need to be modified to use REST API methods of the **AuthZ** service (above) in lieu of its internal authorization logic.
+The **AuthZ** service must integrate seamlessly into PASTA's current authorization workflow. Three separate tasks must be addressed: (1) Service method ACRs for both the DPM and AM services must be migrated to the **AuthZ** ACR registry; (2) the existing `access_matrix` database table, including principal owners stored in the DPM `resource_registry` database table, must be migrated to the **AuthZ** ACR registry with PASTA IDs; and (3) the DPM service must be modified to use the REST API methods of the **AuthZ** service (above) in lieu of its internal authorization processing.
 
-#### Access_matrix Migration
+#### Principal Owner and Access Matrix Migration for Data Package Resources
+
+For each data package, an entry in the **AuthZ** ACR registry for every data package resource, including the data package itself, will be required for the principal owner. This should be followed by migrating corresponding entries for each data package resource found in the `access_matrix` database table to the **AuthZ** ACR registry. (Note that data packages that are not represented in the `access_matrix` imply a full embargo of the data package exists and all access privileges, other than the owner, are denied.)
 
 1. An **AuthZ** `access_matrix` database table (see *AuthZ Access Control Rule Registry* [above](https://github.com/PASTAplus/PEP/blob/main/peps/pep-9.md#authz-access-control-rule-registry)).
 2. 
