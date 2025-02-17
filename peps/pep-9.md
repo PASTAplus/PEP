@@ -381,7 +381,7 @@ The **AuthZ** service must integrate seamlessly into PASTA's current authorizati
 
 #### Principal Owner and Access Matrix Migration for Data Package Resources
 
-For each data package, an entry in the **AuthZ** ACR registry for every data package resource, including the data package itself, will be required for the principal owner. This should be followed by migrating corresponding entries for each data package resource found in the `access_matrix` database table to the **AuthZ** ACR registry. (Note that data packages that are not represented in the `access_matrix` imply a full embargo of the data package exists and all access privileges, other than the owner, are denied.)
+For each data package, an entry in the **AuthZ** ACR registry for every data package resource, including the data package itself, will be required for the principal owner. This should be followed by migrating corresponding entries of each data package resource found in the `access_matrix` database table to the **AuthZ** ACR registry. (Note that data packages that are not represented in the `access_matrix` imply a full embargo of the data package exists and all access privileges, other than for the owner, are denied.)
 
 1. An **AuthZ** `access_matrix` database table (see *AuthZ Access Control Rule Registry* [above](https://github.com/PASTAplus/PEP/blob/main/peps/pep-9.md#authz-access-control-rule-registry)).
 2. 
