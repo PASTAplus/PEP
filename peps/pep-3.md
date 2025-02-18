@@ -95,7 +95,7 @@ Timestamps:
 
 Custom claims:
 
-- `pastaGroups`: List of PASTA group identifiers, with cardinality zero to many. This lists groups in which the user is a member. A group grants the user access to the resources to which the group has access. A group may be owned by the user, in which case they will have added themselves to the group, or by another user, in which case they will have been added by the other user. Users have full control over memberships in groups owned by themselves, but can only leave, not join, groups owned by others. 
+- `pastaGroups`: List of PASTA group identifiers, with cardinality zero to many. This claim lists the groups in which the user is a member. See [PEP-7](./pep-7.md) for a broader discussion about groups.
 - `pastaIsEmailEnabled`: Flag that the user has approved sending automated notifications to the provided email address. Even if this flag is not set, we may send important emails to the user.
 - `pastaIsEmailVerified`: Flag that we have verified that the user is able to receive emails at the address provided in `email`.
 - `pastaIsVetted`: Flag indicating whether the user has been vetted by EDI. Vetted users are granted elevated access in PASTA.
