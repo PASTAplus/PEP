@@ -17,7 +17,7 @@ The Environmental Data Initiative (EDI) proposes to upgrade its Identity and Acc
 1. Identity mapping - allow users to map IdP identities to a single "user profile".
 1. Transition to JWT - adopt industry-standard JSON Web Tokens to convey identity and group information.  
 1. User-managed access control rules - allow users to create and modify data resource access control rules.  
-1. Update use of the EML 2.2.0 `<access>` element - recognise EML `<access>` element content in EML `<additionalMetadata>`.
+1. Update use of the EML 2.2.0 `<access>` element - recognize EML `<access>` element content in EML `<additionalMetadata>`.
 
 # Background
 
