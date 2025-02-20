@@ -135,9 +135,9 @@ See this EDI PEP for more information about the user profile and PASTA ID in the
 
 **2. Group management**
 
-We will introduce a new group object fully managed by users, allowing them to create, modify, and delete group objects. Like the user profile PASTA ID, each group object will receive a PASTA ID, which can also be used in access control rules. Groups will be owned by their creators and have a human-readable name similar to a user’s common name.  However, the current group object owner may transfer group ownership to another user with a valid user profile. Groups can only contain users with a valid user profile.
+We will introduce a new group object fully managed by users, allowing them to create, modify, and delete group objects. Like the user profile's PASTA ID, each group object will also receive a PASTA ID, which can also be used in access control rules. Groups will be owned by their creators and have a human-readable name similar to a user’s common name.  However, the group object owner may transfer ownership to another valid user. Groups can only contain users with a valid user profile.
 
-Similar to other repository resources, groups will also be managed as an access-controlled resource. The group creator will have full rights, including the privilege to assign different users permission to see who is in the group ("read"), add or delete users ("write") in/from the group, or modify the group’s ownership and permissions ("all").
+Similar to other repository resources, groups will also be managed as an access-controlled resource. The group creator, as **OWNER**, will have full rights, including the privilege to assign the following permissions to other users in the group: **READ** - to see others in the group, **WRITE** - to add or delete other users in/from the group, and **OWNER** - to modify the permissions of another user in the group and to delete the group (group deletion may occur even if members exist). A group owner may change their permission, including removing themself from the group, only if at least one other member has the **OWNER** permission.
 
 **3. Identity mapping**
 
