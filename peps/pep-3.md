@@ -101,7 +101,12 @@ Custom claims:
 - `pastaIsVetted`: Flag indicating whether the user has been vetted by EDI. Vetted users are granted elevated access in PASTA.
 - `pastaIsAuthenticated`: Flag indicating that the user has signed in. This will be `true` if the user has authenticated via EDI LDAP or via one of the supported 3rd party identity providers. If will be `false` if the token has been automatically issued to a public, unauthenticated user.
 - `pastaIdentityId`: Internal PASTA Identity ID. This is a unique identifier for the identity provider and account used for signing in to the profile. Since a user may have multiple accounts linked to their profile, this identifier can change with each sign-in. It is used internally in the Authn account linking procedure and may be used in future APIs to provide information about the user's identity provider and current accounts. If the token is issued to a public, unauthenticated user, this claim will have value `0`.
+- `pastaPreviousProfiles`: A list of PASTA IDs of profiles that have previously belonged to the user designated by `sub`. If a user deletes a profile, or unlinks an account from a profile, the profile is added to this list, so that client applications can consolidate information in old profiles into the current one.
+- `pastaIdpName`: The name of the identity provider used for signing in to the profile. As identity provider identifiers are not necessarily globally unique, we use this field to distinguish between different identity providers. It is a lower case string, currently 'ldap', 'microsoft', 'google', 'orcid' or 'github'. The `pastaIdpName` and `pastaIdpUid` fields are guaranteed to be unique together.
+- `pastaIdpUid`: The identity provider's unique identifier for the user who signed in to the current session. This is intended to help support client applications as they migrate from identifying users by their IdP UID to using the PASTA ID (`sub` field).
+- `pastaIdpCname`: The user's common name as provided by the identity provider. This may be different from the `cn` field, as the `cn` field holds the common name that is part of the user's profile.
 
+Note that when client transitions are complete, we plan on deprecating and eventually removing the `pastaIdpName`, `pastaIdpUid`, and `pastaIdpCname` fields.
 
 #### Example payload
 
@@ -126,9 +131,17 @@ Custom claims:
   "pastaIsEmailVerified": true,
   "pastaIsVetted": false,
   "pastaIsAuthenticated": true,
-  "pastaIdentityId": 49322
+  "pastaIdentityId": 49322,
+  "pastaPreviousProfiles": [
+    "PASTA-ad7f1ed004494aabbb9324ea5467eab5",
+    "PASTA-1db1082411a448d26163a01f5a8ab09b"
+  ],
+  "pastaIdpName": "microsoft",
+  "pastaIdpUid": "AAAAAAAAAAAAAAAAAAAAA89SDjSlerGDFSkDxGn_2j2"
 }
 ```
+
+
 
 ## Open issue(s)
 

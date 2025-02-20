@@ -84,11 +84,11 @@ The primary function of the ACR Registry is to store ACRs for all applications i
 - `resource.label` - A human-readable name to display for the resource.
 - `resource.type` - A string that describes the type of the resource.
 - `permission.resource_id` - Reference to the resource to which the permission belongs.
-- `permission.grantee_id` - Reference to the user profile or user group to which the permission is granted. If the grantee is public, the grantee_id is NULL.
-- `permission.grantee_type` - An enumeration of possible values that represent the type of grantee, one of, 'PROFILE', 'GROUP' or 'PUBLIC'.
+- `permission.principal_id` - Reference to the user profile or user group to which the permission is granted. If the principal is public, the principal_id is NULL.
+- `permission.principal_type` - An enumeration of possible values that represent the type of principal, one of, 'PROFILE', 'GROUP' or 'PUBLIC'.
 - `permission.level` - An enumeration of possible values that represent the permission level, one of, 'READ', 'WRITE' or 'CHANGE'.
 
-For example, if we are tracking permissions for a data package with metadata, a quality report, and data entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.collection_id` referencing the `knb-lter-bes.1234.5` collection, a `resource.label` with an entity name or package URL, and a `resource.type` of either `metadata`, `report`, or `data`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.grantee_id` of a user profile, group or NULL (for the public user), and a `permission.grantee_type` of either `PROFILE`, `GROUP` or `PUBLIC`. The `permission.level` would specify the level of access granted to the grantee, and would be one of `READ`, `WRITE` or `CHANGE`.
+For example, if we are tracking permissions for a data package with metadata, a quality report, and data entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.collection_id` referencing the `knb-lter-bes.1234.5` collection, a `resource.label` with an entity name or package URL, and a `resource.type` of either `metadata`, `report`, or `data`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.principal_id` of a user profile, group or NULL (for the public user), and a `permission.principal_type` of either `PROFILE`, `GROUP` or `PUBLIC`. The `permission.level` would specify the level of access granted to the principal, and would be one of `READ`, `WRITE` or `CHANGE`.
 
 
 ### AuthZ authorization algorithm
