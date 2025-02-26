@@ -1,10 +1,10 @@
 # PEP-N: PEP Title
 
 - Author(s):
-- Contact:
-- Status: Draft
-- Type:
-- Created:
+- Contact: Email
+- Status: Draft | Review | Accepted | Rejected | Implemented
+- Type: Application | Process | Policy
+- Created: YYYY-MM-DD
 - Reviewed:
 - Final:
 
@@ -17,3 +17,5 @@
 ## Open issue(s)
 
 ## References
+
+## Rejection
