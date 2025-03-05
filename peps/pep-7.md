@@ -25,9 +25,9 @@ There are currently five EDI applications that use some form of IAM:
 
 1. **Authentication Service** - Performs user authentication through one internal IdP and four external Oauth-IdPs (see Table 1 below), returning an authentication token to the client requesting user authentication.
 2. **Core data repostiory (PASTA)** - Consumes identity credentials in exchange for an authentication token from the Authentication Service and performs internal authorization for repository web-service REST API methods and data package resources.
-3. **Data Portal** - Consumes identity credentials in exchange for an authentication token from the Authentication Service or redirects to the Authentication Service for Oauth authentication and stores returned authentication tokens for future interactions wtih the data repository. 
-4. **ezEML** - Consumes identity credentials in exchange for an authentication token from the Authentication Service or redirects to the Authentication Service for Oauth authentication and stores returned authentication tokens for local authorization and tracking purposes.
-5. **Dashboard** - Performs local user authentication through internal (LDAP) IdP by way of an LDAP bind for local authorization of browser-based applications.
+3. **Data Portal** - Consumes identity credentials in exchange for an authentication token from the Authentication Service or redirects to the Authentication Service for Oauth authentication and stores the returned authentication tokens for future interactions with the data repository, while privileged identities are allowed to execute restricted functionality in the web application. 
+4. **ezEML** - Consumes identity credentials in exchange for an authentication token from the Authentication Service or redirects to the Authentication Service for Oauth authentication and stores the unique user identity extracted from the authentication token for authorization to local metadata resources.
+5. **Dashboard** - Performs local user authentication through internal (LDAP) IdP by way of an LDAP bind for authorization to restricted functionality in the web application.
 
 EDI uses five different identity providers (IdPs) to authenticate users (Table 1). Upon successful authentication, each IdP returns a unique identifier that is used within the authentication token (see below) to uniquely identify the user. The core data repostiory (PASTA), Data Portal, and ezEML all rely on the Authentication Service to perform user authentication. Only the Dashboard performs user authentication directly to the EDI LDAP IdP, by-passing the Authentication Service completely.
 
@@ -41,12 +41,14 @@ EDI uses five different identity providers (IdPs) to authenticate users (Table 1
 
 **Table 1**: Identity providers and the different types of unique user identifiers returned by each.
 
-The authentication token (Listing 1) is a non-standard string containing information about the user's identity: 1) unique identifier, 2) secutity namespace, 3) token time-to-live, and 4) any groups the use may belong to. Each field is separated by an asterisks "*"; all fields, except for groups, are required.
+The authentication token (Listing 1) is a non-standard string containing information about the user's identity, including: 1) unique identifier, 2) secutity namespace, 3) token time-to-live, and 4) groups the use may belong to. Each field is separated by an asterisk "*"; all fields, except for groups, are required.
 
 ```
 mark@gmail.com*https://pasta.edirepository.org/authentication*1531891534443*authenticated
 ```
 **Listing 1**: Example of an EDI authentication token with fields separated by "*" asterisks. Fields are ordered by user identifier, system namespace, time-to-live, and groups.
+
+Authorization within EDI applications take on many forms. The data repository, which uses the PASTA software, has the most comprehensive use of access control within EDI: access control rules (ACRs), in the form of EML `<access>` elements, provide the basis for controlling access to both REST API methods and data package resources. These ACRs define who may access the resource and at what level of access (e.g., "read", "write", and "change permission"). For the REST API methods, ACRs are parsed and stored in memory while the system is running. Data package resource ACRs, on the other hand, are parsed from the EML metadata in which they are declared and stored in a relational database table for easy and quick processing of the rule when the resource is requested. This database table, labeled the `access_matrix`, stores the pertinenet information to determine whether a user can access a data package resource, including the user's unique IdP identifier as declared in the ACR, the allowed permission, and the fully-qualified identifier of the resource (i.e., the persistent URI of the resource). Enforcing access control in the data repository is multi-tiered: a user must first be allowed to execute the REST API method required to access the data package resource, followed by having sufficient rights to access the data resource at the level they require. If either level of access is not met, the request is denied. It is mentionable that the PASTA software used by the data repository denies access to all resources, including REST API methods, from users unless there is an explicit ACR allowing access.
 
 # Issue Statement
 
