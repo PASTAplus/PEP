@@ -21,48 +21,15 @@ The Environmental Data Initiative (EDI) proposes to upgrade its Identity and Acc
 
 # Background
 
-Understanding the EDI IAM model requires a brief overview of the EDI data repository and its components:
+There are currently five EDI applications that use some form of IAM:
 
-The EDI data repository, which uses the PASTA software, is a web-based system that stores and manages ecological science data, metadata, and quality reports in collections called "data packages." To upload and manage data resources, PASTA provides a set of REST web service API methods written in Java. These API methods and the data packages, including their constituents, are considered "protectable" resources by an authorization system that enforces access control based on permissions granted to users who request access to either the API methods or data resources. The default state of the authorization system is to deny access to all API methods and data resources unless it is explicitly granted in the form of an access control rule (ACR). ACRs are codified using an XML structure of the Ecological Metadata Language (EML) schema called an `<access>` element (Listing 1). ACRs for the web service API methods are stored in a static XML file and loaded into memory when the system starts. ACRs for data resources are defined in the data package's EML metadata file and stored in a databe table called the `access_matrix` for fast access. The `access_matrix` contains multiple fields, but the "data resource," "identity," and "permission" fields are critical for interpreting access control rules. The "data resource" column identifies the specific resource being protected, while the "identity" and "permission" columns define who can access the resource and how. Table 1 illustrates how a single data package can have different access permissions for various users, including those identified by an Orcid identifier, the anonymous "public" identifier, and an authenticated user identifier.
+1. **Authentication Service** - Performs user authentication through one internal IdP and four external Oauth-IdPs (see Table 1 below), returning an authentication token to the client requesting user authentication.
+2. **Core data repostiory (PASTA)** - Consumes identity credentials in exchange for an authentication token from the Authentication Service and performs internal authorization for repository web-service REST API methods and data package resources.
+3. **Data Portal** - Consumes identity credentials in exchange for an authentication token from the Authentication Service or redirects to the Authentication Service for Oauth authentication and stores returned authentication tokens for future interactions wtih the data repository. 
+4. **ezEML** - Consumes identity credentials in exchange for an authentication token from the Authentication Service or redirects to the Authentication Service for Oauth authentication and stores returned authentication tokens for local authorization and tracking purposes.
+5. **Dashboard** - Performs local user authentication through internal (LDAP) IdP by way of an LDAP bind for local authorization of browser-based applications.
 
-```xml
-<access authSystem="https://pasta.edirepository.org/authentication" order="allowFirst" scope="document">
-  <allow>
-    <principal>uid=mark,o=EDI,dc=edirepository,dc=org</principal>
-    <permission>all</permission>
-  </allow>
-  <allow>
-    <principal>public</principal>
-    <permission>read</permission>
-  </allow>
-</access>
-```
-**Listing 1**: Example of an EML `<access>` element that may be applied to a system or data resource.
-
-| Data Resource                                                                                       | Identity                                           | Access Type | Access Order | Permission |
-|-----------------------------------------------------------------------------------------------------|----------------------------------------------------|-------------|--------------|------------|
-| <span>https://</span>pasta.lternet.edu/package/data/eml/edi/1220/6/79e0ef272ea569ae12a531306bda59fd | <span>https://</span>orcid.org/0000-0001-6443-XXXX | allow       | allowFirst   | write      |
-| <span>https://</span>pasta.lternet.edu/package/data/eml/edi/1220/6/f65f76748fcbbfdac1d48a476ae86794 | <span>https://</span>orcid.org/0000-0001-6443-XXXX | allow       | allowFirst   | write      |
-| <span>https://</span>pasta.lternet.edu/package/data/eml/edi/1220/6/d58ab68c88a86a28fc5e46bf05f7edfb | <span>https://</span>orcid.org/0000-0001-6443-XXXX | allow       | allowFirst   | write      |
-| <span>https://</span>pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | <span>https://</span>orcid.org/0000-0001-6443-XXXX | allow       | allowFirst   | write      |
-| <span>https://</span>pasta.lternet.edu/package/report/eml/edi/1220/6                                | <span>https://</span>orcid.org/0000-0001-6443-XXXX | allow       | allowFirst   | write      |
-| <span>https://</span>pasta.lternet.edu/package/eml/edi/1220/6                                       | <span>https://</span>orcid.org/0000-0001-6443-XXXX | allow       | allowFirst   | write      |
-| <span>https://</span>pasta.lternet.edu/package/report/eml/edi/1220/6                                | public                                             | allow       | allowFirst   | read       |
-| <span>https://</span>pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | public                                             | allow       | allowFirst   | read       |
-| <span>https://</span>pasta.lternet.edu/package/eml/edi/1220/6                                       | public                                             | allow       | allowFirst   | read       |
-| <span>https://</span>pasta.lternet.edu/package/data/eml/edi/1220/6/f65f76748fcbbfdac1d48a476ae86794 | public                                             | allow       | allowFirst   | read       |
-| <span>https://</span>pasta.lternet.edu/package/data/eml/edi/1220/6/d58ab68c88a86a28fc5e46bf05f7edfb | public                                             | allow       | allowFirst   | read       |
-| <span>https://</span>pasta.lternet.edu/package/metadata/eml/edi/1220/6                              | uid=mark,o=EDI,dc=edirepository,dc=org             | allow       | allowFirst   | all        |
-| <span>https://</span>pasta.lternet.edu/package/report/eml/edi/1220/6                                | uid=mark,o=EDI,dc=edirepository,dc=org             | allow       | allowFirst   | all        |
-| <span>https://</span>pasta.lternet.edu/package/eml/edi/1220/6                                       | uid=mark,o=EDI,dc=edirepository,dc=org             | allow       | allowFirst   | all        |
-
-**Table 1**: A snippet of the "access matrix" table showing access control rules for data resources from the same data package. The "Data Resource" column contains unique resource identifiers (those in need of protection); the "identity" column contains user identifiers in various formats, including an Orcid identifier, anonymous "public" identifier, and an authenticated user identifier with the uid of "mark"; the "Access Type" column contains the type of access applied to the permission: either "allow" or "deny"; the "Access Order" column contains the order in which an access type is applied: either "allowFirst" or "denyFirst"; and the "Permission" column contains the permission applied to the identity for the access type.  
-
-The IAM life-cycle for an EDI resource relies on interactions between a user, an identity provider (IdP), and the PASTA IAM services. Multiple IdPs for user authentication are supported (Table 2), including EDI's internal LDAP and four external identity providers: GitHub, Google, Microsoft, and Orcid. Authentication begins when a user provides secret credentials, like a username and password, to an IdP, proving who they claim to be. In turn, the IdP affirms the user's identity by returning a unique IdP user identifier to the authentication service. The authentication service then bundles this unique identifier into a PASTA authentication token, along with the system namespace, a token validity time-to-live (TTL), and a list of groups the user is a member of (Listing 2). When a user requests access to a protected resource (i.e., PASTA web service or data resource), PASTA sends the authentication token and the requested resource identifier to the authorization service. When received, the authorization service decodes the authentication token to reveal the user's identity, including any groups memberships, and then evaluates the request to determine if the user (or groups) has the requisite permission to access the resource. It is important to note that the PASTA authentication token is uniquely designed to operate within the EDI ecosystem and is not a standard token like a JSON Web Token (JWT). See Figure 1 for a UML sequence diagram representation of the legacy PASTA IAM model workflow. 
-
-![Figure 1](./images/pep7-IAM_Legacy_PASTA.png){ width=50% }
-
-**Figure 1**: Legacy PASTA IAM model workflow for user authentication and resource authorization.
+EDI uses five different identity providers (IdPs) to authenticate users (Table 1). Upon successful authentication, each IdP returns a unique identifier that is used within the authentication token (see below) to uniquely identify the user. The core data repostiory (PASTA), Data Portal, and ezEML all rely on the Authentication Service to perform user authentication. Only the Dashboard performs user authentication directly to the EDI LDAP IdP, by-passing the Authentication Service completely.
 
 | Identity Provider | Unique Identifier  | Example                                            |
 |-------------------|--------------------|----------------------------------------------------|
@@ -72,12 +39,14 @@ The IAM life-cycle for an EDI resource relies on interactions between a user, an
 | Microsoft         | Unique Identifier  | wdKzhHw0bxfW4dT5RNhpXz0h-s7NGR2K54155VI0Wpk        |
 | Orcid             | Orcid Identifier   | <span>https://</span>orcid.org/0005-0327-2290-9230 |
 
-**Table 2**: Identity providers and the different types of unique user identifiers returned by each.
+**Table 1**: Identity providers and the different types of unique user identifiers returned by each.
+
+The authentication token (Listing 1) is a non-standard string containing information about the user's identity: 1) unique identifier, 2) secutity namespace, 3) token time-to-live, and 4) any groups the use may belong to. Each field is separated by an asterisks "*"; all fields, except for groups, are required.
 
 ```
 mark@gmail.com*https://pasta.edirepository.org/authentication*1531891534443*authenticated
 ```
-**Listing 2**: Example of a decoded EDI authentication token with ordered values separated by "*" asterisks. Values are ordered by user identifier, system namespace, time-to-live, and groups.
+**Listing 1**: Example of an EDI authentication token with fields separated by "*" asterisks. Fields are ordered by user identifier, system namespace, time-to-live, and groups.
 
 # Issue Statement
 
