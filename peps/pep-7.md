@@ -12,12 +12,12 @@ Final:
 
 The Environmental Data Initiative (EDI) proposes to upgrade its Identity and Access Management (IAM) model across all its applications. Identity and access management is a framework of policies and technologies ensuring that only users with appropriate permissions can access repository services and data resources. For years, EDI has relied on a local LDAP user registry as its internal identity provider (IdP) for users who need to archive and publish scientific data through the EDI data repository. More recently, EDI has embraced single sign-on (SSO) authentication using external IdPs, providing users with more straightforward options for identity verification, albeit with fewer privileges in EDI applications. Although this approach has worked well over the years, EDI believes that adopting a modern IAM model will significantly improve usability and security throughout EDI in the following areas:
 
-1. User management - by creating distinct EDI "user profiles" for use within EDI applications that do are separate from IdP identifiers, thus providing a consistent and standard identity for use within EDI applications.
-2. Group management - by allowing users to create and manage their own "user" groups.  
-3. Identity mapping - by allowing users to map IdP identities to a single "user profile."
-4. Standardize authentication token - by adopting JSON Web Tokens to convey identity and group information to EDI applications.
-5. Support "editable" access control rules - by allowing users to create and modify data resource access control rules.  
-6. Address deprecation of `<access>` element in EML 2.2.0 - by supporting `<access>` element content in the `<additionalMetadata>`.
+ 1. User management - by creating distinct EDI "user profiles" for use within EDI applications that do are separate from IdP identifiers, thus providing a consistent and standard identity for use within EDI applications.
+  2. Group management - by allowing users to create and manage their own "user" groups.  
+  3. Identity mapping - by allowing users to map IdP identities to a single "user profile."
+  4. Standardize authentication token - by adopting JSON Web Tokens to convey identity and group information to EDI applications.
+  5. Support "editable" access control rules - by allowing users to create and modify data resource access control rules.  
+  6. Address deprecation of `<access>` element in EML 2.2.0 - by supporting `<access>` element content in the `<additionalMetadata>`.
 
 # Background
 
