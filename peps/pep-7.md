@@ -10,15 +10,20 @@ Final:
 
 # Introduction
 
-The Environmental Data Initiative (EDI) proposes to upgrade its Identity and Access Management (IAM) model across all its applications. Identity and access management is a framework of policies and technologies ensuring that only users with appropriate permissions can access repository services and data resources. For years, EDI has relied on a local LDAP user registry as its internal identity provider (IdP) for users who need to archive and publish scientific data through the EDI data repository. More recently, EDI has embraced single sign-on (SSO) authentication using external IdPs, providing users with more straightforward options for identity verification, albeit with fewer privileges in EDI applications. Although this approach has worked well over the years, EDI believes that adopting a modern IAM model will significantly improve usability and security throughout EDI in the following areas:
+The Environmental Data Initiative (EDI) proposes to upgrade its Identity and Access Management (IAM) model across all its applications. Identity and access management is a framework of policies and technologies ensuring that only users who have proven their identity and with appropriate permissions can access repository services and data resources. For years, EDI has relied on a local LDAP user registry as its internal identity provider (IdP) for users who need to archive and publish scientific data through the EDI data repository. More recently, EDI has embraced single sign-on (SSO) authentication using external IdPs, providing users with more straightforward options for identity verification, albeit with fewer privileges in EDI applications. Although this approach has worked well over the years, EDI believes that updating the IAM model will significantly improve usability and security throughout the EDI application ecosystem in the following areas:
 
- 1. User management - by creating distinct EDI "user profiles" for use within EDI applications that do are separate from IdP identifiers, thus providing a consistent and standard identity for use within EDI applications.
-  2. Group management - by allowing users to create and manage their own "user" groups.  
-  3. Identity mapping - by allowing users to map IdP identities to a single "user profile."
-  4. Standardize authentication token - by adopting JSON Web Tokens to convey identity and group information to EDI applications.
-  5. Support "editable" access control rules - by allowing users to create and modify data resource access control rules.  
-  6. Address deprecation of `<access>` element in EML 2.2.0 - by supporting `<access>` element content in the `<additionalMetadata>`.
+**User management**. Integrating user-managed EDI profiles will streamline how EDI software applications identifies and interacts with users (e.g., notifications) based on information held within their profile.
 
+**Group management**. Allowing users to create and manage their onwn groups will reduce the time and complexitity required to manage access control rules (ACRs) for individual users.
+
+**Identity mapping**. Mapping external IdP identities to a single user profile will allow users to authenticate with different IdPs, but use the same EDI "user profile" identity within the EDI application ecosystem.
+
+**JSON Web Tokens**. JSON Web Tokens (JWTs) are an industry recognized authentication token that is supported by many different SDK libraries and tools, simplifying the process to build and parse tokens.
+
+**Programmable Access Control**. Programmable access control rules will allow administrators and users to create and modify ACRs for resources dynamically, without pre-specifying ACRs in static form (e.g., EML document, service file, or software).
+
+**Accept deprecation of EML 2.2.0 `<access>` element**. Pivot from using the EML `<access>` element from within the main body to recognizing them in the schema-free `<additionalMetadata>` element of EML, thereby preserving the ability to pre-write ACRs within the EML document.
+ 
 # Background
 
 There are currently five EDI applications that use some form of IAM:
