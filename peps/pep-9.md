@@ -85,29 +85,32 @@ The AuthZ ACR registry will be implemented as RDBMS tables with the following sc
 
 **Figure 3:** AuthZ ACR registry table schema.
 
-The primary function of the ACR Registry is to store ACRs for all applications in the EDI ecosystem. We use a structure with collections, resources, and permissions. A collection contains zero to many resources, and a resource contains zero to many permissions. Each permission provides read, write or changePermission to either a user profile, a user group, or to the public user.
+The ACR Registry stores ACRs for all applications in the EDI ecosystem. We use a structure with collections, resources, and permissions. A collection contains zero to many resources, and a resource contains zero to many permissions. Each permission provides read, write or ownership to either a user profile or a user group. A user profile can be a regular user or a system level user, such as the public user.
 
 #### Collection
 
 - `id` - Auto-incrementing integers that uniquely identify each table row.
 - `collection.label` - A human-readable name to display for the collection.
 - `collection.type` - A string that describes the type of the collection.
+- `collection.created_date` - The date and time the collection was created.
 
 #### Resource
 
 - `resource.collection_id` - Reference to the collection to which the resource belongs.
-- `resource.name` - The unique identifying name of the resource.
+- `resource.key` - The unique identifier for the resource.
 - `resource.label` - A human-readable name to display for the resource.
 - `resource.type` - A string that describes the type of the resource.
+- `resource.created_date` - The date and time the resource was created.
 
 #### Permission
 
-- `permission.resource_id` - Reference to the resource to which the permission belongs.
-- `permission.principal_id` - Reference to the user profile or user group to which the permission is granted. If the principal is public, the principal_id is NULL.
-- `permission.principal_type` - An enumeration of possible values that represent the type of principal, one of, 'PROFILE', 'GROUP' or 'PUBLIC'.
-- `permission.level` - An enumeration of possible values that represent the permission level, one of, 'READ', 'WRITE' or 'CHANGE'.
+- `permission.resource_id` - Reference to the resource to which the permission applies.
+- `permission.principal_id` - Reference to the user profile or user group to which the permission is granted.
+- `permission.principal_type` - The type of the principal_id (enum of PROFILE or GROUP)
+- `permission.level` - The access level granted by this permission (enum of 'READ', 'WRITE' or 'OWN').
+- `permission.granted_date` - The date and time the permission was granted.
 
-For example, if we are tracking permissions for a data package with metadata, a quality report, and data entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.collection_id` referencing the `knb-lter-bes.1234.5` collection, a `resource.label` with an entity name or package URL, and a `resource.type` of either `metadata`, `report`, or `data`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.principal_id` of a user profile, group or NULL (for the public user), and a `permission.principal_type` of either `PROFILE`, `GROUP` or `PUBLIC`. The `permission.level` would specify the level of access granted to the principal, and would be one of `READ`, `WRITE` or `CHANGE`.
+For example, if we are tracking permissions for a data package with metadata and data entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.collection_id` referencing the `knb-lter-bes.1234.5` collection. The `resource.label` might be `water.csv` while the `resource.key` might be a UUID or a data package URL. The `resource.type` would be either `metadata`, or `data`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.principal_id` of a user profile or user group, and a `permission.principal_type` of either `PROFILE` or `GROUP`. The `permission.level` would specify the level of access granted to the principal, and would be `READ`, `WRITE` or `OWN`.
 
 
 ### AuthZ authorization algorithm
