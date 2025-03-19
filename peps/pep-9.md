@@ -63,7 +63,11 @@ The current use of authorization within EDI applications has the following issue
 
 ## Proposed Solution
 
-We propose to implement a stand-alone authorization service, **AuthZ**, that will manage ACRs for all applications in the EDI ecosystem, including the EDI data repository and ezEML, and complement the new authentication service, **AuthN**, by working seamlessly with PASTA unique identifiers assigned to users and groups (Figure 2). AuthZ will provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs for resources by users. It will also provide a mechanism for managing PASTA service API method ACRs. AuthZ will be designed as microservice, augmented with a web UI frontend, that integrates with the existing EDI application ecosystem and will be implemented in Python using the FastAPI web framework.
+We propose to implement a authorization service, **AuthZ**, combined with the the authentication service (**AuthN**), that will manage ACRs for all applications in the EDI ecosystem, including the EDI data repository and ezEML(Figure 2). AuthZ will provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs for resources by users. It will also provide a mechanism for managing PASTA service API method ACRs. AuthZ will be designed as microservice, augmented with a web UI frontend, that integrates with the existing EDI application ecosystem and will be implemented in Python using the FastAPI web framework.
+
+![](./images/pep9-EDI_app_ecosystem.png)<!--{ width=50% }-->
+
+**Figure 2:** Proposed EDI application ecosystem with the addition of the AuthZ service.
 
 This service will be responsible for the following:
 
@@ -72,10 +76,6 @@ This service will be responsible for the following:
 3. Maintain a secure and private ACR registry with the necessary attributes to perform authorization based on #1.
 4. Provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs by users.
 5. Provide a web UI frontend for managing ACRs for both EDI administrators and users.
-
-![](./images/pep9-EDI_app_ecosystem.png)<!--{ width=50% }-->
-
-**Figure 2:** Proposed EDI application ecosystem with the addition of the AuthZ service.
 
 ### AuthZ Access Control Rule Registry
 
@@ -87,12 +87,21 @@ The AuthZ ACR registry will be implemented as RDBMS tables with the following sc
 
 The primary function of the ACR Registry is to store ACRs for all applications in the EDI ecosystem. We use a structure with collections, resources, and permissions. A collection contains zero to many resources, and a resource contains zero to many permissions. Each permission provides read, write or changePermission to either a user profile, a user group, or to the public user.
 
+#### Collection
+
 - `id` - Auto-incrementing integers that uniquely identify each table row.
 - `collection.label` - A human-readable name to display for the collection.
 - `collection.type` - A string that describes the type of the collection.
+
+#### Resource
+
 - `resource.collection_id` - Reference to the collection to which the resource belongs.
+- `resource.name` - The unique identifying name of the resource.
 - `resource.label` - A human-readable name to display for the resource.
 - `resource.type` - A string that describes the type of the resource.
+
+#### Permission
+
 - `permission.resource_id` - Reference to the resource to which the permission belongs.
 - `permission.principal_id` - Reference to the user profile or user group to which the permission is granted. If the principal is public, the principal_id is NULL.
 - `permission.principal_type` - An enumeration of possible values that represent the type of principal, one of, 'PROFILE', 'GROUP' or 'PUBLIC'.
@@ -385,6 +394,29 @@ isAuthorized(jwt: string, access: string, permission: string)
     permissions:
         system: changePermission
 ```
+
+**7. Get Owned Resources**
+
+Goal: Return a list of resources owned by the identity, including groups, declared in the JWT. 
+
+Use case:
+
+1. An EDI application collects the user's JSON Web Token, the `<access>` element for the protected resource, and the requested permission.
+2. The application sends the token, `<access>` element, and permission to AuthZ to determine if the user is authorized.
+3. AuthZ processes the request and returns a success message if the user is authorized.
+
+Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in AuthZ's ACR registry.
+
+```
+getOwnedResources(jwt: string, access: string, permission: string)
+    jwt: a valid JSON Web Token as a string
+    return:
+        200 OK if authorized
+        403 Forbidden if not authorized
+    permissions:
+        system: changePermission
+```
+
 ### Implementation Strategy for PASTA
 
 The **AuthZ** service must integrate seamlessly into PASTA's current authorization workflow. Three separate tasks must be addressed: (1) Service method ACRs for both the DPM and AM services must be migrated to the **AuthZ** ACR registry; (2) the existing `access_matrix` database table, including principal owners stored in the DPM `resource_registry` database table, must be migrated to the **AuthZ** ACR registry with PASTA IDs; and (3) the DPM service must be modified to use the REST API methods of the **AuthZ** service (above) in lieu of its internal authorization processing.
