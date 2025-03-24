@@ -46,7 +46,7 @@ The quality checking services currently adhere to a limited subset of the intern
 
 To address the limitations identified above, we propose the following enhancements to the EML congruence checker services:
 
-1. **Expansion of Supported Formats:** The authoritative list of unambiguous date and time formats used by the ECC and ezEML congruence checks will be augmented to include unambiguous and commonly used formats. This will improve the coverage of date and time format validation.
+1. **Expansion of Supported Formats:** The authoritative list of unambiguous date and time formats used by the ECC and ezEML congruence checks ([see here](https://github.com/EDIorg/ECC/blob/master/practices/dateTimeFormatString/dateTimeFormatString_regex.csv)) will be augmented to include unambiguous and commonly used formats. This will improve the coverage of date and time format validation.
 
 2. **Continued Warnings for Unsupported Formats:** Data packages containing date and time formats not included in the expanded list will continue to trigger warnings during congruence checks. This will help raise awareness of non-standard formats and encourage users to consider adopting more widely accepted formats.
 
