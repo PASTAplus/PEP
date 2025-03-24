@@ -77,9 +77,9 @@ Adoption of the proposed changes may impact a few EDI applications:
    | ------------------| ------------------------------------ |
    | YYYY-MM-DD        | %Y-%m-%d                             |
 
-7. **Zero-padding:** Zero-padding will not be required, as most programming languages can interpret these date and time formats accurately without it. However, this may affect regex-based congruence checks (ezEML) and PostgreSQL-based congruence checks (ECC).
-   1. Determine effect on regex-based congruence checks
-   2. Determine effect on PostgreSQL-based congruence checks
+7. **Zero-padding:**  
+   While some modern programming languages can interpret non-zero-padded date and time values correctly, support for this behavior is not universal across tools and libraries. To ensure consistency and minimize ambiguity, **we will continue to require that all date and time components are zero-padded** (e.g., `01` for January, `09` for 9 AM). This is the current practice and **will not be modified by this PEP**.
+
 8. **Community Feedback:** We will solicit feedback from the community to review and finalize these recommendations.
 9. **Best Practice Development:** We will initiate the drafting of a best practice document to guide community use of date and time components in EML metadata. This will address fidelity and interpretation issues stemming from current usage patterns. We anticipate this to result in discussion.
 
