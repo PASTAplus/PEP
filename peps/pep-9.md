@@ -81,7 +81,7 @@ This service will be responsible for the following:
 
 The AuthZ ACR registry will be implemented as RDBMS tables with the following schema (Figure 3):
 
-![pep9-acl-tables.png](images/pep9-acl-tables.png)
+![](images/pep9-acl-tables.png)
 
 **Figure 3:** AuthZ ACR registry table schema.
 
