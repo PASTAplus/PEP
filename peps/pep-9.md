@@ -10,7 +10,9 @@
 
 ## Introduction
 
-Protecting resources through access control is a critical component of the EDI Identity and Access Management (IAM) model (see [PEP-7](./pep-7.md)). Access control is applied only within the EDI data repository through a simplified attribute-based access control (ABAC) model written into the PASTA software and in the ezEML metadata editor, which uses a discretionary access control (DAC) model where only resource owners have access to their resources.
+Protecting digital resources through access control is paramount to the EDI Identity and Access Management (IAM) model (see [PEP-7](./pep-7.md)). Digital resources can be anything, inlcuding the elements of a data package (e.g., metadata, quality report, or data), web-service API methods, the scope values of data package identifiers, web-application actions (e.g., forms or links), or metadata models created and edited in *ezEML*. 
+
+Access control is applied only within the EDI data repository through a simplified attribute-based access control (ABAC) model written into the PASTA software and in the ezEML metadata editor, which uses a discretionary access control (DAC) model where only resource owners have access to their resources.
 
 The following discussion pertains primarily to the ABAC model in use by the data repository (topics relevant to ezEML will be noted specifically):
 
@@ -107,10 +109,10 @@ The ACR Registry stores ACRs for all applications in the EDI ecosystem. We use a
 - `permission.resource_id` - Reference to the resource to which the permission applies.
 - `permission.principal_id` - Reference to the user profile or user group to which the permission is granted.
 - `permission.principal_type` - The type of the principal_id (enum of PROFILE or GROUP)
-- `permission.level` - The access level granted by this permission (enum of 'READ', 'WRITE' or 'OWN').
+- `permission.level` - The access level granted by this permission (enum of 'READ', 'WRITE' or 'OWNER').
 - `permission.granted_date` - The date and time the permission was granted.
 
-For example, if we are tracking permissions for a data package with metadata and data entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.collection_id` referencing the `knb-lter-bes.1234.5` collection. The `resource.label` might be `water.csv` while the `resource.key` would be the PASTA URI `https://pasta.lternet.edu/package/data/eml/knb-lter-bes.1234.5/3fb3ef2e559fa42956b69226e9069058`. The `resource.type` would be either `metadata`, or `data`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.principal_id` of a user profile or user group, and a `permission.principal_type` of either `PROFILE` or `GROUP`. The `permission.level` would specify the level of access granted to the principal, and would be `READ`, `WRITE` or `OWN`.
+For example, if we are tracking permissions for a data package with metadata and data entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.collection_id` referencing the `knb-lter-bes.1234.5` collection. The `resource.label` might be `water.csv` while the `resource.key` would be the PASTA URI `https://pasta.lternet.edu/package/data/eml/knb-lter-bes.1234.5/3fb3ef2e559fa42956b69226e9069058`. The `resource.type` would be `data`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.principal_id` of a user profile or user group, and a `permission.principal_type` of either `PROFILE` or `GROUP`. The `permission.level` would specify the level of access granted to the principal, and would be `READ`, `WRITE` or `OWNER`.
 
 
 ### AuthZ authorization algorithm
@@ -171,7 +173,9 @@ addACL(owner: string, eml: string)
     eml: valid EML document as a string
     return:
         200 OK if successful
-        400 Bad Request if EML is invalid
+        4xx Bad Request if EML is invalid
+    body:
+        Empty if 200, error message otherwise
     permissions:
         system: changePermission
 ```
@@ -191,14 +195,67 @@ Use case:
 Notes: This use case supports adding ACLs for PASTA API methods through the `service.xml` file. In this case, the `service.xml` file is not a complete EML document; they consist of ACLs in the form of `<access>` elements. The principal owner of the service method (or other resource) should be added into the ACR registry with the "changePermission" permission; in the case of service methods, the principal owner will be "pasta."
 
 ```
-addACL(owner: string, access: string)
+addACL(owner: string, resource_key: string, access: string)
     owner: owner of resource (derived from "sub" of JWT) as a string
+    resource_key: unique key of resource that the <access> element applies to
     access: valid <access> element as a string
     return:
         200 OK if successful
-        400 Bad Request if <access> element is invalid
+        4xx Bad Request if <access> element is invalid
     permissions:
         system: changePermission
+```
+
+**2a. Set ACR**
+
+Goal: To create an ACR if the ACR does not exist
+
+Use case:
+
+1. An EDI application creates an ACR for an EDI resource.
+2. The application sends the ACR to AuthZ to register the ACR.
+3. AuthZ validates and adds the ACR to the ACR registry.
+4. AuthZ returns a success message to the EDI application.
+
+Notes: This use case supports adding individual ACRs for applications that do not use EML or `<access>` elements.
+
+```
+addACR(resource_key: string, principal: string, permission: string)
+    resource_key: the resource identifier of the resource to be protected by the ACR as a string
+    principal: the principal of the ACR as a string
+    permission: the permission of the ACR as a string
+    return:
+        200 OK if successful
+        400 Bad Request if ACR is invalid
+    permissions:
+        system: changePermission
+        authenticated: changePermission
+```
+
+**2b. Set ACR**
+
+Goal: To modify an ACR if it exists
+
+Use case:
+
+1. An EDI application creates an ACR for an EDI resource.
+2. The application sends the ACR to AuthZ to register the ACR.
+3. AuthZ validates and adds the ACR to the ACR registry.
+4. AuthZ returns a success message to the EDI application.
+
+Notes: This use case supports adding individual ACRs for applications that do not use EML or `<access>` elements.
+
+```
+addACR(resource_key: string, principal: string, permission: string)
+    resource_key: the resource identifier of the resource to be protected by the ACR as a string
+    principal: the principal of the ACR as a string
+    permission: the permission of the ACR as a string
+    return:
+        200 OK if successful
+        400 Bad Request if ACR is invalid
+    permissions:
+        system: changePermission
+        authenticated: changePermission
 ```
 
 **2. Add ACR**
@@ -215,8 +272,8 @@ Use case:
 Notes: This use case supports adding individual ACRs for applications that do not use EML or `<access>` elements.
 
 ```
-addACR(resource_id: string, principal: string, permission: string)
-    resource_id: the resource identifier of the resource to be protected by the ACR as a string
+addACR(resource_key: string, principal: string, permission: string)
+    resource_key: the resource identifier of the resource to be protected by the ACR as a string
     principal: the principal of the ACR as a string
     permission: the permission of the ACR as a string
     return:
@@ -224,7 +281,7 @@ addACR(resource_id: string, principal: string, permission: string)
         400 Bad Request if ACR is invalid
     permissions:
         system: changePermission
-        vetted: write
+        authenticated: changePermission
 ```
 
 **3. Delete ACR**
@@ -292,14 +349,14 @@ Use case:
 Notes: None
 
 ```
-readACR(resource_id: string)
-    resource_id: the resource identifier of the resource to be protected by the ACR as a string
+readACR(resource_key: string)
+    resource_key: the resource identifier of the resource to be protected by the ACR as a string
     return:
         200 OK if successful
         404 Bad Request if ACR is not found in the ACR registry
     permissions:
         system: changePermission
-        vetted: write
+        authenticated: changePermission
 ```
 
 **6a. Is Authorized**
@@ -315,8 +372,9 @@ Use case:
 Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in AuthZ's ACR registry.
 
 ```
-isAuthorized(token: string, access: string, permission: string)
+isAuthorized(token: string, resource_key: string, access: string, permission: string)
     token: a valid PASTA authentication token as a string
+    resource_key:
     access: a valid <access> element as a string
     permission: the permission to be checked as a string
     return:
@@ -339,9 +397,9 @@ Use case:
 Notes: This use case supports the authorization process for data package resources where it is assumed that ACRs exist in the ACR registry.
 
 ```
-isAuthorized(token: string, resource_id: string, permission: string)
+isAuthorized(token: string, resource_key: string, permission: string)
     token: a valid PASTA authentication token as a string
-    resource_id: the resource identifier of the resource to be accessed as a string
+    resource_key: the resource identifier of the resource to be accessed as a string
     permission: the permission to be checked as a string
     return:
         200 OK if authorized
@@ -411,7 +469,7 @@ Use case:
 Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in AuthZ's ACR registry.
 
 ```
-getOwnedResources(jwt: string, access: string, permission: string)
+getOwnedResources(owner: string, access: string, permission: string)
     jwt: a valid JSON Web Token as a string
     return:
         200 OK if authorized
@@ -460,3 +518,7 @@ Currently, the data package owner is passed to the "isAuthorized" method through
 ## Rejection
 
 ...
+
+## TODOS
+
+1. Unify permissions to `read`, `write`, and `changePermission`.
