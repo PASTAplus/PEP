@@ -19,3 +19,4 @@
 | [PEP-14](peps/pep-14.md) | Requiring Authentication for Data Access                                                  | Mark Servilla        | Draft       |            |
 | [PEP-15](peps/pep-15.md) | Authentication with API Keys                                                              | Mark Servilla        | Draft       |            |
 | [PEP-16](peps/pep-16.md) | Centralized Library for Date and Time Congruence Checking                                                              | Colin Smith          | Draft       |            |
+| [PEP-17](peps/pep-17.md) | Supporting Automated Reading of Date and Time Values by Common Programming Languages                                                              | Colin Smith          | Draft       |            |
