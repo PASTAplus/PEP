@@ -91,26 +91,26 @@ The ACR Registry stores ACRs for all applications in the EDI ecosystem. We use a
 
 #### Collection
 
-- `id` - Auto-incrementing integers that uniquely identify each table row.
+- `id` - An auto-incrementing integer that uniquely identifies each table row.
 - `collection.label` - A human-readable name to display for the collection.
 - `collection.type` - A string that describes the type of the collection.
 - `collection.created_date` - The date and time the collection was created.
 
 #### Resource
 
-- `resource.collection_id` - Reference to the collection to which the resource belongs.
-- `resource.key` - The unique identifier for the resource.
-- `resource.label` - A human-readable name to display for the resource.
-- `resource.type` - A string that describes the type of the resource.
+- `resource.collection_id` - A reference to the collection to which the resource belongs.
+- `resource.key` - A unique identifier for the resource.
+- `resource.label` - A human-readable name for the resource.
+- `resource.type` - The resource type.
 - `resource.created_date` - The date and time the resource was created.
 
 #### Permission
 
-- `permission.resource_id` - Reference to the resource to which the permission applies.
-- `permission.principal_id` - Reference to the user profile or user group to which the permission is granted.
-- `permission.principal_type` - The type of the principal_id (enum of PROFILE or GROUP)
-- `permission.level` - The access level granted by this permission (enum of 'READ', 'WRITE' or 'OWNER').
-- `permission.granted_date` - The date and time the permission was granted.
+- `permission.resource_id` - A reference to the resource to which the permission applies.
+- `permission.principal_id` - A reference to the user profile or group to which the permission is granted.
+- `permission.principal_type` - The principal class (enum of PROFILE or GROUP) of the permission.
+- `permission.level` - The access level granted by this permission (enum of 'read', 'write' or 'changePermission').
+- `permission.granted_date` - The grant date and time of the permission.
 
 For example, if we are tracking permissions for a data package with metadata and data entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.collection_id` referencing the `knb-lter-bes.1234.5` collection. The `resource.label` might be `water.csv` while the `resource.key` would be the PASTA URI `https://pasta.lternet.edu/package/data/eml/knb-lter-bes.1234.5/3fb3ef2e559fa42956b69226e9069058`. The `resource.type` would be `data`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.principal_id` of a user profile or user group, and a `permission.principal_type` of either `PROFILE` or `GROUP`. The `permission.level` would specify the level of access granted to the principal, and would be `READ`, `WRITE` or `OWNER`.
 
@@ -155,21 +155,20 @@ Each integration point is selected to minimize the impact on the existing PASTA 
 
 **1a. Add ACL**
 
-Goal: To parse a valid EML document and add its ACRs to the AuthZ ACR registry.
+Goal: To parse a valid EML document and add its ACRs to the AuthZ ACR registry for the resources identified in the EML document.
 
 Use case:
 
-1. A user uploads a data package with an EML metadata document.
-2. PASTA creates a Level-1 EML metadata document and sends the EML to AuthZ to register package ACRs.
-3. AuthZ parses the EML and extracts the ACRs.
-4. AuthZ adds the ACRs to the ACR registry.
-5. AuthZ returns a success message to PASTA.
+1. The Data Package Manager requests that that ACRs be created from the EML document.
+2. AuthZ parses the EML and extracts the ACRs.
+3. AuthZ adds the ACRs to the ACR registry.
+4. AuthZ returns a success message to PASTA.
 
 Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the ACR registry. This should, however, change for consistency: the principal owner should be added into the ACR registry with the "changePermission" permission.
 
 ```
 addACL(owner: string, eml: string)
-    owner: owner of data package resources (derived from "sub" of JWT) as a string
+    owner: The principal owner of the data package (may be either a PASTA-ID or an IdP identifier)
     eml: valid EML document as a string
     return:
         200 OK if successful
@@ -522,3 +521,4 @@ Currently, the data package owner is passed to the "isAuthorized" method through
 ## TODOS
 
 1. Unify permissions to `read`, `write`, and `changePermission`.
+2. Do creation date/times even matter for an ACR?
