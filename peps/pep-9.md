@@ -14,16 +14,16 @@ Protecting digital resources through access control is paramount to the EDI Iden
 
 ## Background 
 
-Historically, access control for EDI revolved around the core repository, PASTA, where static access control rules (ACRs), codified in user-provided [Ecological Metadata Language](https://eml.ecoinformatics.org) (EML) metadata documents, dictated who may read and update the science metadata and data of a data package. These ACRs are declared using the [`<access>`](https://eml.ecoinformatics.org/schema/eml_xsd#eml_access)element (Figure 1) of the EML XML schema and can define multiple rules within a single `<access>` element, creating an access control list (ACL).
+Historically, access control for EDI revolved around the core repository, PASTA, where static access control rules (ACRs), codified in user-provided [Ecological Metadata Language](https://eml.ecoinformatics.org) (EML) metadata documents, dictated who may read and update the science metadata and data of a data package. These ACRs are declared using the [`<access>`](https://eml.ecoinformatics.org/schema/eml_xsd#eml_access) element (Figure 1) of the EML XML schema; multiple rules can be defined within a single `<access>` element, creating an access control list (ACL).
 
 ![](./images/pep9-EML_access_element.png)<!--{ width=65% }-->
 
 **Figure 1:** XML schema diagram for an Ecological Metadata Language `<access>` element.
 
-The `<access>` element (Listing 1) predicates whether the ACR "allows" or "denys" access to the data package's resources depending on where in the document the rule is defined; these are defined in the `<allow>` and `<deny>` sub-elements, respectively (although the use of a `<deny>` element is permitted to explicitly revoke a privilege on a resource, it is rarely used in practice). Within an `<allow>` or `<deny>` element, the subject of the ACR is defined by the `<principal>` sub-element, while the privilege granted (or denied) to the subject is defined by the `<permission>` sub-element. For EDI, the `<principal>` element can be any string value, but generally consists of the unique identity assigned to a user by an Identity Provider (IdP) or is an arbitrary group identifier (e.g., "authenticated"). In contrast, the `<permission>` element can only contain one of the following string values:
+For an EML `<access>` element (see example in Listing 1), the access control rule can either "allow" or "deny" access to the data package's resources (the specific resource in question depends on where in the document the rule is defined). The type of access enforced by the rule is defined by `<access>` sub-elements `<allow>` and `<deny>` (although a "deny" action is permitted to explicitly revoke a privilege on a resource, it is rarely used in practice). Within an `<allow>` or `<deny>` element, the subject and privilege of the ACR is defined by the `<principal>` and `<permission>` sub-elements. For EDI, the value of the `<principal>` element can be any string but generally consists of the unique identity assigned to a user by an Identity Provider (IdP) or is an arbitrary group identifier (e.g., "authenticated"). In contrast, the value of the `<permission>` element can only be one of the following:
 
-* **read** (to gain immutable read access to a resource),
-* **write** (to gain mutable access (e.g., create, read, update, and delete) to a resource), or
+* **read** (to gain immutable "read" access to a resource),
+* **write** (to gain mutable "create", "read" , "update", and "delete" access to a resource), or
 * **changePermission** (to everything in *write*, along with the privilege to alter other's access to a resource).
 
 (These specific permissions are not part of the EML `<access>` element schema; they are legacy and were defined by the Long Term Ecological Research (LTER) Network information management community.)
@@ -38,7 +38,7 @@ The `<access>` element (Listing 1) predicates whether the ACR "allows" or "denys
 ```
 **Listing 1:** Example definition of an Ecological Metadata Language `<access>` element. 
 
-> An `<access>` element ACR may be read as an [RDF triple](https://www.w3.org/TR/rdf11-concepts/#section-triples) **<subject, predicate, object>**, where the *principal* in the ACR is the **subject**, the combination of either "allow" or "deny", along with the *permission*, is the **predicate**, and the protected resource is the **object** . For example, the `<access>` element in *Listing 1*, if found in metadata describing data in a file named `table.csv`, can be read informally as "the user, `uid=mark,o=EDI,dc=edirepository,dc=org`, *has permission to read* the data contained within `table.csv`."
+> An `<access>` element ACR may be read as an [RDF triple](https://www.w3.org/TR/rdf11-concepts/#section-triples) **<subject, predicate, object>**, where the *principal* in the ACR is the **subject**, the combination of either "allow" or "deny", along with the *permission*, is the **predicate**, and the protected resource is the **object** . For example, the `<access>` element in *Listing 1*, if found in metadata describing data in a file named `table.csv`, can be read informally as "the user, `uid=mark,o=EDI,dc=edirepository,dc=org`, *is allowed permission to read* the data contained within `table.csv`."
 
 ACLs for PASTA API methods are declared in a standalone XML document file, `service.xml`, one each for the Data Package Manager (DPM) and Audit Manager (AM) services. These ACLs are read into the system during the PASTA bootstrap process and can be changed by editing the file and restarting the system.
 
