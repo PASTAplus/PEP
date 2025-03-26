@@ -1,5 +1,5 @@
 # PEP-9: Implementing Authorization of the IAM Model
-- Author(s): Mark Servilla
+- Author(s): Mark Servilla, Roger Dahl
 - Contact: mark.servilla@gmail.com
 - Status: Draft
 - Type: Application
@@ -10,25 +10,23 @@
 
 ## Introduction
 
-Protecting digital resources through access control is paramount to the EDI Identity and Access Management (IAM) model (see [PEP-7](./pep-7.md)). Digital resources can be anything, inlcuding the elements of a data package (e.g., metadata, quality report, or data), web-service API methods, the scope values of data package identifiers, web-application actions (e.g., forms or links), or metadata models created and edited in *ezEML*. 
+Protecting digital resources through access control is paramount to the EDI Identity and Access Management (IAM) model (see [PEP-7](./pep-7.md)). Digital resources in the EDI ecosystem can be anything, inlcuding the elements of a data package (e.g., metadata, quality report, or data), web-service API methods, the scope values of data package identifiers, web-application actions (e.g., forms or links), or metadata models created and edited in *ezEML*. The following PEP proposes the development of a unified authorization service to standardize access control across all EDI applications, thereby improving application scalability and minimizing idiosyncratic "stove-pipe" access control solutions.
 
-Access control is applied only within the EDI data repository through a simplified attribute-based access control (ABAC) model written into the PASTA software and in the ezEML metadata editor, which uses a discretionary access control (DAC) model where only resource owners have access to their resources.
+## Background 
 
-The following discussion pertains primarily to the ABAC model in use by the data repository (topics relevant to ezEML will be noted specifically):
-
-The ABAC model determines if an individual has permission to execute a PASTA API method or to upload, access, or remove a data package, or resources (i.e., metadata, data, and quality report) of the data package, from the EDI data repository. Permissions are declared in an access control rule (ACR) using the `<access>` element (Figure 1) syntax defined by the [Ecological Metadata Language](https://eml.ecoinformatics.org/schema/eml_xsd#eml_access) (EML) XML schema. The *principal* (or subject) of an access control rule is the unique identity assigned to a user by an Identity Provider (IdP) or a group identifier (e.g., "authenticated") assigned by the system.  The *permissions* in an ACR are "read," "write," or "changePermission" and map to the following actions:
-
-* **read** to "read" a resource,
-* **write** to the union of "create, read, update, and delete" a resource, and
-* **changePermission** to everything in *write* and the privilege to "change the permission" of a resource ("all" may be substituted for "changePermission" in ACRs).
-
-These specific permissions are not part of the EML `<access>` element schema; they are legacy and were defined by the Long Term Ecological Research (LTER) Network information management community.
+Historically, access control for EDI revolved around the core repository, PASTA, where static access control rules (ACRs), codified in user-provided [Ecological Metadata Language](https://eml.ecoinformatics.org) (EML) metadata documents, dictated who may read and update the science metadata and data of a data package. These ACRs are declared using the [`<access>`](https://eml.ecoinformatics.org/schema/eml_xsd#eml_access)element (Figure 1) of the EML XML schema and can define multiple rules within a single `<access>` element, creating an access control list (ACL).
 
 ![](./images/pep9-EML_access_element.png)<!--{ width=65% }-->
 
 **Figure 1:** XML schema diagram for an Ecological Metadata Language `<access>` element.
 
-An ACR may be read as an [RDF triple](https://www.w3.org/TR/rdf11-concepts/#section-triples) **<subject, predicate, object>**, where the *principal* in the ACR is the **subject**, the combination of either "allow" or "deny", along with the *permission*, is the **predicate**, and the protected resource is the **object** (although the use of a "deny" verb is permitted in an `<access>` element to explicitly revoke a privilege on a resource, it is rarely used in practice). For example, the `<access>` element in *Listing 1*, if found in metadata describing data in a file named `table.csv`, can be read informally as "the user, `uid=mark,o=EDI,dc=edirepository,dc=org`, *has permission to read* the data contained within `table.csv`."
+The `<access>` element (Listing 1) predicates whether the ACR "allows" or "denys" access to the data package's resources depending on where in the document the rule is defined; these are defined in the `<allow>` and `<deny>` sub-elements, respectively (although the use of a `<deny>` element is permitted to explicitly revoke a privilege on a resource, it is rarely used in practice). Within an `<allow>` or `<deny>` element, the subject of the ACR is defined by the `<principal>` sub-element, while the privilege granted (or denied) to the subject is defined by the `<permission>` sub-element. For EDI, the `<principal>` element can be any string value, but generally consists of the unique identity assigned to a user by an Identity Provider (IdP) or is an arbitrary group identifier (e.g., "authenticated"). In contrast, the `<permission>` element can only contain one of the following string values:
+
+* **read** (to gain immutable read access to a resource),
+* **write** (to gain mutable access (e.g., create, read, update, and delete) to a resource), or
+* **changePermission** (to everything in *write*, along with the privilege to alter other's access to a resource).
+
+(These specific permissions are not part of the EML `<access>` element schema; they are legacy and were defined by the Long Term Ecological Research (LTER) Network information management community.)
 
 ```xml
 <access>
@@ -38,9 +36,11 @@ An ACR may be read as an [RDF triple](https://www.w3.org/TR/rdf11-concepts/#sect
   </allow>
 </access>
 ```
-**Listing 1:** Example of an Ecological Metadata Language `<access>` element. 
+**Listing 1:** Example definition of an Ecological Metadata Language `<access>` element. 
 
-One or more ACRs may be combined within a single `<access>` element (as permitted by the XML schema) to form an Access Control List (ACL), where multiple subjects and predicates govern a single resource object. ACLs for PASTA API methods are declared in a standalone XML document file, `service.xml`, one each for the Data Package Manager (DPM) and Audit Manager (AM) services. These ACLs are read into the system during the PASTA bootstrap process and can be changed by editing the file and restarting the system.
+> An `<access>` element ACR may be read as an [RDF triple](https://www.w3.org/TR/rdf11-concepts/#section-triples) **<subject, predicate, object>**, where the *principal* in the ACR is the **subject**, the combination of either "allow" or "deny", along with the *permission*, is the **predicate**, and the protected resource is the **object** . For example, the `<access>` element in *Listing 1*, if found in metadata describing data in a file named `table.csv`, can be read informally as "the user, `uid=mark,o=EDI,dc=edirepository,dc=org`, *has permission to read* the data contained within `table.csv`."
+
+ACLs for PASTA API methods are declared in a standalone XML document file, `service.xml`, one each for the Data Package Manager (DPM) and Audit Manager (AM) services. These ACLs are read into the system during the PASTA bootstrap process and can be changed by editing the file and restarting the system.
 
 ACLs for data package resources are declared in the data package's EML metadata document and are translated from XML and stored in the `access_matrix` RDBS table as single ACRs when the data package EML is first uploaded into the repository; these ACRs cannot be modified once they are entered into the table. Data package ACLs can occur at two levels: (1) at the "data package" level, which sets the permissions for all data package resources (i.e., metadata, quality report, and data entities) and (2) at the "data entity" level, which sets permissions for individual data entities and overides permissions set at the "data package" level (it is not uncommon to set "public" read access to the metadata and quality report, but restrict "public" access to data entities).
 
