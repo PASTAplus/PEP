@@ -10,7 +10,7 @@
 
 ## Introduction
 
-Protecting digital resources through access control is paramount to the EDI Identity and Access Management (IAM) model (see [PEP-7](./pep-7.md)). Digital resources in the EDI ecosystem can be anything, inlcuding the elements of a data package (e.g., metadata, quality report, or data), web-service API methods, the scope values of data package identifiers, web-application actions (e.g., forms or links), or metadata models created and edited in *ezEML*.
+Protecting digital resources through access control is paramount to the EDI Identity and Access Management (IAM) model (see [PEP-7](./pep-7.md)). Digital resources in the EDI ecosystem can be anything, inlcuding the elements of a data package (e.g., metadata, quality report, or data), web-service API methods, the scope values of data package identifiers, web-application actions (e.g., forms or links), or metadata models created and edited in *ezEML*. These resources require protection from malicious and non-malicious actions through the use of access control rules (ACRs), which codify how a user of an EDI application may act upon a resource.
 
 The following PEP proposes the development of an *authorization service* that unifies access control across all EDI applications. It will improve application scalability and eliminate idiosyncratic access control behavior of "stove-pipe" solutions. A single *authorization service* will greatly improve EDI's IAM model in three ways:
 
@@ -20,7 +20,7 @@ The following PEP proposes the development of an *authorization service* that un
 
 ## Background 
 
-Historically, access control for EDI revolved around the core repository, PASTA, where static access control rules (ACRs), codified in user-provided [Ecological Metadata Language](https://eml.ecoinformatics.org) (EML) metadata documents, dictated who may read and update the science metadata and data of a data package. These ACRs are declared using the [`<access>`](https://eml.ecoinformatics.org/schema/eml_xsd#eml_access) element (Figure 1) of the EML XML schema; multiple rules can be defined within a single `<access>` element, creating an access control list (ACL).
+Historically, access control for EDI revolved around the core repository, PASTA, where static access control rules, codified in user-provided [Ecological Metadata Language](https://eml.ecoinformatics.org) (EML) metadata documents, dictated who may read and update the science metadata and data of a data package. These ACRs are declared using the [`<access>`](https://eml.ecoinformatics.org/schema/eml_xsd#eml_access) element (Figure 1) of the EML XML schema (multiple rules can be defined within a single `<access>` element, creating an access control list (ACL)).
 
 ![](./images/pep9-EML_access_element.png)<!--{ width=65% }-->
 
@@ -42,9 +42,9 @@ For an EML `<access>` element (see example in Listing 1), the access control rul
   </allow>
 </access>
 ```
-**Listing 1:** Example definition of an Ecological Metadata Language `<access>` element. 
+**Listing 1:** Example definition of an Ecological Metadata Language `<access>` element. If found in metadata describing data in a file named `table.csv`, this ACR can be read informally as "the user, `uid=mark,o=EDI,dc=edirepository,dc=org`, *is allowed permission to read* the data contained within `table.csv`."
 
-> An `<access>` element ACR may be read as an [RDF triple](https://www.w3.org/TR/rdf11-concepts/#section-triples) **<subject, predicate, object>**, where the *principal* in the ACR is the **subject**, the combination of either "allow" or "deny", along with the *permission*, is the **predicate**, and the protected resource is the **object** . For example, the `<access>` element in *Listing 1*, if found in metadata describing data in a file named `table.csv`, can be read informally as "the user, `uid=mark,o=EDI,dc=edirepository,dc=org`, *is allowed permission to read* the data contained within `table.csv`."
+> *Side note*: An `<access>` element ACR may be read as an [RDF triple](https://www.w3.org/TR/rdf11-concepts/#section-triples) **<subject, predicate, object>**, where the *principal* in the ACR is the **subject**, the combination of either "allow" or "deny", along with the *permission*, is the **predicate**, and the protected resource is the **object** .
 
 ACLs for PASTA API methods are declared in a standalone XML document file, `service.xml`, one each for the Data Package Manager (DPM) and Audit Manager (AM) services. These ACLs are read into the system during the PASTA bootstrap process and can be changed by editing the file and restarting the system.
 
@@ -64,27 +64,27 @@ The current use of access management within EDI applications has the following i
 
 ## Proposed Solution
 
-We propose to design and implement an *authorization service* that will perform access management for all types of resources used within EDI applications (Figure 2). Because this service shares related content with the authentication service, both services will be combined and operate on the same server using the same Python FastAPI web framework and Postgresql database. The authorization service will provide (1) a web browser user interface and (2) a REST API for managing resource ACRs, including functionality to add, modify, and delete resource ACRs by users who have "changePermission" privileges to the resource (i.e., an owner of the resource).
-
-![](./images/pep9-EDI_app_ecosystem.png)<!--{ width=50% }-->
-
-**Figure 2:** Proposed EDI application ecosystem with the addition of the AuthZ service.
+We propose to design and implement an *authorization service* that will perform access management for all types of resources used within EDI applications (Figure 2). Because this service shares related content with the authentication service, both services will be combined and operate on the same server using the same Python FastAPI web framework and Postgresql database.
 
 This service will be responsible for the following:
 
 1. Implement a secure and verifiable authorization algorithm that will process ACRs for EDI resources.
-2. Support all applications in the EDI ecosystem.
+2. Support all applications and their respective resources in the EDI ecosystem.
 3. Maintain a secure and private ACR registry with the necessary attributes to perform authorization based on #1.
-4. Provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs by users.
-5. Provide a web UI frontend for managing ACRs for both EDI administrators and users.
+4. Provide a REST API for managing ACRs, including the ability to add, modify, and delete ACRs by users who have "changePermission" privileges to the resource (i.e., an owner of the resource).
+5. Provide a web browser UI frontend for managing ACRs for both EDI administrators and users.
 
-### AuthZ Access Control Rule Registry
+![](./images/pep9-EDI_app_ecosystem.png)<!--{ width=50% }-->
+
+**Figure 2:** Proposed EDI application ecosystem with the addition of an authorization service.
+
+### Access Control Rule Registry
 
 The AuthZ ACR registry will be implemented as RDBMS tables with the following schema (Figure 3):
 
 ![](images/pep9-acl-tables.png)
 
-**Figure 3:** AuthZ ACR registry table schema.
+**Figure 3:** Authorization service ACR registry table schema.
 
 The ACR Registry stores ACRs for all applications in the EDI ecosystem. We use a structure with collections, resources, and permissions. A collection contains zero to many resources, and a resource contains zero to many permissions. Each permission provides read, write or ownership to either a user profile or a user group. A user profile can be a regular user or a system level user, such as the public user.
 
@@ -111,12 +111,12 @@ The ACR Registry stores ACRs for all applications in the EDI ecosystem. We use a
 - `permission.level` - The access level granted by this permission (enum of 'read', 'write' or 'changePermission').
 - `permission.granted_date` - The grant date and time of the permission.
 
-For example, if we are tracking permissions for a data package with metadata and data entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.collection_id` referencing the `knb-lter-bes.1234.5` collection. The `resource.label` might be `water.csv` while the `resource.key` would be the PASTA URI `https://pasta.lternet.edu/package/data/eml/knb-lter-bes.1234.5/3fb3ef2e559fa42956b69226e9069058`. The `resource.type` would be `data`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.principal_id` of a user profile or user group, and a `permission.principal_type` of either `PROFILE` or `GROUP`. The `permission.level` would specify the level of access granted to the principal, and would be `READ`, `WRITE` or `OWNER`.
+For example, if we are tracking permissions for a data package with metadata and data entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.collection_id` referencing the `knb-lter-bes.1234.5` collection. The `resource.label` might be `water.csv` while the `resource.key` would be the PASTA URI `https://pasta.lternet.edu/package/data/eml/knb-lter-bes.1234.5/3fb3ef2e559fa42956b69226e9069058`. The `resource.type` would be `data`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.principal_id` of a user profile or user group, and a `permission.principal_type` of either `PROFILE` or `GROUP`. The `permission.level` would specify the level of access granted to the principal, and would be `read`, `write` or `changePermission`.
 
 
-### AuthZ authorization algorithm
+### Authorization algorithm
 
-Premises for the AuthZ authorization algorithm are as follows:
+Premises for the authorization algorithm are as follows:
 
 1. All principals are denied access to all resources unless an ACR exists that explicitly allows access.
 2. An ACR only defines "allow" access to a resource. "Deny" access is not supported.
