@@ -80,7 +80,7 @@ This service will be responsible for the following:
 
 ### Access Control Rule Registry
 
-The AuthZ ACR registry will be implemented as RDBMS tables with the following schema (Figure 3):
+The ACR registry will be implemented as RDBMS tables with the following schema (Figure 3):
 
 ![](images/pep9-acl-tables.png)
 
@@ -122,7 +122,7 @@ Premises for the authorization algorithm are as follows:
 2. An ACR only defines "allow" access to a resource. "Deny" access is not supported.
 3. If multiple ACRs exist for a resource that affect the same user, the most permissive ACR is applied. For example, if one ACR allows read access and another allows write access, the write access is applied. Similarly, if one ACR allows read access for a user and another allows write access for a group to which the user belongs, the write access is applied.
 
-The AuthZ authorization algorithm requires three parameters:
+The authorization algorithm requires three parameters:
 
 1. The resource identifier to be accessed.
 2. The set of principals attempting to access the resource.
@@ -142,26 +142,26 @@ def is_authorized(resource: str, principals: set, permission: int) -> bool:
 ```
 ### PASTA Integration
 
-There are three primary integration points between AuthZ and PASTA:
+There are three primary integration points between the *authorization service* and PASTA:
 
 1. Data package resource ACR registration ([see UML here](./images/pep9-data_package_resource_add_ACL-Data_Package_Life_Cycle_Authorization.png)).
 2. Service method authorization ([see UML here](./images/pep9-service_method_authZ-Service_Method_Authorization.png)).
 3. Data package resource authorization ([see UML here](./images/pep9-data_resource_authZ-Read_Resource_Authorization.png)).
 
-Each integration point is selected to minimize the impact on the existing PASTA architecture and to provide a seamless transition to the new AuthZ service.
+Each integration point is selected to minimize the impact on the existing PASTA architecture and to provide a seamless transition to the new *authorization service*.
 
 ### Use Case and REST API Method Definitions
 
 **1a. Add ACL**
 
-Goal: To parse a valid EML document and add its ACRs to the AuthZ ACR registry for the resources identified in the EML document.
+Goal: To parse a valid EML document and add its ACRs to the ACR registry for the resources identified in the EML document.
 
 Use case:
 
 1. The Data Package Manager requests that that ACRs be created from the EML document.
-2. AuthZ parses the EML and extracts the ACRs.
-3. AuthZ adds the ACRs to the ACR registry.
-4. AuthZ returns a success message to PASTA.
+2. The *authorization service* parses the EML and extracts the ACRs.
+3. The *authorization service* adds the ACRs to the ACR registry.
+4. The *authorization service* returns a success message to PASTA.
 
 Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the ACR registry. This should, however, change for consistency: the principal owner should be added into the ACR registry with the "changePermission" permission.
 
@@ -180,15 +180,15 @@ addACL(owner: string, eml: string)
 
 **1b. Add ACL**
 
-Goal: To parse a valid `<access>` element and add its ACRs to the AuthZ ACR registry.
+Goal: To parse a valid `<access>` element and add its ACRs to the *authorization service* ACR registry.
 
 Use case:
 
 1. An EDI application creates an `<access>` element ACL for an EDI resource.
-2. The application sends the `<access>` element ACL to AuthZ to register the ACR.
-3. AuthZ parses the `<access>` element ACL and extracts the ACRs.
-4. AuthZ adds the ACRs to the ACR registry.
-5. AuthZ returns a success message to the EDI application.
+2. The application sends the `<access>` element ACL to the *authorization service* to register the ACR.
+3. The *authorization service* parses the `<access>` element ACL and extracts the ACRs.
+4. The *authorization service* adds the ACRs to the ACR registry.
+5. The *authorization service* returns a success message to the EDI application.
 
 Notes: This use case supports adding ACLs for PASTA API methods through the `service.xml` file. In this case, the `service.xml` file is not a complete EML document; they consist of ACLs in the form of `<access>` elements. The principal owner of the service method (or other resource) should be added into the ACR registry with the "changePermission" permission; in the case of service methods, the principal owner will be "pasta."
 
@@ -211,9 +211,9 @@ Goal: To create an ACR if the ACR does not exist
 Use case:
 
 1. An EDI application creates an ACR for an EDI resource.
-2. The application sends the ACR to AuthZ to register the ACR.
-3. AuthZ validates and adds the ACR to the ACR registry.
-4. AuthZ returns a success message to the EDI application.
+2. The application sends the ACR to the *authorization service* to register the ACR.
+3. The *authorization service* validates and adds the ACR to the ACR registry.
+4. The *authorization service* returns a success message to the EDI application.
 
 Notes: This use case supports adding individual ACRs for applications that do not use EML or `<access>` elements.
 
@@ -237,9 +237,9 @@ Goal: To modify an ACR if it exists
 Use case:
 
 1. An EDI application creates an ACR for an EDI resource.
-2. The application sends the ACR to AuthZ to register the ACR.
-3. AuthZ validates and adds the ACR to the ACR registry.
-4. AuthZ returns a success message to the EDI application.
+2. The application sends the ACR to the *authorization service* to register the ACR.
+3. The *authorization service* validates and adds the ACR to the ACR registry.
+4. The *authorization service* returns a success message to the EDI application.
 
 Notes: This use case supports adding individual ACRs for applications that do not use EML or `<access>` elements.
 
@@ -258,14 +258,14 @@ addACR(resource_key: string, principal: string, permission: string)
 
 **2. Add ACR**
 
-Goal: To add an individual ACR as defined by ACR attributes to the AuthZ ACR registry.
+Goal: To add an individual ACR as defined by ACR attributes to the The *authorization service* ACR registry.
 
 Use case:
 
 1. An EDI application creates an ACR for an EDI resource.
-2. The application sends the ACR to AuthZ to register the ACR.
-3. AuthZ validates and adds the ACR to the ACR registry.
-4. AuthZ returns a success message to the EDI application.
+2. The application sends the ACR to The *authorization service* to register the ACR.
+3. The *authorization service* validates and adds the ACR to the ACR registry.
+4. The *authorization service* returns a success message to the EDI application.
 
 Notes: This use case supports adding individual ACRs for applications that do not use EML or `<access>` elements.
 
@@ -284,14 +284,14 @@ addACR(resource_key: string, principal: string, permission: string)
 
 **3. Delete ACR**
 
-Goal: To delete an individual ACR from the AuthZ ACR registry.
+Goal: To delete an individual ACR from the The *authorization service* ACR registry.
 
 Use case:
 
 1. An EDI application selects an ACR identifier, identifying an ACR that should be deleted from the ACR registry.
-2. The application sends the ACR identifier to AuthZ to delete the ACR.
-3. AuthZ deletes the ACR from the ACR registry.
-4. AuthZ returns a success message to the EDI application.
+2. The application sends the ACR identifier to The *authorization service* to delete the ACR.
+3. The *authorization service* deletes the ACR from the ACR registry.
+4. The *authorization service* returns a success message to the EDI application.
 
 Notes:
 
@@ -308,14 +308,14 @@ deleteACR(acr_id: int)
 
 **4. Update ACR**
 
-Goal: To update an individual ACR in the AuthZ ACR registry.
+Goal: To update an individual ACR in the The *authorization service* ACR registry.
 
 Use case:
 
 1. An EDI application selects an ACR identifier, identifying an ACR that should be updated in the ACR registry.
-2. The application sends the ACR identifier, along with the new ACR attributes, to AuthZ to update the ACR.
-3. AuthZ updates the ACR in the ACR registry.
-4. AuthZ returns a success message to the EDI application.
+2. The application sends the ACR identifier, along with the new ACR attributes, to The *authorization service* to update the ACR.
+3. The *authorization service* updates the ACR in the ACR registry.
+4. The *authorization service* returns a success message to the EDI application.
 
 Notes: This use case can also be accomplished by deleting the ACR and adding a new ACR with the same ACR attributes; however, doing so would require two API calls and result in a new ACR identifier.
 
@@ -335,14 +335,14 @@ updateACR(acr_id: int, resource_id: string, principal: string, permission: strin
 
 **5. Read ACR**
 
-Goal: To read the attributes of an individual ACR in the AuthZ ACR registry based on the resource identifier.
+Goal: To read the attributes of an individual ACR in the The *authorization service* ACR registry based on the resource identifier.
 
 Use case:
 
 1. A client application selects an ACR by providing a resource identifier.
-2. The application sends the resource identifier to AuthZ.
-3. AuthZ verifies the client application has privileges to read the ACR.
-4. AuthZ returns the attributes of the ACR based on the resource identifier.
+2. The application sends the resource identifier to The *authorization service*.
+3. The *authorization service* verifies the client application has privileges to read the ACR.
+4. The *authorization service* returns the attributes of the ACR based on the resource identifier.
 
 Notes: None
 
@@ -364,10 +364,10 @@ Goal: To determine if a principal is authorized to access a resource.
 Use case:
 
 1. An EDI application collects the user's authentication token, the `<access>` element for the protected resource, and the requested permission.
-2. The application sends the token, `<access>` element, and permission to AuthZ to determine if the user is authorized.
-3. AuthZ processes the request and returns a success message if the user is authorized.
+2. The application sends the token, `<access>` element, and permission to The *authorization service* to determine if the user is authorized.
+3. The *authorization service* processes the request and returns a success message if the user is authorized.
 
-Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in AuthZ's ACR registry.
+Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in the *authorization service* ACR registry.
 
 ```
 isAuthorized(token: string, resource_key: string, access: string, permission: string)
@@ -389,8 +389,8 @@ Goal: To determine if a principal is authorized to access a resource.
 Use case:
 
 1. An EDI application collects the user's authentication token, the resource identifier for the protected resource, and the requested permission.
-2. The application sends the token, resource identifier, and permission to AuthZ to determine if the user is authorized.
-3. AuthZ processes the request and returns a success message if the user is authorized.
+2. The application sends the token, resource identifier, and permission to The *authorization service* to determine if the user is authorized.
+3. The *authorization service* processes the request and returns a success message if the user is authorized.
 
 Notes: This use case supports the authorization process for data package resources where it is assumed that ACRs exist in the ACR registry.
 
@@ -413,10 +413,10 @@ Goal: To determine if a principal is authorized to access a resource.
 Use case:
 
 1. An EDI application collects the user's JSON Web Token, the `<access>` element for the protected resource, and the requested permission.
-2. The application sends the token, `<access>` element, and permission to AuthZ to determine if the user is authorized.
-3. AuthZ processes the request and returns a success message if the user is authorized.
+2. The application sends the token, `<access>` element, and permission to The *authorization service* to determine if the user is authorized.
+3. The *authorization service* processes the request and returns a success message if the user is authorized.
 
-Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in AuthZ's ACR registry.
+Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in the *authorization service* ACR registry.
 
 ```
 isAuthorized(jwt: string, access: string, permission: string)
@@ -437,10 +437,10 @@ Goal: To determine if a principal is authorized to access a resource.
 Use case:
 
 1. An EDI application collects the user's JSON Web Token, the `<access>` element for the protected resource, and the requested permission.
-2. The application sends the token, `<access>` element, and permission to AuthZ to determine if the user is authorized.
-3. AuthZ processes the request and returns a success message if the user is authorized.
+2. The application sends the token, `<access>` element, and permission to The *authorization service* to determine if the user is authorized.
+3. The *authorization service* processes the request and returns a success message if the user is authorized.
 
-Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in AuthZ's ACR registry.
+Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in the *authorization service* ACR registry.
 
 ```
 isAuthorized(jwt: string, access: string, permission: string)
@@ -461,10 +461,10 @@ Goal: Return a list of resources owned by the identity, including groups, declar
 Use case:
 
 1. An EDI application collects the user's JSON Web Token, the `<access>` element for the protected resource, and the requested permission.
-2. The application sends the token, `<access>` element, and permission to AuthZ to determine if the user is authorized.
-3. AuthZ processes the request and returns a success message if the user is authorized.
+2. The application sends the token, `<access>` element, and permission to The *authorization service* to determine if the user is authorized.
+3. The *authorization service* processes the request and returns a success message if the user is authorized.
 
-Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in AuthZ's ACR registry.
+Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in the *authorization service* ACR registry.
 
 ```
 getOwnedResources(owner: string, access: string, permission: string)
@@ -478,13 +478,13 @@ getOwnedResources(owner: string, access: string, permission: string)
 
 ### Implementation Strategy for PASTA
 
-The **AuthZ** service must integrate seamlessly into PASTA's current authorization workflow. Three separate tasks must be addressed: (1) Service method ACRs for both the DPM and AM services must be migrated to the **AuthZ** ACR registry; (2) the existing `access_matrix` database table, including principal owners stored in the DPM `resource_registry` database table, must be migrated to the **AuthZ** ACR registry with PASTA IDs; and (3) the DPM service must be modified to use the REST API methods of the **AuthZ** service (above) in lieu of its internal authorization processing.
+The *authorization service* service must integrate seamlessly into PASTA's current authorization workflow. Three separate tasks must be addressed: (1) Service method ACRs for both the DPM and AM services must be migrated to the *authorization service* ACR registry; (2) the existing `access_matrix` database table, including principal owners stored in the DPM `resource_registry` database table, must be migrated to the *authorization service* ACR registry with PASTA IDs; and (3) the DPM service must be modified to use the REST API methods of the *authorization service* service (above) in lieu of its internal authorization processing.
 
 #### Principal Owner and Access Matrix Migration for Data Package Resources
 
-For each data package, an entry in the **AuthZ** ACR registry for every data package resource, including the data package itself, will be required for the principal owner. This should be followed by migrating corresponding entries of each data package resource found in the `access_matrix` database table to the **AuthZ** ACR registry. (Note that data packages that are not represented in the `access_matrix` imply a full embargo of the data package exists and all access privileges, other than for the owner, are denied.)
+For each data package, an entry in the *authorization service* ACR registry for every data package resource, including the data package itself, will be required for the principal owner. This should be followed by migrating corresponding entries of each data package resource found in the `access_matrix` database table to the *authorization service* ACR registry. (Note that data packages that are not represented in the `access_matrix` imply a full embargo of the data package exists and all access privileges, other than for the owner, are denied.)
 
-1. An **AuthZ** `access_matrix` database table (see *AuthZ Access Control Rule Registry* [above](https://github.com/PASTAplus/PEP/blob/main/peps/pep-9.md#authz-access-control-rule-registry)).
+1. An *authorization service* `access_matrix` database table (see The *authorization service* Access Control Rule Registry [above](https://github.com/PASTAplus/PEP/blob/main/peps/pep-9.md#authz-access-control-rule-registry)).
 2. 
 
 
@@ -493,21 +493,21 @@ For each data package, an entry in the **AuthZ** ACR registry for every data pac
 
 ## Open issue(s)
 
-### 1. Will AuthZ support "deny" verbs in ACRs?
+### 1. Will the *authorization service* support "deny" verbs in ACRs?
 
-Because the "deny" verb is rarely used in practice, it will not be supported in the initial implementation of the AuthZ service. However, this feature may be added in a future release.
+Because the "deny" verb is rarely used in practice, it will not be supported in the initial implementation of the *authorization service* service. However, this feature may be added in a future release.
 
-### 2. How will the current `DataPackageManager.access_matrix` table be migrated to the AuthZ ACR registry?
+### 2. How will the current `DataPackageManager.access_matrix` table be migrated to the *authorization service* ACR registry?
 
-### 3. How will ezEML interact with the AuthZ service?
+### 3. How will ezEML interact with the *authorization service* service?
 
 ### 4. Will the data package "principal" owner be represented in the ACR registry?
 
 Currently, the data package owner is passed to the "isAuthorized" method through a separate parameter, `principalOwner`, which is obtained by querying the data package manager resource registry. The `principalOwner` is compared to the submitter of the resource access request to determine if the submitter is the owner of the data package, and if so, the submitter is granted "changePermission" access to the data resource in question without the need for an ACR. This is an implicit ACR that is not stored in the ACR registry.
 
-### 5. How will legacy `<access>` elements that contain IdP user identifiers and group identifiers work within the AuthZ service?
+### 5. How will legacy `<access>` elements that contain IdP user identifiers and group identifiers work within the *authorization service* service?
 
-### 6. Should AuthZ expose a UI for managing ACRs or should each client application provide its own UI?
+### 6. Should the *authorization service* expose a UI for managing ACRs or should each client application provide its own UI?
 
 ## References
 
@@ -516,8 +516,3 @@ Currently, the data package owner is passed to the "isAuthorized" method through
 ## Rejection
 
 ...
-
-## TODOS
-
-1. Unify permissions to `read`, `write`, and `changePermission`.
-2. Do creation date/times even matter for an ACR?
