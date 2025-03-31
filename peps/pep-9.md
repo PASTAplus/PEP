@@ -189,7 +189,7 @@ Goal: To parse a valid `<access>` element and add its ACRs to the *authorization
 
 Use case:
 
-1. A client sends an `<access>` element ACL to the *authorization service* to register ACRs.
+1. A client sends an `<access>` element ACL and the resource_key, resource_label, resource_type, and collection_id to the *authorization service* to register ACRs.
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* parses the `<access>` element ACL and extracts the ACRs.
 4. The *authorization service* adds the ACL ACRs to the ACR registry.
@@ -200,12 +200,15 @@ Notes: This use case supports adding ACLs for PASTA API methods through the `ser
 ```
 POST: /auth/v1/access
 
-addAccess(resource_key, access):
-    resource_key: resource key for the <access> element
+addAccess(access, resource_key, resource_label, resource_type, collection_id):
     access: valid <access> element
+    resource_key: resource key for the <access> element
+    resource_label: the human readable name of the resource
+    resource_type: the type of resource
+    collection_id: the collection identifier (may be `None`)
     return:
         200 OK if successful
-        400 Bad Request if <access> element is invalid
+        400 Bad Request if <access> element or the other parameters are invalid
         401 Unauthorized if the client does not provide a valid authentication token
         403 Forbidden if client is not authorized to execute method
     body:
@@ -527,6 +530,8 @@ Use case:
 4. The *authorization service* updates the ACR.
 5. The *authorization service* returns a success message and the permission identifier to the client.
 
+Note: It is an error if the client attempts to modify the `changePermission` permission of a principal if no other principal has `changePermission` permission.
+
 ```
 PUT: /auth/v1/rule/<id>
 
@@ -542,6 +547,7 @@ updateRule(permission_id, resource_id, principal, principal_type, permission)
         401 Unauthorized if the client does not provide a valid authentication token
         403 Forbidden if client is not authorized to execute method or access ACR
         404 If rule is not found
+        422 If no `changePermission` would occur
     body:
         The permission_id if 200, error message otherwise
     permissions:
@@ -560,6 +566,8 @@ Use case:
 4. The *authorization service* deletes the ACR
 5. The *authorization service* returns a success message and the permission identifier to the client.
 
+Note: It is an error if the client attempts to remove the `changePermission` permission of a principal if no other principal has `changePermission` permission.
+
 ```
 DELETE: /auth/v1/rule/<id>
 
@@ -571,6 +579,7 @@ deleteRule(permission_id)
         401 Unauthorized if the client does not provide a valid authentication token
         403 Forbidden if client is not authorized to execute method or access ACR
         404 If rule is not found
+        422 If no `changePermission` would occur
     body:
         The permission_id if 200, error message otherwise
     permissions:
