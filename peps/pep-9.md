@@ -152,7 +152,7 @@ Each integration point is selected to minimize the impact on the existing PASTA 
 
 ### Use Case and REST API Method Definitions
 
-**1a. Add ACL**
+**1. Add EML**
 
 Goal: To parse a valid EML document and add its ACRs to the ACR registry for the resources identified in the EML document.
 
@@ -167,7 +167,9 @@ Use case:
 Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the existing `access_matrix`. This should, however, change for consistency: the principal owner should be added into the ACR registry with the "changePermission" permission. This method should create a "Data Package" collection.
 
 ```
-addACL(principal, eml)
+POST /auth/v1/eml
+
+addEML(principal, eml)
     principal: The owner of the data package (may be either a PASTA-ID or an IdP identifier)
     eml: valid EML document as a string
     return:
@@ -181,7 +183,7 @@ addACL(principal, eml)
         pasta: changePermission
 ```
 
-**1b. Add ACL**
+**2. Add Access**
 
 Goal: To parse a valid `<access>` element and add its ACRs to the *authorization service* ACR registry.
 
@@ -196,7 +198,9 @@ Use case:
 Notes: This use case supports adding ACLs for PASTA API methods through the `service.xml` file. In this case, the `service.xml` file is not a complete EML document; they consist of ACLs in the form of `<access>` elements. The principal owner of the service method (or other resource) should be added into the ACR registry with the "changePermission" permission; in the case of service methods, the principal owner will be "pasta."
 
 ```
-addACL(resource_key, access):
+POST: /auth/v1/access
+
+addAccess(resource_key, access):
     resource_key: resource key for the <access> element
     access: valid <access> element
     return:
@@ -210,23 +214,22 @@ addACL(resource_key, access):
         pasta: changePermission
 ```
 
-**2. Set Collection**
+**3a. Create Collection**
 
-Goal: To create, update, or delete a collection
+Goal: To create a collection
 
 Use case:
 
 1. A client sends a collection to the *authorization service*.
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* verifies that the requesting principal is authorized to access the collection.
-4. The *authorization service*:
-    a. POST: creates the collection
-    b. PUT: updates the collection
-    c. DELETE: deletes the collection
+4. The *authorization service* creates the collection.
 5. The *authorization service* returns a success message to the client.
 
 ```
-setCollection(collection_label, collection_type)
+POST: /auth/v1/collection
+
+createCollection(collection_label, collection_type)
     collection_label: the human readable name of the collection
     collection_type: the type of collection
     return:
@@ -241,7 +244,96 @@ setCollection(collection_label, collection_type)
         authenticated: changePermission
 ```
 
-**3. Set Resource**
+**3b. Update Collection**
+
+Goal: To update a collection
+
+Use case:
+
+1. A client sends a collection to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* verifies that the requesting principal is authorized to access the collection.
+4. The *authorization service* updates the collection.
+5. The *authorization service* returns a success message to the client.
+
+```
+PUT: /auth/v1/collection/id
+
+updateCollection(collection_id, collection_label, collection_type)
+    collection_id: the unique collection identifier
+    collection_label: the human readable name of the collection
+    collection_type: the type of collection
+    return:
+        200 OK if successful
+        400 Bad Request if collection is invalid
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access collection
+        404 If PUT or DELETE and the collection is not found
+    body:
+        The collection_id if 200, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**3c. Delete Collection**
+
+Goal: To delete a collection
+
+Use case:
+
+1. A client sends a collection identifier to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* verifies that the requesting principal is authorized to access the collection.
+4. The *authorization service* deletes the collection.
+5. The *authorization service* returns a success message to the client.
+
+```
+DELETE: /auth/v1/collection/id
+
+deleteCollection(collection_id)
+    collection_id: the unique collection identifier
+    return:
+        200 OK if successful
+        400 Bad Request if collection is invalid
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access collection
+        404 If PUT or DELETE and the collection is not found
+    body:
+        The collection_id if 200, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**3d. Read Collection**
+
+Goal: To read a collection
+
+Use case:
+
+1. A client sends a collection identifier to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* verifies that the requesting principal is authorized to access the collection.
+4. The *authorization service* reads the collection information into a structure.
+5. The *authorization service* returns a success message to the client.
+
+```
+GET: /auth/v1/collection/id
+
+readCollection(collection_id)
+    collection_id: the unique collection identifier
+    return:
+        200 OK if successful
+        400 Bad Request if collection is invalid
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access collection
+        404 If PUT or DELETE and the collection is not found
+    body:
+        The collection structure if 200, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**4a. Create Resource**
 
 Goal: To create, update, or delete a resource
 
@@ -274,7 +366,106 @@ setResource(resource_key, resource_label, resource_type, collection_id)
         authenticated: changePermission
 ```
 
-**4. Set ACR**
+**4a. Create Resource**
+
+Goal: To create, update, or delete a resource
+
+Use case:
+
+1. A client sends a resource to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* verifies that the requesting principal is authorized to access the resource.
+4. The *authorization service*:
+    a. POST: creates the resource
+    b. PUT: updates the resource
+    c. DELETE: deletes the resource
+5. The *authorization service* returns a success message to the client.
+
+```
+setResource(resource_key, resource_label, resource_type, collection_id)
+    resource_key: the unique resource key of the resource
+    resource_label: the human readable name of the resource
+    resource_type: the type of resource
+    collection_id: the collection identifier (may be `None`)
+    return:
+        200 OK if successful
+        400 Bad Request if resource is invalid
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+        404 If PUT or DELETE and the resource is not found
+    body:
+        The resource_id if 200, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**4a. Create Resource**
+
+Goal: To create, update, or delete a resource
+
+Use case:
+
+1. A client sends a resource to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* verifies that the requesting principal is authorized to access the resource.
+4. The *authorization service*:
+    a. POST: creates the resource
+    b. PUT: updates the resource
+    c. DELETE: deletes the resource
+5. The *authorization service* returns a success message to the client.
+
+```
+setResource(resource_key, resource_label, resource_type, collection_id)
+    resource_key: the unique resource key of the resource
+    resource_label: the human readable name of the resource
+    resource_type: the type of resource
+    collection_id: the collection identifier (may be `None`)
+    return:
+        200 OK if successful
+        400 Bad Request if resource is invalid
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+        404 If PUT or DELETE and the resource is not found
+    body:
+        The resource_id if 200, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**4a. Create Resource**
+
+Goal: To create, update, or delete a resource
+
+Use case:
+
+1. A client sends a resource to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* verifies that the requesting principal is authorized to access the resource.
+4. The *authorization service*:
+    a. POST: creates the resource
+    b. PUT: updates the resource
+    c. DELETE: deletes the resource
+5. The *authorization service* returns a success message to the client.
+
+```
+setResource(resource_key, resource_label, resource_type, collection_id)
+    resource_key: the unique resource key of the resource
+    resource_label: the human readable name of the resource
+    resource_type: the type of resource
+    collection_id: the collection identifier (may be `None`)
+    return:
+        200 OK if successful
+        400 Bad Request if resource is invalid
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+        404 If PUT or DELETE and the resource is not found
+    body:
+        The resource_id if 200, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**5. Create Rule**
 
 Goal: To create, update, or delete an ACR
 
@@ -309,7 +500,112 @@ setACR(resource_key, principal, principal_type, permission)
         authenticated: changePermission
 ```
 
-**5. Get ACL**
+**5. Create Rule**
+
+Goal: To create, update, or delete an ACR
+
+Use case:
+
+1. A client sends an ACR to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* verifies that the requesting principal is authorized to access the ACR, if the ACR exists.
+4. The *authorization service*:
+    a. POST: creates the ACR
+    b. PUT: updates the ACR
+    c. DELETE: deletes the ACR
+5. The *authorization service* returns a success message to the client.
+
+Notes: This use case supports managing an individual ACR for applications that do not use EML or `<access>` elements. The *authorization service* will create a user profile (along with a PASTA-ID) if the principal is not a PASTA-ID.
+
+```
+setACR(resource_key, principal, principal_type, permission)
+    resource_key: the unique resource key of the resource
+    principal: the principal of the ACR
+    principal_type: the type of principal (PROFILE or GROUP)
+    permission: the permission of the ACR (may be `None` if DELETE)
+    return:
+        200 OK if successful
+        400 Bad Request if ACR is invalid
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access ACR
+        404 If PUT or DELETE and the ACR is not found
+    body:
+        The permission_id if 200, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**5. Create Rule**
+
+Goal: To create, update, or delete an ACR
+
+Use case:
+
+1. A client sends an ACR to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* verifies that the requesting principal is authorized to access the ACR, if the ACR exists.
+4. The *authorization service*:
+    a. POST: creates the ACR
+    b. PUT: updates the ACR
+    c. DELETE: deletes the ACR
+5. The *authorization service* returns a success message to the client.
+
+Notes: This use case supports managing an individual ACR for applications that do not use EML or `<access>` elements. The *authorization service* will create a user profile (along with a PASTA-ID) if the principal is not a PASTA-ID.
+
+```
+setACR(resource_key, principal, principal_type, permission)
+    resource_key: the unique resource key of the resource
+    principal: the principal of the ACR
+    principal_type: the type of principal (PROFILE or GROUP)
+    permission: the permission of the ACR (may be `None` if DELETE)
+    return:
+        200 OK if successful
+        400 Bad Request if ACR is invalid
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access ACR
+        404 If PUT or DELETE and the ACR is not found
+    body:
+        The permission_id if 200, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**5. Create Rule**
+
+Goal: To create, update, or delete an ACR
+
+Use case:
+
+1. A client sends an ACR to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* verifies that the requesting principal is authorized to access the ACR, if the ACR exists.
+4. The *authorization service*:
+    a. POST: creates the ACR
+    b. PUT: updates the ACR
+    c. DELETE: deletes the ACR
+5. The *authorization service* returns a success message to the client.
+
+Notes: This use case supports managing an individual ACR for applications that do not use EML or `<access>` elements. The *authorization service* will create a user profile (along with a PASTA-ID) if the principal is not a PASTA-ID.
+
+```
+setACR(resource_key, principal, principal_type, permission)
+    resource_key: the unique resource key of the resource
+    principal: the principal of the ACR
+    principal_type: the type of principal (PROFILE or GROUP)
+    permission: the permission of the ACR (may be `None` if DELETE)
+    return:
+        200 OK if successful
+        400 Bad Request if ACR is invalid
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access ACR
+        404 If PUT or DELETE and the ACR is not found
+    body:
+        The permission_id if 200, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**6a. Get ACL**
 
 Goal: To return the ACL from the *authorization service* ACR registry for a resource key.
 
@@ -323,6 +619,8 @@ Use case:
 Notes: None
 
 ```
+GET: /auth/resource/key
+
 getACL(resource_key)
     resource_key: the unique resource key
     return:
@@ -336,7 +634,36 @@ getACL(resource_key)
         authenticated: changePermission
 ```
 
-**6. Is Authorized**
+**6a. Get ACL**
+
+Goal: To return the ACL from the *authorization service* ACR registry for a resource identifier.
+
+Use case:
+
+2. The client sends the resource key to The *authorization service*.
+3. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+4. The *authorization service* verifies that the requesting principal is authorized to access the ACL.
+5. The *authorization service* returns a succes message to the client with the ACL in the body of the response.
+
+Notes: None
+
+```
+GET: /auth/resource/id
+
+getACL(resource_key)
+    resource_key: the unique resource key
+    return:
+        200 OK if successful
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access to the resource
+        404 If no ACRs are found
+    body:
+        ACL if 200, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**7a. Is Authorized**
 
 Goal: To determine if a principal is authorized to access a resource.
 
@@ -347,6 +674,8 @@ Use case:
 3. The *authorization service* processes the request and returns a success message if the principal is authorized.
 
 ```
+POST: /auth/v1/authorized
+
 isAuthorized(token, resource_key, permission)
     token: a valid authentication token
     resource_key: the unique resource key
@@ -362,7 +691,35 @@ isAuthorized(token, resource_key, permission)
         authenticated: changePermission
 ```
 
-**7. Get Resources**
+**7b. Is Authorized**
+
+Goal: To determine if a principal is authorized to access a resource.
+
+Use case:
+
+1. A client sends an authentication token, the resource key, and the requested permission to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* processes the request and returns a success message if the principal is authorized.
+
+```
+POST: /auth/v1/authorized
+
+isAuthorized(token, resource_id, permission)
+    token: a valid authentication token
+    resource_id: the unique resource identifier
+    permission: the permission being requested
+    return:
+        200 OK if authorized
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access the resource or if principal is not authorized to access the resource
+        404 If the resource_key is not found
+    body:
+        Empty if 200, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**8. Get Resources**
 
 Goal: Return a list of resource keys owned by the principal.
 
@@ -375,6 +732,8 @@ Use case:
 Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in the *authorization service* ACR registry.
 
 ```
+GET: /auth/resources
+
 getResources(token)
     token: a valid authentication token
     return:
