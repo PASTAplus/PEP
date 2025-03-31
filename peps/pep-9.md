@@ -86,7 +86,7 @@ The ACR registry will be implemented as RDBMS tables with the following schema (
 
 **Figure 3:** Authorization service ACR registry table schema.
 
-The ACR Registry stores ACRs for all applications in the EDI ecosystem. We use a structure with collections, resources, and permissions. A collection contains zero to many resources, and a resource contains zero to many permissions. Each permission provides read, write or ownership to either a user profile or a user group. A user profile can be a regular user or a system level user, such as the public user.
+The ACR Registry will store ACRs for all applications in the EDI ecosystem. We will use a structure with *collections*, *resources*, and *permissions*. A collection contains zero to many resources, and a resource contains zero to many permissions. Each permission provides *read*, *write* or *chanagePermission* privileges to the principal associated with the ACR. The principal references either a user profile or a group. (A user profile can be a regular user or a system level user, such as the "public" user; both regular users and system users will have a unique PASTA-ID.)
 
 #### Collection
 
@@ -98,7 +98,7 @@ The ACR Registry stores ACRs for all applications in the EDI ecosystem. We use a
 #### Resource
 
 - `resource.collection_id` - A reference to the collection to which the resource belongs.
-- `resource.key` - A unique identifier for the resource.
+- `resource.key` - A unique system identifier for the resource.
 - `resource.label` - A human-readable name for the resource.
 - `resource.type` - The resource type.
 - `resource.created_date` - The date and time the resource was created.
@@ -107,8 +107,8 @@ The ACR Registry stores ACRs for all applications in the EDI ecosystem. We use a
 
 - `permission.resource_id` - A reference to the resource to which the permission applies.
 - `permission.principal_id` - A reference to the user profile or group to which the permission is granted.
-- `permission.principal_type` - The principal class (enum of PROFILE or GROUP) of the permission.
-- `permission.level` - The access level granted by this permission (enum of 'read', 'write' or 'changePermission').
+- `permission.principal_type` - The principal class (enum of `PROFILE` or `GROUP`) of the permission.
+- `permission.level` - The access level granted by this permission (enum of `read`, `write` or `changePermission`).
 - `permission.granted_date` - The grant date and time of the permission.
 
 For example, if we are tracking permissions for a data package with metadata and data entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.collection_id` referencing the `knb-lter-bes.1234.5` collection. The `resource.label` might be `water.csv` while the `resource.key` would be the PASTA URI `https://pasta.lternet.edu/package/data/eml/knb-lter-bes.1234.5/3fb3ef2e559fa42956b69226e9069058`. The `resource.type` would be `data`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.principal_id` of a user profile or user group, and a `permission.principal_type` of either `PROFILE` or `GROUP`. The `permission.level` would specify the level of access granted to the principal, and would be `read`, `write` or `changePermission`.
@@ -116,25 +116,25 @@ For example, if we are tracking permissions for a data package with metadata and
 
 ### Authorization algorithm
 
-Premises for the authorization algorithm are as follows:
+Premises:
 
-1. All principals are denied access to all resources unless an ACR exists that explicitly allows access.
-2. An ACR only defines "allow" access to a resource. "Deny" access is not supported.
-3. If multiple ACRs exist for a resource that affect the same user, the most permissive ACR is applied. For example, if one ACR allows read access and another allows write access, the write access is applied. Similarly, if one ACR allows read access for a user and another allows write access for a group to which the user belongs, the write access is applied.
+1. All principals are denied access to all resources unless an ACR exists that explicitly grants access for the principal to the resource.
+2. An ACR will only support "allow" access to resources; "deny" access will not be supported.
+3. If multiple ACRs exist pertaining to the same principal and the same resource, but with different permissions, then the most permissive permission will be granted. (For example, if one ACR allows read access and another allows write access, the write access is applied. Similarly, if one ACR allows read access for a user and another allows write access for a group to which the user belongs, then write access is applied.)
 
 The authorization algorithm requires three parameters:
 
 1. The resource identifier to be accessed.
-2. The set of principals attempting to access the resource.
-3. The requested permission for the resource. The permission is an integer value that represents the access level requested by the principal (read = 1, write = 2, changePermission = 3).
+2. The set of principals (either a user profile or groups) attempting to access the resource (as determined from the authentication token).
+3. The requested permission for the resource (*read*, *write*, *changePermission*).
 
 The algorithm is as follows:
 ```python
-def is_authorized(resource: str, principals: set, permission: int) -> bool:
+def is_authorized(resource, principals, permission) -> bool:
     authorized = False
-    acrs = getACRs(resource)
+    acl = getACL(resource)
     for principal in principals:
-        for acr in acrs:
+        for acr in acl:
             if acr.principal == principal:
                 if acr.permission <= permission:
                     authorized = True
@@ -158,24 +158,27 @@ Goal: To parse a valid EML document and add its ACRs to the ACR registry for the
 
 Use case:
 
-1. The Data Package Manager requests that that ACRs be created from the EML document.
-2. The *authorization service* parses the EML and extracts the ACRs.
-3. The *authorization service* adds the ACRs to the ACR registry.
-4. The *authorization service* returns a success message to PASTA.
+1. A client sends and EML document to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* parses the EML and extracts the ACRs.
+4. The *authorization service* adds the ACL ACRs to the ACR registry.
+5. The *authorization service* returns a success message to client.
 
-Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the ACR registry. This should, however, change for consistency: the principal owner should be added into the ACR registry with the "changePermission" permission.
+Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the existing `access_matrix`. This should, however, change for consistency: the principal owner should be added into the ACR registry with the "changePermission" permission. This method should create a "Data Package" collection.
 
 ```
-addACL(owner: string, eml: string)
-    owner: The principal owner of the data package (may be either a PASTA-ID or an IdP identifier)
+addACL(principal, eml)
+    principal: The owner of the data package (may be either a PASTA-ID or an IdP identifier)
     eml: valid EML document as a string
     return:
         200 OK if successful
-        4xx Bad Request if EML is invalid
+        400 Bad Request if EML is invalid
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method
     body:
         Empty if 200, error message otherwise
     permissions:
-        system: changePermission
+        pasta: changePermission
 ```
 
 **1b. Add ACL**
@@ -184,296 +187,145 @@ Goal: To parse a valid `<access>` element and add its ACRs to the *authorization
 
 Use case:
 
-1. An EDI application creates an `<access>` element ACL for an EDI resource.
-2. The application sends the `<access>` element ACL to the *authorization service* to register the ACR.
+1. A client sends an `<access>` element ACL to the *authorization service* to register ACRs.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* parses the `<access>` element ACL and extracts the ACRs.
-4. The *authorization service* adds the ACRs to the ACR registry.
-5. The *authorization service* returns a success message to the EDI application.
+4. The *authorization service* adds the ACL ACRs to the ACR registry.
+5. The *authorization service* returns a success message to the client.
 
 Notes: This use case supports adding ACLs for PASTA API methods through the `service.xml` file. In this case, the `service.xml` file is not a complete EML document; they consist of ACLs in the form of `<access>` elements. The principal owner of the service method (or other resource) should be added into the ACR registry with the "changePermission" permission; in the case of service methods, the principal owner will be "pasta."
 
 ```
-addACL(owner: string, resource_key: string, access: string)
-    owner: owner of resource (derived from "sub" of JWT) as a string
-    resource_key: unique key of resource that the <access> element applies to
-    access: valid <access> element as a string
+addACL(resource_key, access):
+    resource_key: resource key for the <access> element
+    access: valid <access> element
     return:
         200 OK if successful
-        4xx Bad Request if <access> element is invalid
+        400 Bad Request if <access> element is invalid
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method
+    body:
+        Empty if 200, error message otherwise
     permissions:
-        system: changePermission
+        pasta: changePermission
 ```
 
-**2a. Set ACR**
+**2. Set ACR**
 
-Goal: To create an ACR if the ACR does not exist
+Goal: To create, update, or delete an ACR
 
 Use case:
 
-1. An EDI application creates an ACR for an EDI resource.
-2. The application sends the ACR to the *authorization service* to register the ACR.
-3. The *authorization service* validates and adds the ACR to the ACR registry.
-4. The *authorization service* returns a success message to the EDI application.
+2. A client sends an ACR to the *authorization service*.
+3. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+4. The *authorization service* verifies that the requesting principal is authorized to access the ACR, if the ACR exists.
+5. The *authorization service*:
+    a. POST: creates the ACR
+    b. PUT: updates the ACR
+    c. DELETE: deletes the ACR
+6. The *authorization service* returns a success message to the client.
 
-Notes: This use case supports adding individual ACRs for applications that do not use EML or `<access>` elements.
-
-```
-addACR(resource_key: string, principal: string, permission: string)
-    resource_key: the resource identifier of the resource to be protected by the ACR as a string
-    principal: the principal of the ACR as a string
-    permission: the permission of the ACR as a string
-    return:
-        200 OK if successful
-        400 Bad Request if ACR is invalid
-    permissions:
-        system: changePermission
-        authenticated: changePermission
-```
-
-**2b. Set ACR**
-
-Goal: To modify an ACR if it exists
-
-Use case:
-
-1. An EDI application creates an ACR for an EDI resource.
-2. The application sends the ACR to the *authorization service* to register the ACR.
-3. The *authorization service* validates and adds the ACR to the ACR registry.
-4. The *authorization service* returns a success message to the EDI application.
-
-Notes: This use case supports adding individual ACRs for applications that do not use EML or `<access>` elements.
+Notes: This use case supports managing an individual ACR for applications that do not use EML or `<access>` elements. The *authorization service* will create a user profile (along with a PASTA-ID) if the principal is not a PASTA-ID.
 
 ```
-addACR(resource_key: string, principal: string, permission: string)
-    resource_key: the resource identifier of the resource to be protected by the ACR as a string
-    principal: the principal of the ACR as a string
-    permission: the permission of the ACR as a string
+setACR(collection_id, resource_key, resource_label, resource_type, principal, principal_type, permission)
+    collection_id: identifier of the collection (may be `None`)
+    resource_key: the unique resource key of the resource
+    resource_label: the human readable label of the resource (may be `None`)
+    resource_type: the type of resource
+    principal: the principal of the ACR
+    principal_type: the type of principal (PROFILE or GROUP)
+    permission: the permission of the ACR (may be `None` if DELETE)
     return:
         200 OK if successful
         400 Bad Request if ACR is invalid
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access ACR
+        404 If PUT or DELETE and the ACR is not found
+    body:
+        Empty if 200, error message otherwise
     permissions:
-        system: changePermission
         authenticated: changePermission
 ```
 
-**2. Add ACR**
 
-Goal: To add an individual ACR as defined by ACR attributes to the The *authorization service* ACR registry.
+**3. Get ACL**
 
-Use case:
-
-1. An EDI application creates an ACR for an EDI resource.
-2. The application sends the ACR to The *authorization service* to register the ACR.
-3. The *authorization service* validates and adds the ACR to the ACR registry.
-4. The *authorization service* returns a success message to the EDI application.
-
-Notes: This use case supports adding individual ACRs for applications that do not use EML or `<access>` elements.
-
-```
-addACR(resource_key: string, principal: string, permission: string)
-    resource_key: the resource identifier of the resource to be protected by the ACR as a string
-    principal: the principal of the ACR as a string
-    permission: the permission of the ACR as a string
-    return:
-        200 OK if successful
-        400 Bad Request if ACR is invalid
-    permissions:
-        system: changePermission
-        authenticated: changePermission
-```
-
-**3. Delete ACR**
-
-Goal: To delete an individual ACR from the The *authorization service* ACR registry.
+Goal: To return the ACL from the *authorization service* ACR registry for a resource key.
 
 Use case:
 
-1. An EDI application selects an ACR identifier, identifying an ACR that should be deleted from the ACR registry.
-2. The application sends the ACR identifier to The *authorization service* to delete the ACR.
-3. The *authorization service* deletes the ACR from the ACR registry.
-4. The *authorization service* returns a success message to the EDI application.
-
-Notes:
-
-```
-deleteACR(acr_id: int)
-    acr_id: the ACR identifier of the ACR to be removed as an integer
-    return:
-        200 OK if successful
-        404 Bad Request if ACR is not found in the ACR registry
-    permissions:
-        system: changePermission
-        vetted: write
-```
-
-**4. Update ACR**
-
-Goal: To update an individual ACR in the The *authorization service* ACR registry.
-
-Use case:
-
-1. An EDI application selects an ACR identifier, identifying an ACR that should be updated in the ACR registry.
-2. The application sends the ACR identifier, along with the new ACR attributes, to The *authorization service* to update the ACR.
-3. The *authorization service* updates the ACR in the ACR registry.
-4. The *authorization service* returns a success message to the EDI application.
-
-Notes: This use case can also be accomplished by deleting the ACR and adding a new ACR with the same ACR attributes; however, doing so would require two API calls and result in a new ACR identifier.
-
-```
-updateACR(acr_id: int, resource_id: string, principal: string, permission: string)
-    acr_id: the ACR identifier of the ACR to be removed as an integer
-    resource_id: the resource identifier of the resource to be protected by the ACR as a string
-    principal: the principal of the ACR as a string
-    permission: the permission of the ACR as a string
-    return:
-        200 OK if successful
-        404 Bad Request if ACR is not found in the ACR registry
-    permissions:
-        system: changePermission
-        vetted: write
-```
-
-**5. Read ACR**
-
-Goal: To read the attributes of an individual ACR in the The *authorization service* ACR registry based on the resource identifier.
-
-Use case:
-
-1. A client application selects an ACR by providing a resource identifier.
-2. The application sends the resource identifier to The *authorization service*.
-3. The *authorization service* verifies the client application has privileges to read the ACR.
-4. The *authorization service* returns the attributes of the ACR based on the resource identifier.
+2. The client sends the resource key to The *authorization service*.
+3. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+4. The *authorization service* verifies that the requesting principal is authorized to access the ACL.
+5. The *authorization service* returns a succes message to the client with the ACL in the body of the response.
 
 Notes: None
 
 ```
-readACR(resource_key: string)
-    resource_key: the resource identifier of the resource to be protected by the ACR as a string
+getACL(resource_key)
+    resource_key: the unique resource key
     return:
         200 OK if successful
-        404 Bad Request if ACR is not found in the ACR registry
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access to the resource
+        404 If no ACRs are found
+    body:
+        ACL if 200, error message otherwise
     permissions:
-        system: changePermission
         authenticated: changePermission
 ```
 
-**6a. Is Authorized**
+**4. Is Authorized**
 
 Goal: To determine if a principal is authorized to access a resource.
 
 Use case:
 
-1. An EDI application collects the user's authentication token, the `<access>` element for the protected resource, and the requested permission.
-2. The application sends the token, `<access>` element, and permission to The *authorization service* to determine if the user is authorized.
-3. The *authorization service* processes the request and returns a success message if the user is authorized.
+1. A client sends an authentication token, the resource key, and the requested permission to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* processes the request and returns a success message if the principal is authorized.
+
+```
+isAuthorized(token, resource_key, permission)
+    token: a valid authentication token
+    resource_key: the unique resource key
+    permission: the permission being requested
+    return:
+        200 OK if authorized
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access the resource or if principal is not authorized to access the resource
+        404 If the resource_key is not found
+    body:
+        Empty if 200, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**5. Get Resources**
+
+Goal: Return a list of resource keys owned by the principal.
+
+Use case:
+
+1. A client sends an authentication token to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* returns a success message if the user is authorized with the list of resource keys and resource labels in the body of the response.
 
 Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in the *authorization service* ACR registry.
 
 ```
-isAuthorized(token: string, resource_key: string, access: string, permission: string)
-    token: a valid PASTA authentication token as a string
-    resource_key:
-    access: a valid <access> element as a string
-    permission: the permission to be checked as a string
+getResources(token)
+    token: a valid authentication token
     return:
         200 OK if authorized
-        403 Forbidden if not authorized
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method
+        404 If no resources are found
+    body:
+        Resource list if 200, error message otherwise
     permissions:
-        system: changePermission
-```
-
-**6b. Is Authorized**
-
-Goal: To determine if a principal is authorized to access a resource.
-
-Use case:
-
-1. An EDI application collects the user's authentication token, the resource identifier for the protected resource, and the requested permission.
-2. The application sends the token, resource identifier, and permission to The *authorization service* to determine if the user is authorized.
-3. The *authorization service* processes the request and returns a success message if the user is authorized.
-
-Notes: This use case supports the authorization process for data package resources where it is assumed that ACRs exist in the ACR registry.
-
-```
-isAuthorized(token: string, resource_key: string, permission: string)
-    token: a valid PASTA authentication token as a string
-    resource_key: the resource identifier of the resource to be accessed as a string
-    permission: the permission to be checked as a string
-    return:
-        200 OK if authorized
-        403 Forbidden if not authorized
-    permissions:
-        system: changePermission
-```
-
-**6c. Is Authorized**
-
-Goal: To determine if a principal is authorized to access a resource.
-
-Use case:
-
-1. An EDI application collects the user's JSON Web Token, the `<access>` element for the protected resource, and the requested permission.
-2. The application sends the token, `<access>` element, and permission to The *authorization service* to determine if the user is authorized.
-3. The *authorization service* processes the request and returns a success message if the user is authorized.
-
-Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in the *authorization service* ACR registry.
-
-```
-isAuthorized(jwt: string, access: string, permission: string)
-    jwt: a valid JSON Web Token as a string
-    access: a valid <access> element as a string
-    permission: the permission to be checked as a string
-    return:
-        200 OK if authorized
-        403 Forbidden if not authorized
-    permissions:
-        system: changePermission
-```
-
-**6d. Is Authorized**
-
-Goal: To determine if a principal is authorized to access a resource.
-
-Use case:
-
-1. An EDI application collects the user's JSON Web Token, the `<access>` element for the protected resource, and the requested permission.
-2. The application sends the token, `<access>` element, and permission to The *authorization service* to determine if the user is authorized.
-3. The *authorization service* processes the request and returns a success message if the user is authorized.
-
-Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in the *authorization service* ACR registry.
-
-```
-isAuthorized(jwt: string, access: string, permission: string)
-    jwt: a valid JSON Web Token as a string
-    resource_id: the resource identifier of the resource to be accessed as a string
-    permission: the permission to be checked as a string
-    return:
-        200 OK if authorized
-        403 Forbidden if not authorized
-    permissions:
-        system: changePermission
-```
-
-**7. Get Owned Resources**
-
-Goal: Return a list of resources owned by the identity, including groups, declared in the JWT. 
-
-Use case:
-
-1. An EDI application collects the user's JSON Web Token, the `<access>` element for the protected resource, and the requested permission.
-2. The application sends the token, `<access>` element, and permission to The *authorization service* to determine if the user is authorized.
-3. The *authorization service* processes the request and returns a success message if the user is authorized.
-
-Notes: This use case supports the authorization process for PASTA API methods if the ACLs in the  `service.xml` file are not registered in the *authorization service* ACR registry.
-
-```
-getOwnedResources(owner: string, access: string, permission: string)
-    jwt: a valid JSON Web Token as a string
-    return:
-        200 OK if authorized
-        403 Forbidden if not authorized
-    permissions:
-        system: changePermission
+        authenticated: changePermission
 ```
 
 ### Implementation Strategy for PASTA
