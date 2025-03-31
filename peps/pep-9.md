@@ -210,29 +210,90 @@ addACL(resource_key, access):
         pasta: changePermission
 ```
 
-**2. Set ACR**
+**2. Set Collection**
+
+Goal: To create, update, or delete a collection
+
+Use case:
+
+1. A client sends a collection to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* verifies that the requesting principal is authorized to access the collection.
+4. The *authorization service*:
+    a. POST: creates the collection
+    b. PUT: updates the collection
+    c. DELETE: deletes the collection
+5. The *authorization service* returns a success message to the client.
+
+```
+setCollection(collection_label, collection_type)
+    collection_label: the human readable name of the collection
+    collection_type: the type of collection
+    return:
+        200 OK if successful
+        400 Bad Request if collection is invalid
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access collection
+        404 If PUT or DELETE and the collection is not found
+    body:
+        The collection_id if 200, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**3. Set Resource**
+
+Goal: To create, update, or delete a resource
+
+Use case:
+
+1. A client sends a resource to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* verifies that the requesting principal is authorized to access the resource.
+4. The *authorization service*:
+    a. POST: creates the resource
+    b. PUT: updates the resource
+    c. DELETE: deletes the resource
+5. The *authorization service* returns a success message to the client.
+
+```
+setResource(resource_key, resource_label, resource_type, collection_id)
+    resource_key: the unique resource key of the resource
+    resource_label: the human readable name of the resource
+    resource_type: the type of resource
+    collection_id: the collection identifier (may be `None`)
+    return:
+        200 OK if successful
+        400 Bad Request if resource is invalid
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+        404 If PUT or DELETE and the resource is not found
+    body:
+        The resource_id if 200, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**4. Set ACR**
 
 Goal: To create, update, or delete an ACR
 
 Use case:
 
-2. A client sends an ACR to the *authorization service*.
-3. The *authorization service* verifies that the requesting principal is authorized to execute the method.
-4. The *authorization service* verifies that the requesting principal is authorized to access the ACR, if the ACR exists.
-5. The *authorization service*:
+1. A client sends an ACR to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* verifies that the requesting principal is authorized to access the ACR, if the ACR exists.
+4. The *authorization service*:
     a. POST: creates the ACR
     b. PUT: updates the ACR
     c. DELETE: deletes the ACR
-6. The *authorization service* returns a success message to the client.
+5. The *authorization service* returns a success message to the client.
 
 Notes: This use case supports managing an individual ACR for applications that do not use EML or `<access>` elements. The *authorization service* will create a user profile (along with a PASTA-ID) if the principal is not a PASTA-ID.
 
 ```
-setACR(collection_id, resource_key, resource_label, resource_type, principal, principal_type, permission)
-    collection_id: identifier of the collection (may be `None`)
+setACR(resource_key, principal, principal_type, permission)
     resource_key: the unique resource key of the resource
-    resource_label: the human readable label of the resource (may be `None`)
-    resource_type: the type of resource
     principal: the principal of the ACR
     principal_type: the type of principal (PROFILE or GROUP)
     permission: the permission of the ACR (may be `None` if DELETE)
@@ -243,13 +304,12 @@ setACR(collection_id, resource_key, resource_label, resource_type, principal, pr
         403 Forbidden if client is not authorized to execute method or access ACR
         404 If PUT or DELETE and the ACR is not found
     body:
-        Empty if 200, error message otherwise
+        The permission_id if 200, error message otherwise
     permissions:
         authenticated: changePermission
 ```
 
-
-**3. Get ACL**
+**5. Get ACL**
 
 Goal: To return the ACL from the *authorization service* ACR registry for a resource key.
 
@@ -276,7 +336,7 @@ getACL(resource_key)
         authenticated: changePermission
 ```
 
-**4. Is Authorized**
+**6. Is Authorized**
 
 Goal: To determine if a principal is authorized to access a resource.
 
@@ -302,7 +362,7 @@ isAuthorized(token, resource_key, permission)
         authenticated: changePermission
 ```
 
-**5. Get Resources**
+**7. Get Resources**
 
 Goal: Return a list of resource keys owned by the principal.
 
