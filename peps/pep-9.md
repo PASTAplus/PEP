@@ -466,7 +466,7 @@ Use case:
 5. The *authorization service* returns a success message and the resource identifier to the client.
 
 ```
-GET : /auth/v1/resource/key
+GET : /auth/v1/resource/<key>
 
 getResourceIdentifier(resource_key)
     resource_key: the unique resource key
