@@ -1,6 +1,6 @@
 # PEP-4: Expanding the List of Supported Date and Time Formats for ECC and ezEML Congruence Checks
 
-* Author(s): Colin Smith, Jon Ide  
+* Author(s): Colin Smith  
 * Contact: colin.smith@wisc.edu  
 * Status: Draft  
 * Type: Policy  
