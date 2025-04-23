@@ -15,7 +15,10 @@ The EML Congruence Checker (ECC) and the ezEML Check Data Tables are services th
 
 ### Unambiguous Date and Time Format
 
-A date and time format is considered unambiguous if it has a single, clear interpretation and is defined using a specific format string within the data package metadata. Here are the key characteristics of unambiguous formats:
+A date and time format is considered unambiguous if it has a single, clear interpretation and is defined using a specific format string within the data package metadata. An unambiguous format must be both human-readable and machine-interpretable, ensuring consistency across visual inspection and automated parsing. This helps avoid errors during data validation, integration, and analysis.
+
+
+Here are the key characteristics of unambiguous formats:
 
 * **Calendar Date Representation:** Four-digit years (YYYY) are always used to avoid potential confusion arising from double-digit years. Month and Day: Months (MM) and days (DD) are represented with two digits each.
 * **Time Representation:** The 24-hour format is used to represent time, with the specific level of precision dictated by the data itself. Hours (hh), minutes (mm), and seconds (ss) are represented with two digits each.
@@ -78,7 +81,7 @@ Adoption of the proposed changes may impact a few EDI applications:
    | YYYY-MM-DD        | %Y-%m-%d                             |
 
 7. **Zero-padding:**  
-   While some modern programming languages can interpret non-zero-padded date and time values correctly, support for this behavior is not universal across tools and libraries. To ensure consistency and minimize ambiguity, **we will continue to require that all date and time components are zero-padded** (e.g., `01` for January, `09` for 9 AM). This is the current practice and **will not be modified by this PEP**.
+   While some modern programming language can interpret non-zero-padded date and time values correctly, support for this behavior is not universal across tools and libraries. To ensure consistency and minimize ambiguity, we will continue to require that all date and time components are zero-padded (e.g., `01` for January, `09` for 9 AM). This requirement aligns with the widely adopted C standard for date and time formatting, across many programming languages, providing a consistent, well-established basis for unambiguous machine parsing. Allowing non-padded values would break from this convention and risk compatibility issues or parsing errors in structured data processing pipelines. *This is the current practice and will not be modified by this PEP.*
 
 8. **Community Feedback:** We will solicit feedback from the community to review and finalize these recommendations.
 9. **Best Practice Development:** We will initiate the drafting of a best practice document to guide community use of date and time components in EML metadata. This will address fidelity and interpretation issues stemming from current usage patterns. We anticipate this to result in discussion.
