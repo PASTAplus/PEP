@@ -1,4 +1,4 @@
-# PEP-2: Add level of abstraction between ACLs and IdPs using unique random IDs for users (PASTA ID)
+# PEP-2: Add level of abstraction between IdP identifiers and EDI applications using unique random EDI identifiers (EDI ID) for users
 
 - Author(s): Roger Dahl
 - Contact: dahl at unm edu
@@ -41,6 +41,23 @@ This resolves the issues mentioned in the Issue Statement. In addition, this has
 
 - This will not prevent users from having separate identities in PASTA, as we plan on a mapping process between accounts, which will be optional.
 
+### Use Cases and REST API Method Definitions
+
+**1a. Create Profile**
+
+Goal: To create a new user profile using an IdP identifier.
+
+**1b. Read Profile**
+
+Goal: To return a user profile associated with an EDI ID.
+
+**1c. Update Profile**
+
+Goal: To update the attributes of a user profile associated with an EDI ID.
+
+**1d. Delete Profile**
+
+Goal: To delete a user profile associated with an EDI ID.
 
 ## Open issue(s)
 
