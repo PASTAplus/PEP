@@ -52,7 +52,7 @@ ACLs for data package resources are declared in the data package's EML metadata 
 
 Both the `service.xml` file and EML metadata use the same XML `<access>` element structure, allowing use of the same ACR processor to determine authorization. In both cases, ACRs allowing access to resources must be explicitly granted, otherwise the resource request is denied.
 
-For ezEML, there is an implicit **write** permission for the owner of a resource. In this case, the owner is identified through the IdP identifier provided through the PASTA authentication token. Resources are held in filesystem directories that map to the owner's identifier and only the owner of the directory may create or modify resources within it. There is exception to this rule where the owner of the resource may grant temporary **write** access to another user of ezEML, enabling collaboration. This process, however, does not provide permanent access to the resource and is revoked when the proxy user completes their actions.
+For ezEML, there is an implicit **write** permission for the owner of a resource. In this case, the owner is identified through the IdP identifier provided through the PASTA authentication token. Resources are held in filesystem directories that map to the owner's identifier and only the owner of the directory may create or modify resources within it. There is an exception to this rule where the owner of the resource may grant temporary **write** access to another user of ezEML, enabling collaboration. This process, however, does not provide permanent access to the resource and is revoked when the proxy user completes their actions.
 
 ## Issue Statement
 
@@ -86,7 +86,7 @@ The ACR registry will be implemented as RDBMS tables with the following schema (
 
 **Figure 3:** Authorization service ACR registry table schema.
 
-The ACR Registry will store ACRs for all applications in the EDI ecosystem. We will use a structure with *collections*, *resources*, and *permissions*. A collection contains zero to many resources, and a resource contains zero to many permissions. Each permission provides *read*, *write* or *chanagePermission* privileges to the principal associated with the ACR. The principal references either a user profile or a group. (A user profile can be a regular user or a system level user, such as the "public" user; both regular users and system users will have a unique PASTA-ID.)
+The ACR Registry will store ACRs for all applications in the EDI ecosystem. We will use a structure with *collections*, *resources*, and *permissions*. A collection contains zero to many resources, and a resource contains zero to many permissions. Each permission provides *read*, *write* or *chanagePermission* privileges to the principal associated with the ACR. The principal references either a user profile or a group. (A user profile can be a regular user or a system level user, such as the "public" user; both regular users and system users will have a unique EDI-ID.)
 
 #### Collection
 
@@ -170,7 +170,7 @@ Notes: This use case supports the existing PASTA data package upload process. Pa
 POST: /auth/v1/eml
 
 addEML(principal, eml)
-    principal: The owner of the data package (may be either a PASTA-ID or an IdP identifier)
+    principal: The owner of the data package (may be either a EDI-ID or an IdP identifier)
     eml: valid EML document as a string
     return:
         200 OK if successful
@@ -217,125 +217,7 @@ addAccess(access, resource_key, resource_label, resource_type, collection_id):
         pasta: changePermission
 ```
 
-**3a. Create Collection**
-
-Goal: To create a collection
-
-Use case:
-
-1. A client sends a collection to the *authorization service*.
-2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
-3. The *authorization service* verifies that the requesting principal is authorized to access the collection.
-4. The *authorization service* creates the collection.
-5. The *authorization service* returns a success message and the collection identifier to the client.
-
-```
-POST: /auth/v1/collection
-
-createCollection(collection_label, collection_type)
-    collection_label: the human readable name of the collection
-    collection_type: the type of collection
-    return:
-        200 OK if successful
-        400 Bad Request if collection is invalid
-        401 Unauthorized if the client does not provide a valid authentication token
-        403 Forbidden if client is not authorized to execute method or access collection
-    body:
-        The collection_id if 200, error message otherwise
-    permissions:
-        authenticated: changePermission
-```
-
-**3b. Update Collection**
-
-Goal: To update a collection
-
-Use case:
-
-1. A client sends a collection to the *authorization service*.
-2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
-3. The *authorization service* verifies that the requesting principal is authorized to access the collection.
-4. The *authorization service* updates the collection.
-5. The *authorization service* returns a success message and the collection identifier to the client.
-
-```
-PUT: /auth/v1/collection/<id>
-
-updateCollection(collection_id, collection_label, collection_type)
-    collection_id: the unique collection identifier
-    collection_label: the human readable name of the collection
-    collection_type: the type of collection
-    return:
-        200 OK if successful
-        400 Bad Request if collection is invalid
-        401 Unauthorized if the client does not provide a valid authentication token
-        403 Forbidden if client is not authorized to execute method or access collection
-        404 If collection is not found
-    body:
-        The collection_id if 200, error message otherwise
-    permissions:
-        authenticated: changePermission
-```
-
-**3c. Delete Collection**
-
-Goal: To delete a collection
-
-Use case:
-
-1. A client sends a collection identifier to the *authorization service*.
-2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
-3. The *authorization service* verifies that the requesting principal is authorized to access the collection.
-4. The *authorization service* deletes the collection.
-5. The *authorization service* returns a success message and the collection identifier to the client.
-
-```
-DELETE: /auth/v1/collection/<id>
-
-deleteCollection(collection_id)
-    collection_id: the unique collection identifier
-    return:
-        200 OK if successful
-        400 Bad Request if collection is invalid
-        401 Unauthorized if the client does not provide a valid authentication token
-        403 Forbidden if client is not authorized to execute method or access collection
-        404 If collection is not found
-    body:
-        The collection_id if 200, error message otherwise
-    permissions:
-        authenticated: changePermission
-```
-
-**3d. Read Collection**
-
-Goal: To read a collection
-
-Use case:
-
-1. A client sends a collection identifier to the *authorization service*.
-2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
-3. The *authorization service* verifies that the requesting principal is authorized to access the collection.
-4. The *authorization service* reads the collection information into a structure.
-5. The *authorization service* returns a success message and the structure to the client.
-
-```
-GET: /auth/v1/collection/<id>
-
-readCollection(collection_id)
-    collection_id: the unique collection identifier
-    return:
-        200 OK if successful
-        400 Bad Request if collection is invalid
-        401 Unauthorized if the client does not provide a valid authentication token
-        403 Forbidden if client is not authorized to execute method or access collection
-        404 If collection is not found
-    body:
-        The collection structure if 200, error message otherwise
-    permissions:
-        authenticated: changePermission
-```
-
-**4a. Create Resource**
+**3a. Create Resource**
 
 Goal: To create a resource
 
@@ -345,28 +227,28 @@ Use case:
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* verifies that the requesting principal is authorized to access the resource.
 4. The *authorization service* creates the resource.
-5. The *authorization service* returns a success message and the resource identifier to the client.
+5. The *authorization service* returns a 200 OK to the client.
 
 ```
 POST: /auth/v1/resource
 
-createResource(resource_key, resource_label, resource_type, collection_id)
+createResource(resource_key, resource_label, resource_type, parent_id)
     resource_key: the unique resource key of the resource
     resource_label: the human readable name of the resource
     resource_type: the type of resource
-    collection_id: the collection identifier (may be `None`)
+    parent_id: the parent identifier (may be `None` for top-level parent (root))
     return:
         200 OK if successful
         400 Bad Request if resource is invalid
         401 Unauthorized if the client does not provide a valid authentication token
         403 Forbidden if client is not authorized to execute method or access resource
     body:
-        The resource_id if 200, error message otherwise
+        Empty if 200 OK, error message otherwise
     permissions:
         authenticated: changePermission
 ```
 
-**4b. Update Resource**
+**3b. Update Resource**
 
 Goal: To update a resource
 
@@ -376,17 +258,16 @@ Use case:
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* verifies that the requesting principal is authorized to access the resource.
 4. The *authorization service* updates the resource.
-5. The *authorization service* returns a success message and the resource identifier to the client.
+5. The *authorization service* returns a 200 OK to the client.
 
 ```
-PUT: /auth/v1/resource/<id>
+PUT: /auth/v1/resource/<key>
 
-updateResource(resource_id, resource_key, resource_label, resource_type, collection_id)
-    resource_id: the uniquue resource identifier
+updateResource(resource_key, resource_label, resource_type, parent_id)
     resource_key: the unique resource key of the resource
     resource_label: the human readable name of the resource
     resource_type: the type of resource
-    collection_id: the collection identifier (may be `None`)
+    parent_id: the parent identifier (may be `None` for top-level parent (root); cannot be child identifier)
     return:
         200 OK if successful
         400 Bad Request if resource is invalid
@@ -394,12 +275,12 @@ updateResource(resource_id, resource_key, resource_label, resource_type, collect
         403 Forbidden if client is not authorized to execute method or access resource
         404 If resource is not found
     body:
-        The resource_id if 200, error message otherwise
+        Empty if 200 OK, error message otherwise
     permissions:
         authenticated: changePermission
 ```
 
-**4c. Delete Resource**
+**3c. Delete Resource**
 
 Goal: To delete a resource
 
@@ -409,13 +290,13 @@ Use case:
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* verifies that the requesting principal is authorized to access the resource.
 4. The *authorization service* deletes the resource.
-5. The *authorization service* returns a success message and the resource identifier to the client.
+5. The *authorization service* returns a 200 OK to the client.
 
 ```
-DELETE: /auth/v1/resource/<id>
+DELETE: /auth/v1/resource/<key>
 
-deleteResource(resource_id)
-    resource_id: the unique resource identifier
+deleteResource(resource_key)
+    resource_key: the unique resource key of the resource
     return:
         200 OK if successful
         400 Bad Request if resource is invalid
@@ -423,12 +304,12 @@ deleteResource(resource_id)
         403 Forbidden if client is not authorized to execute method or access resource
         404 If resource is not found
     body:
-        The resource_id if 200, error message otherwise
+        Empty if 200 OK, error message otherwise
     permissions:
         authenticated: changePermission
 ```
 
-**4d. Read Resource**
+**3d. Read Resource**
 
 Goal: To read a resource
 
@@ -438,13 +319,14 @@ Use case:
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* verifies that the requesting principal is authorized to access the resource.
 4. The *authorization service* reads the resource information into a structure.
-5. The *authorization service* returns a success message and the structure to the client.
+5. The *authorization service* returns a 200 OK and the resource structure to the client.
 
 ```
-GET : /auth/v1/resource/<id>
+GET : /auth/v1/resource/<key>?decendents
 
-readResource(resource_key, resource_label, resource_type, collection_id)
-    resource_id: the unique resource identifier
+readResource(resource_key, descendents)
+    resource_key: the unique resource key of the resource
+    descendents: boolean if resource structure contains descendent children
     return:
         200 OK if successful
         400 Bad Request if resource is invalid
@@ -452,40 +334,12 @@ readResource(resource_key, resource_label, resource_type, collection_id)
         403 Forbidden if client is not authorized to execute method or access resource
         404 If resource is not found
     body:
-        The resource structure if 200, error message otherwise
+        The resource structure if 200 OK, error message otherwise
     permissions:
         authenticated: changePermission
 ```
 
-**4e. Get Resource Identifier**
-
-Goal: To get a resource identifier
-
-Use case:
-
-1. A client sends a resource key to the *authorization service*.
-2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
-3. The *authorization service* verifies that the requesting principal is authorized to access the resource.
-5. The *authorization service* returns a success message and the resource identifier to the client.
-
-```
-GET : /auth/v1/resource/<key>
-
-getResourceIdentifier(resource_key)
-    resource_key: the unique resource key
-    return:
-        200 OK if successful
-        400 Bad Request if resource is invalid
-        401 Unauthorized if the client does not provide a valid authentication token
-        403 Forbidden if client is not authorized to execute method or access resource
-        404 If resource is not found
-    body:
-        The resource_id if 200, error message otherwise
-    permissions:
-        authenticated: changePermission
-```
-
-**5a. Create Rule**
+**4a. Create Rule**
 
 Goal: To create an ACR
 
@@ -495,30 +349,29 @@ Use case:
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* verifies that the requesting principal is authorized to access the ACR, if the ACR exists.
 4. The *authorization service* creates the ACR.
-5. The *authorization service* returns a success message and the permission identifier to the client.
+5. The *authorization service* returns  a 200 OK and the rule identifier to the client.
 
-Notes: The *authorization service* will create a user profile (along with a PASTA-ID) if the principal is not a PASTA-ID.
+Notes: The *authorization service* will create a user profile (along with a EDI-ID) if the principal is not a EDI-ID.
 
 ```
 POST: /auth/v1/rule
 
-createRule(resource_id, principal, principal_type, permission)
-    resource_id: the unique resource identifier
+createRule(resource_key, principal, permission)
+    resource_key: the unique resource key of the resource
     principal: the principal of the ACR
-    principal_type: the type of principal (PROFILE or GROUP)
-    permission: the permission of the ACR (may be `None` if DELETE)
+    permission: the permission of the ACR
     return:
         200 OK if successful
         400 Bad Request if ACR is invalid
         401 Unauthorized if the client does not provide a valid authentication token
         403 Forbidden if client is not authorized to execute method or access ACR
     body:
-        The permission_id if 200, error message otherwise
+        The rule_id if 200  OK, error message otherwise
     permissions:
         authenticated: changePermission
 ```
 
-**5b. Update Rule**
+**4b. Update Rule**
 
 Goal: To update an ACR
 
@@ -535,11 +388,10 @@ Note: It is an error if the client attempts to modify the `changePermission` per
 ```
 PUT: /auth/v1/rule/<id>
 
-updateRule(permission_id, resource_id, principal, principal_type, permission)
-    permission_id: the unique permission identifier
-    resource_id: the unique resource identifier
+updateRule(rule_id, resource_key, principal, permission)
+    rule_id: the unique rule identifier
+    resource_key: the unique resource key of the resource
     principal: the principal of the ACR
-    principal_type: the type of principal (PROFILE or GROUP)
     permission: the permission of the ACR (may be `None` if DELETE)
     return:
         200 OK if successful
@@ -549,30 +401,30 @@ updateRule(permission_id, resource_id, principal, principal_type, permission)
         404 If rule is not found
         422 If no `changePermission` would occur
     body:
-        The permission_id if 200, error message otherwise
+        Empty if 200 OK, error message otherwise
     permissions:
         authenticated: changePermission
 ```
 
-**5c. Delete Rule**
+**4c. Delete Rule**
 
 Goal: To delete an ACR
 
 Use case:
 
-1. A client sends a permission identifier to the *authorization service*.
+1. A client sends a rule identifier to the *authorization service*.
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* verifies that the requesting principal is authorized to access the ACR, if the ACR exists.
 4. The *authorization service* deletes the ACR
-5. The *authorization service* returns a success message and the permission identifier to the client.
+5. The *authorization service* returns a 200 OK and the rule identifier to the client.
 
 Note: It is an error if the client attempts to remove the `changePermission` permission of a principal if no other principal has `changePermission` permission.
 
 ```
 DELETE: /auth/v1/rule/<id>
 
-deleteRule(permission_id)
-    permission_id: the unique permission identifier
+deleteRule(rule_id)
+    rule_id: the unique rule identifier
     return:
         200 OK if successful
         400 Bad Request if ACR is invalid
@@ -581,12 +433,12 @@ deleteRule(permission_id)
         404 If rule is not found
         422 If no `changePermission` would occur
     body:
-        The permission_id if 200, error message otherwise
+        Empty if 200 OK, error message otherwise
     permissions:
         authenticated: changePermission
 ```
 
-**5d. Read Rule**
+**4d. Read Rule**
 
 Goal: To read an ACR
 
@@ -596,13 +448,13 @@ Use case:
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* verifies that the requesting principal is authorized to access the ACR, if the ACR exists.
 4. The *authorization service* reads the ACR into a structure.
-5. The *authorization service* returns a success message and the structure to the client.
+5. The *authorization service* returns a 200 OK and the structure to the client.
 
 ```
 GET: /auth/v1/rule/<id>
 
-readRule(permission_id)
-    permission_id: the unique permissions identifier
+readRule(rule_id)
+    rule_id: the unique rule identifier
     return:
         200 OK if successful
         400 Bad Request if ACR is invalid
@@ -610,7 +462,7 @@ readRule(permission_id)
         403 Forbidden if client is not authorized to execute method or access ACR
         404 If rule is not found
     body:
-        The permission structure if 200, error message otherwise
+        The rule structure if 200 OK, error message otherwise
     permissions:
         authenticated: changePermission
 ```
@@ -630,15 +482,15 @@ Use case:
 ```
 POST: /auth/v1/rules
 
-getACL(resource_id)
-    resource_id: the unique resource identifier
+getACL(resource_key)
+    resource_key: the unique resource key
     return:
         200 OK if successful
         401 Unauthorized if the client does not provide a valid authentication token
         403 Forbidden if client is not authorized to execute method or access to the resource
         404 If no ACRs are found
     body:
-        The ACL structure if 200, error message otherwise
+        The ACL structure if 200 OK, error message otherwise
     permissions:
         authenticated: changePermission
 ```
@@ -656,9 +508,9 @@ Use case:
 ```
 POST: /auth/v1/authorized
 
-isAuthorized(token, resource_id, permission)
+isAuthorized(token, resource_key, permission)
     token: a valid authentication token
-    resource_id: the unique resource identifier
+    resource_key: the unique resource key
     permission: the permission being requested
     return:
         200 OK if authorized
@@ -666,14 +518,14 @@ isAuthorized(token, resource_id, permission)
         403 Forbidden if client is not authorized to execute method or access the resource or if principal is not authorized to access the resource
         404 If the resource_key is not found
     body:
-        Empty if 200, error message otherwise
+        Empty if 200 OK, error message otherwise
     permissions:
         authenticated: changePermission
 ```
 
 **8. Get Resources**
 
-Goal: Return a list of resource identifiers owned by the principal.
+Goal: Return a list of resource keys owned by the principal.
 
 Use case:
 
@@ -682,7 +534,7 @@ Use case:
 3. The *authorization service* returns a success message if the user is authorized with the list of resource keys and resource labels in the body of the response.
 
 ```
-POST: /auth/v1/resources
+GET: /auth/v1/resources
 
 getResources(token)
     token: a valid authentication token
@@ -692,7 +544,7 @@ getResources(token)
         403 Forbidden if client is not authorized to execute method
         404 If no resources are found
     body:
-        Resource list if 200, error message otherwise
+        Resource list structure if 200 OK error message otherwise
     permissions:
         authenticated: changePermission
 ```
