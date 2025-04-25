@@ -78,6 +78,8 @@ This service will be responsible for the following:
 
 **Figure 2:** Proposed EDI application ecosystem with the addition of an authorization service.
 
+**TODO: This section needs to be rewritten with the current model in mind**
+
 ### Access Control Rule Registry
 
 The ACR registry will be implemented as RDBMS tables with the following schema (Figure 3):
@@ -86,14 +88,7 @@ The ACR registry will be implemented as RDBMS tables with the following schema (
 
 **Figure 3:** Authorization service ACR registry table schema.
 
-The ACR Registry will store ACRs for all applications in the EDI ecosystem. We will use a structure with *collections*, *resources*, and *permissions*. A collection contains zero to many resources, and a resource contains zero to many permissions. Each permission provides *read*, *write* or *chanagePermission* privileges to the principal associated with the ACR. The principal references either a user profile or a group. (A user profile can be a regular user or a system level user, such as the "public" user; both regular users and system users will have a unique EDI-ID.)
-
-#### Collection
-
-- `id` - An auto-incrementing integer that uniquely identifies each table row.
-- `collection.label` - A human-readable name to display for the collection.
-- `collection.type` - A string that describes the type of the collection.
-- `collection.created_date` - The date and time the collection was created.
+The ACR Registry will store ACRs for all applications in the EDI ecosystem. We will use a structure with *resources* and *rules*. A  resource contains zero to many rules. Each permission provides *read*, *write* or *chanagePermission* privileges to the principal associated with the ACR. The principal references either a user profile or a group, both referenced by an EDI-ID.
 
 #### Resource
 
@@ -103,13 +98,12 @@ The ACR Registry will store ACRs for all applications in the EDI ecosystem. We w
 - `resource.type` - The resource type.
 - `resource.created_date` - The date and time the resource was created.
 
-#### Permission
+#### Rule
 
-- `permission.resource_id` - A reference to the resource to which the permission applies.
-- `permission.principal_id` - A reference to the user profile or group to which the permission is granted.
-- `permission.principal_type` - The principal class (enum of `PROFILE` or `GROUP`) of the permission.
-- `permission.level` - The access level granted by this permission (enum of `read`, `write` or `changePermission`).
-- `permission.granted_date` - The grant date and time of the permission.
+- `rule.resource_id` - A reference to the resource to which the rule applies.
+- `rule.principal_id` - A reference to the user profile or group to which the permission is granted.
+- `rule.level` - The permission granted by this rule (enum of `read`, `write` or `changePermission`).
+- `rule.granted_date` - The grant date and time of the rule.
 
 For example, if we are tracking permissions for a data package with metadata and data entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.collection_id` referencing the `knb-lter-bes.1234.5` collection. The `resource.label` might be `water.csv` while the `resource.key` would be the PASTA URI `https://pasta.lternet.edu/package/data/eml/knb-lter-bes.1234.5/3fb3ef2e559fa42956b69226e9069058`. The `resource.type` would be `data`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.principal_id` of a user profile or user group, and a `permission.principal_type` of either `PROFILE` or `GROUP`. The `permission.level` would specify the level of access granted to the principal, and would be `read`, `write` or `changePermission`.
 
@@ -164,8 +158,6 @@ Use case:
 4. The *authorization service* adds the ACL ACRs to the ACR registry.
 5. The *authorization service* returns a success message to client.
 
-Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the existing `access_matrix`. This should, however, change for consistency: the principal owner should be added into the ACR registry with the "changePermission" permission. This method should create a "Data Package" collection.
-
 ```
 POST: /auth/v1/eml
 
@@ -183,6 +175,8 @@ addEML(principal, eml)
         pasta: changePermission
 ```
 
+Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the existing `access_matrix`. This should, however, change for consistency: the principal owner should be added into the ACR registry with the "changePermission" permission. This method should create a "Data Package" collection.
+
 **2. Add Access**
 
 Goal: To parse a valid `<access>` element and add its ACRs to the *authorization service* ACR registry.
@@ -194,8 +188,6 @@ Use case:
 3. The *authorization service* parses the `<access>` element ACL and extracts the ACRs.
 4. The *authorization service* adds the ACL ACRs to the ACR registry.
 5. The *authorization service* returns a success message to the client.
-
-Notes: This use case supports adding ACLs for PASTA API methods through the `service.xml` file. In this case, the `service.xml` file is not a complete EML document; they consist of ACLs in the form of `<access>` elements. The principal owner of the service method (or other resource) should be added into the ACR registry with the "changePermission" permission; in the case of service methods, the principal owner will be "pasta."
 
 ```
 POST: /auth/v1/access
@@ -216,6 +208,8 @@ addAccess(access, resource_key, resource_label, resource_type, collection_id):
     permissions:
         pasta: changePermission
 ```
+
+Notes: This use case supports adding ACLs for PASTA API methods through the `service.xml` file. In this case, the `service.xml` file is not a complete EML document; they consist of ACLs in the form of `<access>` elements. The principal owner of the service method (or other resource) should be added into the ACR registry with the "changePermission" permission; in the case of service methods, the principal owner will be "pasta."
 
 **3a. Create Resource**
 
@@ -322,7 +316,7 @@ Use case:
 5. The *authorization service* returns a 200 OK and the resource structure to the client.
 
 ```
-GET : /auth/v1/resource/<key>?decendents
+GET : /auth/v1/resource/<key>?descendents
 
 readResource(resource_key, descendents)
     resource_key: the unique resource key of the resource
@@ -349,9 +343,7 @@ Use case:
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* verifies that the requesting principal is authorized to access the ACR, if the ACR exists.
 4. The *authorization service* creates the ACR.
-5. The *authorization service* returns  a 200 OK and the rule identifier to the client.
-
-Notes: The *authorization service* will create a user profile (along with a EDI-ID) if the principal is not a EDI-ID.
+5. The *authorization service* returns  a 200 OK to the client.
 
 ```
 POST: /auth/v1/rule
@@ -366,10 +358,12 @@ createRule(resource_key, principal, permission)
         401 Unauthorized if the client does not provide a valid authentication token
         403 Forbidden if client is not authorized to execute method or access ACR
     body:
-        The rule_id if 200  OK, error message otherwise
+        Empty if 200 OK, error message otherwise
     permissions:
         authenticated: changePermission
 ```
+
+Notes: The *authorization service* will create a user profile (along with a EDI-ID) if the principal is not a EDI-ID.
 
 **4b. Update Rule**
 
@@ -383,13 +377,10 @@ Use case:
 4. The *authorization service* updates the ACR.
 5. The *authorization service* returns a success message and the permission identifier to the client.
 
-Note: It is an error if the client attempts to modify the `changePermission` permission of a principal if no other principal has `changePermission` permission.
-
 ```
-PUT: /auth/v1/rule/<id>
+PUT: /auth/v1/rule/<key>/<principal>
 
-updateRule(rule_id, resource_key, principal, permission)
-    rule_id: the unique rule identifier
+updateRule(resource_key, principal, permission)
     resource_key: the unique resource key of the resource
     principal: the principal of the ACR
     permission: the permission of the ACR (may be `None` if DELETE)
@@ -406,6 +397,8 @@ updateRule(rule_id, resource_key, principal, permission)
         authenticated: changePermission
 ```
 
+Note: It is an error if the client attempts to modify the `changePermission` permission of a principal if no other principal has `changePermission` permission.
+
 **4c. Delete Rule**
 
 Goal: To delete an ACR
@@ -418,13 +411,12 @@ Use case:
 4. The *authorization service* deletes the ACR
 5. The *authorization service* returns a 200 OK and the rule identifier to the client.
 
-Note: It is an error if the client attempts to remove the `changePermission` permission of a principal if no other principal has `changePermission` permission.
-
 ```
-DELETE: /auth/v1/rule/<id>
+DELETE: /auth/v1/rule/<key>/<principal>
 
 deleteRule(rule_id)
-    rule_id: the unique rule identifier
+    resource_key: the unique resource key of the resource
+    principal: the principal of the ACR
     return:
         200 OK if successful
         400 Bad Request if ACR is invalid
@@ -437,6 +429,8 @@ deleteRule(rule_id)
     permissions:
         authenticated: changePermission
 ```
+
+Note: It is an error if the client attempts to remove the `changePermission` permission of a principal if no other principal has `changePermission` permission.
 
 **4d. Read Rule**
 
@@ -451,10 +445,11 @@ Use case:
 5. The *authorization service* returns a 200 OK and the structure to the client.
 
 ```
-GET: /auth/v1/rule/<id>
+GET: /auth/v1/rule/<key>/<principal>
 
-readRule(rule_id)
-    rule_id: the unique rule identifier
+readRule(resource_key, principal)
+    resource_key: the unique resource key of the resource
+    principal: the principal of the ACR
     return:
         200 OK if successful
         400 Bad Request if ACR is invalid
