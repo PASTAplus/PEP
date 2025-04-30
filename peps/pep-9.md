@@ -84,7 +84,7 @@ This service will be responsible for the following:
 
 The ACR registry will be implemented as RDBMS tables with the following schema (Figure 3):
 
-![](images/pep9-acl-tables.png)
+![](./images/pep9-acl-tables.png)
 
 **Figure 3:** Authorization service ACR registry table schema.
 
