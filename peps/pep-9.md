@@ -88,11 +88,12 @@ The ACR registry will be implemented as RDBMS tables with the following schema (
 
 **Figure 3:** Authorization service ACR registry table schema.
 
-The ACR Registry will store ACRs for all applications in the EDI ecosystem. We will use a structure with *resources* and *rules*. A  resource contains zero to many rules. Each permission provides *read*, *write* or *chanagePermission* privileges to the principal associated with the ACR. The principal references either a user profile or a group, both referenced by an EDI-ID.
+The ACR Registry will store ACRs for all applications in the EDI ecosystem. We will use a structure with *resources*, *rules* and *principals*. A resource may be a child of another resource, and may contain zero to many rules. Each rule provides *read*, *write* or *changePermission* privileges to the principal associated with the ACR. The principal references either a user profile or a group. A user profile can be a regular user or a system level user, such as the "public" user; both regular users and system users will have a unique EDI ID.
 
 #### Resource
 
-- `resource.collection_id` - A reference to the collection to which the resource belongs.
+- `resource.id` - Row ID of the resource (referenced in rules).
+- `resource.parent_id` - An optional reference to a parent resource, making this resource a child of the parent resource.
 - `resource.key` - A unique system identifier for the resource.
 - `resource.label` - A human-readable name for the resource.
 - `resource.type` - The resource type.
@@ -100,12 +101,19 @@ The ACR Registry will store ACRs for all applications in the EDI ecosystem. We w
 
 #### Rule
 
+- `rule.id` - Row ID of the rule.
 - `rule.resource_id` - A reference to the resource to which the rule applies.
-- `rule.principal_id` - A reference to the user profile or group to which the permission is granted.
-- `rule.level` - The permission granted by this rule (enum of `read`, `write` or `changePermission`).
+- `rule.principal_id` - A reference to the user profile or group to which the rule is granted.
+- `rule.level` - The access level granted by this rule (enum of `read`, `write` or `changePermission`).
 - `rule.granted_date` - The grant date and time of the rule.
 
-For example, if we are tracking permissions for a data package with metadata and data entities, the `collection.label` might be `knb-lter-bes.1234.5`, and the `collection.type` would be `package`. Linked to this collection would be a number of resources. Each resource would have a `resource.collection_id` referencing the `knb-lter-bes.1234.5` collection. The `resource.label` might be `water.csv` while the `resource.key` would be the PASTA URI `https://pasta.lternet.edu/package/data/eml/knb-lter-bes.1234.5/3fb3ef2e559fa42956b69226e9069058`. The `resource.type` would be `data`. Permissions would then be linked to these resources via `permission.resource_id`. Each permission would have a `permission.principal_id` of a user profile or user group, and a `permission.principal_type` of either `PROFILE` or `GROUP`. The `permission.level` would specify the level of access granted to the principal, and would be `read`, `write` or `changePermission`.
+#### Principal
+
+- `principal.id` - Row ID of the principal (referenced in rules).
+- `principal.entity_id` - The unique identifier of the principal (either a user profile or group).
+- `principal.entity_type` - The principal class (enum of `PROFILE` or `GROUP`) of the principal.
+
+For example, if we are tracking permissions for a data package with metadata and data entities, we would set up a tree of resources. The `resource.label` of the root resource might be `knb-lter-bes.1234.5`, and the `resource.type` would be `package`. To this parent, we would add two child resources with labels `Data` and `Metadata`. These child resources would then have their own children, representing the individual data and metadata entities in the package. So a resource with parent `Data` might have `resource.label` of `water.csv` while the `resource.key` would be the PASTA URI `https://pasta.lternet.edu/package/data/eml/knb-lter-bes.1234.5/3fb3ef2e559fa42956b69226e9069058`. The `resource.type` would be `data`. Rules would then be linked to these resources via `rule.resource_id`. Each rule would have a `rule.principal_id` of a user profile or user group. The `rule.level` would specify the level of access granted to the principal, and would be `read`, `write` or `changePermission`. The principal would be linked to the `principal.id` of the principal table. The `principal.entity_id` would be the unique identifier of the principal, which could be a user profile or group, and `principal.entity_type` would be `PROFILE` or `GROUP`.
 
 
 ### Authorization algorithm
@@ -158,6 +166,11 @@ Use case:
 4. The *authorization service* adds the ACL ACRs to the ACR registry.
 5. The *authorization service* returns a success message to client.
 
+<<<<<<< Updated upstream
+=======
+Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the existing `access_matrix`. This should, however, change for consistency: the principal owner should be added into the ACR registry with the "changePermission" permission. This method should create a "Data Package" resource tree.
+
+>>>>>>> Stashed changes
 ```
 POST: /auth/v1/eml
 
@@ -183,7 +196,7 @@ Goal: To parse a valid `<access>` element and add its ACRs to the *authorization
 
 Use case:
 
-1. A client sends an `<access>` element ACL and the resource_key, resource_label, resource_type, and collection_id to the *authorization service* to register ACRs.
+1. A client sends an `<access>` element ACL and the resource_key, resource_label, resource_type to the *authorization service* to register ACRs.
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* parses the `<access>` element ACL and extracts the ACRs.
 4. The *authorization service* adds the ACL ACRs to the ACR registry.
