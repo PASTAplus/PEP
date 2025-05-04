@@ -476,7 +476,7 @@ readRule(resource_key, principal)
         authenticated: changePermission
 ```
 
-**6. Get ACL**
+**5. Get ACL**
 
 Goal: To return the ACL from the *authorization service* ACR registry for a resource identifier.
 
@@ -504,7 +504,7 @@ getACL(resource_key)
         authenticated: changePermission
 ```
 
-**7. Is Authorized**
+**6. Is Authorized**
 
 Goal: To determine if a principal is authorized to access a resource.
 
@@ -532,7 +532,7 @@ isAuthorized(token, resource_key, permission)
         authenticated: changePermission
 ```
 
-**8. Get Resources**
+**7. Get Resources**
 
 Goal: Return a list of resource keys owned by the principal.
 
