@@ -558,6 +558,32 @@ getResources(token)
         authenticated: changePermission
 ```
 
+**8. Get Resource Tree**
+
+Goal: Return a resource tree structure given a resource key.
+
+Use case:
+
+1. A client sends an authentication token to the *authorization service* in the message body.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* returns a success message if the user is authorized with the resource tree data structure in the body of the response.
+
+```
+GET: /auth/v1/resource_tree/{resource_key}
+
+getResources(resource_key)
+    resource_key: the unique resource key
+    return:
+        200 OK if authorized
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method
+        404 If no resource is found for the given resource key
+    body:
+        Resource tree data structure if 200 OK error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
 ### Implementation Strategy for PASTA
 
 The *authorization service* service must integrate seamlessly into PASTA's current authorization workflow. Three separate tasks must be addressed: (1) Service method ACRs for both the DPM and AM services must be migrated to the *authorization service* ACR registry; (2) the existing `access_matrix` database table, including principal owners stored in the DPM `resource_registry` database table, must be migrated to the *authorization service* ACR registry with PASTA IDs; and (3) the DPM service must be modified to use the REST API methods of the *authorization service* service (above) in lieu of its internal authorization processing.
