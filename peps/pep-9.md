@@ -90,8 +90,6 @@ The ACR registry will be implemented as RDBMS tables with the following schema (
 
 The ACR Registry will store ACRs for all application resources in the EDI ecosystem. We will use a structure with *resources*, *rules*, and *principals*:
 
-The principal references either a user profile or a group. A user profile can be a regular user or a system level user, such as the "public" user; both regular users and system users will have a unique EDI-ID.
-
 #### Resource
 
 A resource may be singular or consist of a heiarchical set (as for data packages) where a resource object is the child of another resource, forming a directed acyclic graph (DAG) where children may have only one parent. Resources have zero to many access rules, each rule containing a permission and principal, the subject of the rule. Resources are identified by a unique key provided by the application, along with a human-readable label (the label does not have to be unique).
@@ -113,6 +111,8 @@ A resource may be singular or consist of a heiarchical set (as for data packages
 - `rule.granted_date` - The grant date and time of the rule.
 
 #### Principal
+
+The principal references either a user profile or a group. A user profile can be a regular user or a system level user, such as the "public" user; both regular users and system users will have a unique EDI-ID.
 
 - `principal.id` - Row ID of the principal (referenced in rules).
 - `principal.subject_id` - A reference to the subject, either a profile or group.
