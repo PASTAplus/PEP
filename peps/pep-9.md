@@ -88,32 +88,37 @@ The ACR registry will be implemented as RDBMS tables with the following schema (
 
 **Figure 3:** Authorization service ACR registry table schema.
 
-The ACR Registry will store ACRs for all applications in the EDI ecosystem. We will use a structure with *resources*, *rules*, and *principals*. A resource may be a child of another resource, forming a directed acyclic graph (DAG) where children may have only one parent, and may contain zero to many rules. Each rule provides *read*, *write* or *changePermission* privileges to the principal associated with the ACR. The principal references either a user profile or a group. A user profile can be a regular user or a system level user, such as the "public" user; both regular users and system users will have a unique EDI-ID.
+The ACR Registry will store ACRs for all application resources in the EDI ecosystem. We will use a structure with *resources*, *rules*, and *principals*:
+
+The principal references either a user profile or a group. A user profile can be a regular user or a system level user, such as the "public" user; both regular users and system users will have a unique EDI-ID.
 
 #### Resource
+
+A resource may be singular or consist of a heiarchical set (as for data packages) where a resource object is the child of another resource, forming a directed acyclic graph (DAG) where children may have only one parent. Resources have zero to many access rules, each rule containing a permission and principal, the subject of the rule. Resources are identified by a unique key provided by the application, along with a human-readable label (the label does not have to be unique).
 
 - `resource.id` - Row ID of the resource (referenced in rules).
 - `resource.parent_id` - An optional reference to a parent resource, making this resource a child of the parent resource.
 - `resource.key` - A unique system identifier for the resource.
 - `resource.label` - A human-readable name for the resource.
 - `resource.type` - The resource type.
-- `resource.created_date` - The date and time the resource was created.
 
 #### Rule
+
+ Each rule uniquely maps a resource to a principal subject (i.e., user profile or group) and a permission (*read*, *write* or *changePermission*), defining how the principal can access the resource.
 
 - `rule.id` - Row ID of the rule.
 - `rule.resource_id` - A reference to the resource to which the rule applies.
 - `rule.principal_id` - A reference to the user profile or group to which the rule is granted.
-- `rule.level` - The access level granted by this rule (enum of `read`, `write` or `changePermission`).
+- `rule.permission` - The access permission granted by this rule (enum of `read`, `write` or `changePermission`).
 - `rule.granted_date` - The grant date and time of the rule.
 
 #### Principal
 
 - `principal.id` - Row ID of the principal (referenced in rules).
-- `principal.profile_or_group_id` - A reference to a profile or group.
-- `principal.type_enum` - The principal class (enum of `PROFILE` or `GROUP`) of the principal.
+- `principal.subject_id` - A reference to the subject, either a profile or group.
+- `principal.subject_type` - The principal subject type (enum of `PROFILE` or `GROUP`).
 
-For example, if we are tracking permissions for a data package with metadata and data entities, we would set up an inverted tree of resources (i.e., DAG). The `resource.label` of the root resource might be `knb-lter-bes.1234.5`, and the `resource.type` would be `package`. To this parent, we would add two child resources of `resource.type` `collection` and with labels `data` and `metadata`. These child resources would then have their own children, representing the individual data and metadata entities in the package. So a resource with parent `data` might have `resource.label` of `water.csv` while the `resource.key` would be the PASTA URI `https://pasta.lternet.edu/package/data/eml/knb-lter-bes.1234.5/3fb3ef2e559fa42956b69226e9069058`. The `resource.type` would be `data`. Rules would then be linked to these resources via `rule.resource_id`. Each rule would have a `rule.principal_id` of a user profile or user group. The `rule.level` would specify the level of access granted to the principal, and would be `read`, `write` or `changePermission`. The principal would be linked to the `principal.id` of the principal table. The `principal.profile_or_group_id` would be the row ID of a row in the Profile or Group table, and `principal.type_enum` would be `PROFILE` or `GROUP`.
+For example, if we are tracking permissions for a data package with metadata and data entities, we would set up an inverted tree (DAG) of resources (Figure 4). The `resource.label` of the root resource might be `knb-lter-bes.1234.5`, and the `resource.type` would be `package`. To this parent, we would add two child resources of `resource.type` `collection` and with labels `data` and `metadata`. These child resources would then have their own children, representing the individual data and metadata entities in the package. So a resource with parent `data` might have `resource.label` of `water.csv` while the `resource.key` would be the PASTA URI `https://pasta.lternet.edu/package/data/eml/knb-lter-bes.1234.5/3fb3ef2e559fa42956b69226e9069058`. The `resource.type` would be `data`. Rules would then be linked to these resources via `rule.resource_id`. Each rule would have a `rule.principal_id` of a user profile or user group. The `rule.permission` would specify the permission of access granted to the principal, and would be `read`, `write` or `changePermission`. The principal would be linked to the `principal.id` of the principal table. The `principal.subject_id` would be the row ID of a row in the Profile or Group table, and `principal.subject_type` would be `PROFILE` or `GROUP`.
 
 ![](./images/pep9-resource_tree.png)
 
