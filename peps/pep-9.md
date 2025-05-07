@@ -211,12 +211,11 @@ Use case:
 ```
 POST: /auth/v1/access
 
-addAccess(access, resource_key, resource_label, resource_type, collection_id):
+addAccess(access, resource_key, resource_label, resource_type):
     access: valid <access> element
     resource_key: resource key for the <access> element
     resource_label: the human readable name of the resource
     resource_type: the type of resource
-    collection_id: the collection identifier (may be `None`)
     return:
         200 OK if successful
         400 Bad Request if <access> element or the other parameters are invalid
@@ -245,11 +244,11 @@ Use case:
 ```
 POST: /auth/v1/resource
 
-createResource(resource_key, resource_label, resource_type, parent_id)
+createResource(resource_key, resource_label, resource_type, parent_resource_key)
     resource_key: the unique resource key of the resource
     resource_label: the human readable name of the resource
     resource_type: the type of resource
-    parent_id: the parent identifier (may be `None` for top-level parent (root))
+    parent_resource_key: the resource key of the parent (may be `None` for top-level parent (root))
     return:
         200 OK if successful
         400 Bad Request if resource is invalid
@@ -276,11 +275,11 @@ Use case:
 ```
 PUT: /auth/v1/resource/<key>
 
-updateResource(resource_key, resource_label, resource_type, parent_id)
+updateResource(resource_key, resource_label, resource_type, parent_resource_key)
     resource_key: the unique resource key of the resource
     resource_label: the human readable name of the resource
     resource_type: the type of resource
-    parent_id: the parent identifier (may be `None` for top-level parent (root); cannot be child identifier)
+    parent_resource_key: the resource key of the parent (may be `None` for top-level parent (root))
     return:
         200 OK if successful
         400 Bad Request if resource is invalid
@@ -433,7 +432,7 @@ Use case:
 ```
 DELETE: /auth/v1/rule/<key>/<principal>
 
-deleteRule(rule_id)
+deleteRule(resource_key, principal)
     resource_key: the unique resource key of the resource
     principal: the principal of the ACR
     return:
@@ -481,6 +480,34 @@ readRule(resource_key, principal)
         authenticated: changePermission
 ```
 
+**4e. List Rules**
+
+Goal: To list rules of a specific principal
+
+Use case:
+
+1. A client sends a permission identifier to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* reads the list of ACRs into a structure.
+4. The *authorization service* returns a 200 OK and the structure to the client.
+
+```
+GET: /auth/v1/rule/<principal>
+
+listRules(principal)
+    principal: the principal of the ACRs
+    return:
+        200 OK if successful
+        400 Bad Request if principal is invalid
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access ACRs
+        404 If principal is not found
+    body:
+        The rule list structure if 200 OK, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
 **5. Get ACL**
 
 Goal: To return the ACL from the *authorization service* ACR registry for a resource identifier.
@@ -494,7 +521,7 @@ Use case:
 5. The *authorization service* returns a succes message and the structure to the client.
 
 ```
-POST: /auth/v1/rules
+GET: /auth/v1/rules/<key>
 
 getACL(resource_key)
     resource_key: the unique resource key
