@@ -70,8 +70,6 @@ The following claims are included in the payload of JWT tokens returned by the E
 | groups          | List of EDI group identifiers |
 | isEmailEnabled  | Email notifications enabled   |
 | isEmailVerified | Email address verified        |
-| isVetted        | User is vetted                |
-| isAuthenticated | User is authenticated         |
 | identityId      | Internal EDI Identity ID      |
 
 Specifics on usage of these claims in the context of PASTA:
@@ -96,10 +94,11 @@ Timestamps:
 Custom claims:
 
 - `groups`: List of EDI group identifiers, with cardinality zero to many. This claim lists the groups in which the user is a member. See [PEP-7](./pep-7.md) for a broader discussion about groups.
+  - System groups:
+    - `isVetted` - Group indicating whether the user has been vetted by EDI. Vetted users are granted elevated access in PASTA.
+    - `isAuthenticated`: Group indicating whether the user has signed in.
 - `isEmailEnabled`: Flag that the user has approved sending automated notifications to the provided email address. Even if this flag is not set, we may send important emails to the user.
 - `isEmailVerified`: Flag that we have verified that the user is able to receive emails at the address provided in `email`.
-- `isVetted`: Flag indicating whether the user has been vetted by EDI. Vetted users are granted elevated access in PASTA.
-- `isAuthenticated`: Flag indicating that the user has signed in. This will be `true` if the user has authenticated via EDI LDAP or via one of the supported 3rd party identity providers. If will be `false` if the token has been automatically issued to a public, unauthenticated user.
 - `identityId`: Internal PASTA Identity ID. This is a unique identifier for the identity provider and account used for signing in to the profile. Since a user may have multiple accounts linked to their profile, this identifier can change with each sign-in. It is used internally in the Authn account linking procedure and may be used in future APIs to provide information about the user's identity provider and current accounts. If the token is issued to a public, unauthenticated user, this claim will have value `0`.
 - `previousProfiles`: A list of PASTA IDs of profiles that have previously belonged to the user designated by `sub`. If a user deletes a profile, or unlinks an account from a profile, the profile is added to this list, so that client applications can consolidate information in old profiles into the current one.
 - `idpName`: The name of the identity provider used for signing in to the profile. As identity provider identifiers are not necessarily globally unique, we use this field to distinguish between different identity providers. It is a lower case string, currently 'ldap', 'microsoft', 'google', 'orcid' or 'github'. The `pastaIdpName` and `pastaIdpUid` fields are guaranteed to be unique together.
