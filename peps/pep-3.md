@@ -55,28 +55,28 @@ A JWT token consists of three parts separated by dots: the header, the payload, 
 
 The following claims are included in the payload of JWT tokens returned by the EDI Authentication (Authn) service:
 
-| Claim                | Description                     |
-|----------------------|---------------------------------|
-| sub                  | PASTA user profile identifier   |
-| cn                   | Common name                     |
-| gn                   | Given name                      |
-| email                | Email address                   |
-| hd                   | Hosted domain                   |
-| iss                  | Issuer                          |
-| sn                   | System notification             |
-| iat                  | Issued at                       |
-| nbf                  | Not before                      |
-| exp                  | Expiration                      |
-| pastaGroups          | List of PASTA group identifiers |
-| pastaIsEmailEnabled  | Email notifications enabled     |
-| pastaIsEmailVerified | Email address verified          |
-| pastaIsVetted        | User is vetted                  |
-| pastaIsAuthenticated | User is authenticated           |
-| pastaIdentityId      | PASTA Identity ID               |
+| Claim           | Description                   |
+|-----------------|-------------------------------|
+| sub             | EDI user profile identifier   |
+| cn              | Common name                   |
+| gn              | Given name                    |
+| email           | Email address                 |
+| hd              | Hosted domain                 |
+| iss             | Issuer                        |
+| sn              | System notification           |
+| iat             | Issued at                     |
+| nbf             | Not before                    |
+| exp             | Expiration                    |
+| groups          | List of EDI group identifiers |
+| isEmailEnabled  | Email notifications enabled   |
+| isEmailVerified | Email address verified        |
+| isVetted        | User is vetted                |
+| isAuthenticated | User is authenticated         |
+| identityId      | Internal EDI Identity ID      |
 
 Specifics on usage of these claims in the context of PASTA:
 
-- `sub`: Unique, immutable identifier for a user profile in PASTA. This identifies the user for which the token was issued. It is created when a user creates a profile. The identifier is on the form `PASTA-<UUID-HEX>`, where `<UUID-HEX>` is a 32-character hexadecimal string. We refer to identifiers on this form as PASTA identifiers. There are two types of PASTA identifiers; one for users and one for groups. 
+- `sub`: Unique, immutable identifier for a user profile in PASTA. This identifies the user for which the token was issued. It is created when a user creates a profile. The identifier is on the form `EDI-<HEX-UUID>`, where `<HEX-UUID>` is a 32-character hexadecimal string. We refer to identifiers on this form as EDI identifiers. There are two types of EDI identifiers; one for users and one for groups.
 - `cn`: Full name of the user. This is a free form field which may be modified by the user. It is meant for display only and no semantics should be inferred.
 - `gn`: First name of the user. This contains the first word of the `cn`, or the full `cn` if the `cn` contains only one word.
 - `email`: The user's email address. This is the email address provided by the user.
@@ -95,24 +95,24 @@ Timestamps:
 
 Custom claims:
 
-- `pastaGroups`: List of PASTA group identifiers, with cardinality zero to many. This claim lists the groups in which the user is a member. See [PEP-7](./pep-7.md) for a broader discussion about groups.
-- `pastaIsEmailEnabled`: Flag that the user has approved sending automated notifications to the provided email address. Even if this flag is not set, we may send important emails to the user.
-- `pastaIsEmailVerified`: Flag that we have verified that the user is able to receive emails at the address provided in `email`.
-- `pastaIsVetted`: Flag indicating whether the user has been vetted by EDI. Vetted users are granted elevated access in PASTA.
-- `pastaIsAuthenticated`: Flag indicating that the user has signed in. This will be `true` if the user has authenticated via EDI LDAP or via one of the supported 3rd party identity providers. If will be `false` if the token has been automatically issued to a public, unauthenticated user.
-- `pastaIdentityId`: Internal PASTA Identity ID. This is a unique identifier for the identity provider and account used for signing in to the profile. Since a user may have multiple accounts linked to their profile, this identifier can change with each sign-in. It is used internally in the Authn account linking procedure and may be used in future APIs to provide information about the user's identity provider and current accounts. If the token is issued to a public, unauthenticated user, this claim will have value `0`.
-- `pastaPreviousProfiles`: A list of PASTA IDs of profiles that have previously belonged to the user designated by `sub`. If a user deletes a profile, or unlinks an account from a profile, the profile is added to this list, so that client applications can consolidate information in old profiles into the current one.
-- `pastaIdpName`: The name of the identity provider used for signing in to the profile. As identity provider identifiers are not necessarily globally unique, we use this field to distinguish between different identity providers. It is a lower case string, currently 'ldap', 'microsoft', 'google', 'orcid' or 'github'. The `pastaIdpName` and `pastaIdpUid` fields are guaranteed to be unique together.
-- `pastaIdpUid`: The identity provider's unique identifier for the user who signed in to the current session. This is intended to help support client applications as they migrate from identifying users by their IdP UID to using the PASTA ID (`sub` field).
-- `pastaIdpCname`: The user's common name as provided by the identity provider. This may be different from the `cn` field, as the `cn` field holds the common name that is part of the user's profile.
+- `groups`: List of EDI group identifiers, with cardinality zero to many. This claim lists the groups in which the user is a member. See [PEP-7](./pep-7.md) for a broader discussion about groups.
+- `isEmailEnabled`: Flag that the user has approved sending automated notifications to the provided email address. Even if this flag is not set, we may send important emails to the user.
+- `isEmailVerified`: Flag that we have verified that the user is able to receive emails at the address provided in `email`.
+- `isVetted`: Flag indicating whether the user has been vetted by EDI. Vetted users are granted elevated access in PASTA.
+- `isAuthenticated`: Flag indicating that the user has signed in. This will be `true` if the user has authenticated via EDI LDAP or via one of the supported 3rd party identity providers. If will be `false` if the token has been automatically issued to a public, unauthenticated user.
+- `identityId`: Internal PASTA Identity ID. This is a unique identifier for the identity provider and account used for signing in to the profile. Since a user may have multiple accounts linked to their profile, this identifier can change with each sign-in. It is used internally in the Authn account linking procedure and may be used in future APIs to provide information about the user's identity provider and current accounts. If the token is issued to a public, unauthenticated user, this claim will have value `0`.
+- `previousProfiles`: A list of PASTA IDs of profiles that have previously belonged to the user designated by `sub`. If a user deletes a profile, or unlinks an account from a profile, the profile is added to this list, so that client applications can consolidate information in old profiles into the current one.
+- `idpName`: The name of the identity provider used for signing in to the profile. As identity provider identifiers are not necessarily globally unique, we use this field to distinguish between different identity providers. It is a lower case string, currently 'ldap', 'microsoft', 'google', 'orcid' or 'github'. The `pastaIdpName` and `pastaIdpUid` fields are guaranteed to be unique together.
+- `idpUid`: The identity provider's unique identifier for the user who signed in to the current session. This is intended to help support client applications as they migrate from identifying users by their IdP UID to using the PASTA ID (`sub` field).
+- `idpCname`: The user's common name as provided by the identity provider. This may be different from the `cn` field, as the `cn` field holds the common name that is part of the user's profile.
 
-Note that when client transitions are complete, we plan on deprecating and eventually removing the `pastaIdpName`, `pastaIdpUid`, and `pastaIdpCname` fields.
+Note that when client transitions are complete, we plan on deprecating and eventually removing the `idpName`, `idpUid`, and `idpCname` fields.
 
 #### Example payload
 
 ```json
 { 
-  "sub": "PASTA-b4022bba0474451785dc244143c29f4d",
+  "sub": "EDI-b4022bba0474451785dc244143c29f4d",
   "cn": "Mary Smith",
   "gn": "Mary",
   "email": "mary@marysmith.org",
@@ -122,22 +122,23 @@ Note that when client transitions are complete, we plan on deprecating and event
   "iat": "1731516687",
   "nbf": "1731516687",
   "exp": "1731520287",
-  "pastaGroups": [
-    "PASTA-3e592810230b45e3933a8341da02a873",
-    "PASTA-80ffbe75703f46d8b2fe3b2c7af67b5f",
-    "PASTA-a597bcf3f3414fe783c230d4e9c6e4f6"
+  "groups": [
+    "EDI-3e592810230b45e3933a8341da02a873",
+    "EDI-80ffbe75703f46d8b2fe3b2c7af67b5f",
+    "EDI-a597bcf3f3414fe783c230d4e9c6e4f6"
   ],
-  "pastaIsEmailEnabled": true,
-  "pastaIsEmailVerified": true,
-  "pastaIsVetted": false,
-  "pastaIsAuthenticated": true,
-  "pastaIdentityId": 49322,
-  "pastaPreviousProfiles": [
-    "PASTA-ad7f1ed004494aabbb9324ea5467eab5",
-    "PASTA-1db1082411a448d26163a01f5a8ab09b"
+  "isEmailEnabled": true,
+  "isEmailVerified": true,
+  "isVetted": false,
+  "isAuthenticated": true,
+  "identityId": 49322,
+  "previousProfiles": [
+    "EDI-ad7f1ed004494aabbb9324ea5467eab5",
+    "EDI-1db1082411a448d26163a01f5a8ab09b"
   ],
-  "pastaIdpName": "microsoft",
-  "pastaIdpUid": "AAAAAAAAAAAAAAAAAAAAA89SDjSlerGDFSkDxGn_2j2"
+  "idpName": "microsoft",
+  "idpUid": "AAAAAAAAAAAAAAAAAAAAA89SDjSlerGDFSkDxGn_2j2",
+  "idpCname": "Mary J Smith"
 }
 ```
 
