@@ -93,7 +93,7 @@ Timestamps:
 
 Custom claims:
 
-- `principals`: List of profile and/or group principal EDI-IDs, with cardinality zero to many. This claim lists principals which provide additional access to the user to which the token was issued.
+- `principals`: List of profile and/or group principal EDI-IDs, with cardinality zero to many. This claim lists principals which may provide additional access to the user to which the token was issued.
   - Group principals:
     - The group EDI-ID is included for all groups in which the user profile is currently a member. 
   - System principals:
@@ -102,7 +102,7 @@ Custom claims:
   - See [PEP-7](./pep-7.md) for a broader discussion about groups.
 - `isEmailEnabled`: Flag that the user has approved sending automated notifications to the provided email address. Even if this flag is not set, we may send important emails to the user.
 - `isEmailVerified`: Flag that we have verified that the user is able to receive emails at the address provided in `email`.
-- `identityId`: Internal PASTA Identity ID. This is a unique identifier for the identity provider and account used for signing in to the profile. Since a user may have multiple accounts linked to their profile, this identifier can change with each sign-in. It is used internally in the Authn account linking procedure and may be used in future APIs to provide information about the user's identity provider and current accounts. If the token is issued to a public, unauthenticated user, this claim will have value `0`.
+- `identityId`: Internal Identity ID. This is a unique identifier for the identity provider and account used for signing in to the profile. Since a user may have multiple accounts linked to their profile, this identifier can change with each sign-in. It is used internally in the Authn account linking procedure and may be used in future APIs to provide information about the user's identity provider and current accounts. If the token is issued to a public, unauthenticated user, this claim will have value `0`.
 - `profileHistory`: A list of EDI-IDs of profiles that have previously belonged to the user designated by `sub`. If a user deletes a profile, or unlinks an account from a profile, the profile is added to this list, so that client applications can consolidate information in old profiles into the current one.
 - `idpName`: The name of the identity provider used for signing in to the profile. As identity provider identifiers are not necessarily globally unique, we use this field to distinguish between different identity providers. It is a lower case string, currently 'ldap', 'microsoft', 'google', 'orcid' or 'github'. The `pastaIdpName` and `pastaIdpUid` fields are guaranteed to be unique together.
 - `idpUid`: The identity provider's unique identifier for the user who signed in to the current session. This is intended to help support client applications as they migrate from identifying users by their IdP UID to using the EDI-ID (`sub` field).
@@ -143,7 +143,6 @@ Note that when client transitions are complete, we plan on deprecating and event
   "idpCname": "Mary J Smith"
 }
 ```
-
 
 
 ## Open issue(s)
