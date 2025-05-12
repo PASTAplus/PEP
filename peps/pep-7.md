@@ -14,29 +14,29 @@ The Environmental Data Initiative (EDI) proposes to upgrade its Identity and Acc
 
 **User management**. Integrating user-managed EDI profiles will streamline how EDI software applications identifies and interacts with users (e.g., notifications) based on information held within their profile.
 
-**Group management**. Allowing users to create and manage their onwn groups will reduce the time and complexitity required to manage access control rules (ACRs) for individual users.
+**Group management**. Allowing users to create and manage their own groups will reduce the time and complexity required to manage access control rules (ACRs) for individual users.
 
 **Identity mapping**. Mapping external IdP identities to a single user profile will allow users to authenticate with different IdPs, but use the same EDI "user profile" identity within the EDI application ecosystem.
 
 **Authentication Tokens**. Replacing the PASTA Authentication Token with a JSON Web Token (JWT), an industry standard authentication token that is supported by many different SDK libraries and tools, will simplify the process of building and parsing tokens, while seamlessly extending the schema capabilities of the token structure.
 
-**Programmable Access Control**. Programmable access control rules (ACRs) will allow administrators and users to dynamically create and modify ACRs for resources, whithout relying on pre-defined ACRs in static form (e.g., EML document, service file, or software).
+**Programmable Access Control**. Programmable access control rules (ACRs) will allow administrators and users to dynamically create and modify ACRs for resources, without relying on pre-defined ACRs in static form (e.g., EML document, service file, or software).
 
 **Accept deprecation of EML 2.2.0 `<access>` element**. Pivot from using the EML `<access>` element from within the main body of the EML to recognizing them in the schema-free `<additionalMetadata>` element of EML, thereby preserving the ability to pre-define ACRs within the EML document.
 
-**Identity API Keys**. Adopting API keys for users to identify themselves when using REST API methods within the EDI application ecosystem allows autonomy for workflows and ohter software that require authentication to access resources without having to repeatedly sign-in through a web browser.
+**Identity API Keys**. Adopting API keys for users to identify themselves when using REST API methods within the EDI application ecosystem allows autonomy for workflows and other software that require authentication to access resources without having to repeatedly sign-in through a web browser.
  
 # Background
 
 There are currently five EDI applications that use some form of IAM:
 
 1. **Authentication Service** - Performs user authentication through one internal IdP and four external Oauth-IdPs (see Table 1 below), returning an authentication token to the client.
-2. **Core data repostiory (PASTA)** - Consumes identity credentials in exchange for an authentication token from the Authentication Service and performs internal authorization for repository web-service REST API methods and data package resources.
+2. **Core data repository (PASTA)** - Consumes identity credentials in exchange for an authentication token from the Authentication Service and performs internal authorization for repository web-service REST API methods and data package resources.
 3. **Data Portal** - Consumes identity credentials in exchange for an authentication token from the Authentication Service or redirects to the Authentication Service for Oauth authentication and stores the returned authentication tokens for future interactions with the data repository. In addition, privileged identities are allowed to execute restricted functionality in the Data Portal web application. 
-4. **ezEML** - Consumes identity credentials in exchange for an authentication token from the Authentication Service or redirects to the Authentication Service for Oauth authenticationd; stores the unique user identity extracted from the authentication token in a web session for authorization to local metadata resources.
+4. **ezEML** - Consumes identity credentials in exchange for an authentication token from the Authentication Service or redirects to the Authentication Service for Oauth authentication; stores the unique user identity extracted from the authentication token in a web session for authorization to local metadata resources.
 5. **Dashboard** - Performs local user authentication through the internal (LDAP) IdP by way of an LDAP bind for authorization to restricted functionality in the web application.
 
-EDI uses five different identity providers (IdPs) to authenticate users (Table 1). Successful authentication returns a unique IdP identifier that is stored in a newly minted PASTA authentication token (Listing 1). The authentication token is digitally signed to ensure integrity and can be passed to an EDI application as proof of the user's identity. Authentication tokens are short-lived (less than one day) and must be regenerated regularly to provide service continuity. The core data repostiory (PASTA), Data Portal, and ezEML all rely on the Authentication Service to validate a user's identity. Only the Dashboard directly authenticates a subset of adminstrator users by performing an LDAP bind to the EDI LDAP, by-passing the Authentication Service completely.
+EDI uses five different identity providers (IdPs) to authenticate users (Table 1). Successful authentication returns a unique IdP identifier that is stored in a newly minted PASTA authentication token (Listing 1). The authentication token is digitally signed to ensure integrity and can be passed to an EDI application as proof of the user's identity. Authentication tokens are short-lived (less than one day) and must be regenerated regularly to provide service continuity. The core data repository (PASTA), Data Portal, and ezEML all rely on the Authentication Service to validate a user's identity. Only the Dashboard directly authenticates a subset of administrator users by performing an LDAP bind to the EDI LDAP, by-passing the Authentication Service completely.
 
 | Identity Provider | Unique Identifier  | Example                                            |
 |-------------------|--------------------|----------------------------------------------------|
@@ -48,7 +48,7 @@ EDI uses five different identity providers (IdPs) to authenticate users (Table 1
 
 **Table 1**: Identity providers and the different types of unique user identifiers returned by each.
 
-The authentication token is a non-standard string containing information about the user's identity, including: 1) the user's IdP identifier, 2) the EDI secutity namespace, 3) a token time-to-live, and 4) any groups the user may belong to. Each field is separated by an asterisk "*". All of the fields, except for the *groups*, are required in the token.
+The authentication token is a non-standard string containing information about the user's identity, including: 1) the user's IdP identifier, 2) the EDI security namespace, 3) a token time-to-live, and 4) any groups the user may belong to. Each field is separated by an asterisk "*". All the fields are required in the token.
 
 ```
 mark@gmail.com*https://pasta.edirepository.org/authentication*1531891534443*authenticated
@@ -57,9 +57,9 @@ mark@gmail.com*https://pasta.edirepository.org/authentication*1531891534443*auth
 
 Authorization within EDI applications use different approaches:
 
-The data repository, running the PASTA software, uses structured access control rules (ACRs) in the form of EML `<access>` elements to authorize access to both REST API methods and data package resources. These ACRs define who may access the resource and at what level of access (e.g., "read", "write", and "change permission"). For REST API methods, ACRs are parsed and stored in memory when the system is running. Data package resource ACRs, on the other hand, are extracted from the EML metadata in which they are declared and stored in a relational database table, called the `access_matrix`, as a processing efficiency for when the resource is requested. The `access_matrix` stores all of the information necessary to determine whether a user can access a data package resource, which happens thousands of times a day, and includes the user's IdP identifier, allowed permissions, and the fully-qualified identifier of the resource. Enforcing access control in the data repository is multi-tiered: a user must first be allowed to execute the REST API method required to access the data package resource, followed by having sufficient rights to access the data resource at the level they require. If either level of access is not met, the request is denied. It is mentionable that the PASTA software used by the data repository denies access to all resources, including REST API methods, from users unless there is an explicit ACR allowing access.
+The data repository, running the PASTA software, uses structured access control rules (ACRs) in the form of EML `<access>` elements to authorize access to both REST API methods and data package resources. These ACRs define who may access the resource and at what level of access (e.g., "read", "write", and "change permission"). For REST API methods, ACRs are parsed and stored in memory when the system is running. Data package resource ACRs, on the other hand, are extracted from the EML metadata in which they are declared and stored in a relational database table, called the `access_matrix`, as a processing efficiency for when the resource is requested. The `access_matrix` stores all the information necessary to determine whether a user can access a data package resource, which happens thousands of times a day, and includes the user's IdP identifier, allowed permissions, and the fully-qualified identifier of the resource. Enforcing access control in the data repository is multi-tiered: a user must first be allowed to execute the REST API method required to access the data package resource, followed by having sufficient rights to access the data resource at the level they require. If either level of access is not met, the request is denied. It is mentionable that the PASTA software used by the data repository denies access to all resources, including REST API methods, from users unless there is an explicit ACR allowing access.
 
-Authorization for the Data Portal, ezEML, and the Dashboard all use web browser session-based information to determine whether a user is permitted to access a resource. These sessions persist across browser restarts, but vary in the lenght of time they are valid. The Data Portal and Dashboard use access control to restrict non-privileged users from executing specific web functionality, while ezEML uses discretionary access control for restricting access to metadata and data resources to the resource owner, only (ezEML does support collaborative sharing of resources through the possession of a resource token that can be passed to anyone the owner whishes to access the resource). 
+Authorization for the Data Portal, ezEML, and the Dashboard all use web browser session-based information to determine whether a user is permitted to access a resource. These sessions persist across browser restarts, but vary in the length of time they are valid. The Data Portal and Dashboard use access control to restrict non-privileged users from executing specific web functionality, while ezEML uses discretionary access control for restricting access to metadata and data resources to the resource owner, only (ezEML does support collaborative sharing of resources through the possession of a resource token that can be passed to anyone the owner wishes to access the resource). 
 
 # Issue Statement
 
@@ -67,7 +67,7 @@ EDI’s IAM model works as expected but can be improved. Its original design was
 
 **1. Inconsistent format of unique identities**
 
-The different modalities used for unique identifiers returned by each identity provider complicate matching users with access control rules in several ways. First, users need to know the exact identifier in the authentication token, which must be added into the access control rule of the EML `<access>` element. This is error-prone since the identifier string in both locations must be identical. Moreover, Orcid, and especially Microsoft, identifiers consist of alpha-numeric values that are more difficult to copy and use. To a lesser concern, the unique identifiers are visible to users and expose a level of personal information in the EML metadata and the event logs of EDI’s audit service. 
+The different modalities used for unique identifiers returned by each identity provider complicate matching users with access control rules in several ways. First, users need to know the exact identifier in the authentication token, which must be added into the access control rule of the EML `<access>` element. This is error-prone since the identifier string in both locations must be identical. Moreover, Orcid, and especially Microsoft, identifiers consist of alphanumeric values that are more difficult to copy and use. To a lesser concern, the unique identifiers are visible to users and expose a level of personal information in the EML metadata and the event logs of EDI’s audit service. 
 
 **2. Inability to create, update, or delete user-owned groups.**
 
@@ -127,7 +127,7 @@ Similar to other repository resources, groups will also be managed as an access-
 - **WRITE** - to add or delete other users in/from the group, and
 - **OWNER** - to modify the permissions of another user in the group and to delete the group (group deletion may occur even if members exist).
 
-A group owner may change their permission, including removing themself from the group, only if at least one other member has the **OWNER** permission.
+A group owner may change their permission, including removing themselves from the group, only if at least one other member has the **OWNER** permission.
 
 **3. Identity mapping**
 
