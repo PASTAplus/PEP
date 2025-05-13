@@ -353,7 +353,7 @@ readResource(resource_key, descendents)
 
 **3e. Read Resources**
 
-Goal: Return a list of resource keys owned by the principal.
+Goal: Return resource keys owned by the principal.
 
 Use case:
 
