@@ -30,7 +30,7 @@ For an EML `<access>` element (see example in Listing 1), the access control rul
 
 * **read** (to gain immutable "read" access to a resource),
 * **write** (to gain mutable "create", "read" , "update", and "delete" access to a resource), or
-* **changePermission** (to everything in *write*, along with the privilege to alter other's access to a resource).
+* **changePermission** (to everything in *write*, along with the privilege to alter another's access to a resource).
 
 (These specific permissions are not part of the EML `<access>` element schema; they are legacy and were defined by the Long Term Ecological Research (LTER) Network information management community.)
 
@@ -181,7 +181,7 @@ Notes: This use case supports the existing PASTA data package upload process. Pa
 POST: /auth/v1/eml
 
 addEML(principal, eml)
-    principal: The owner of the data package (may be either a EDI-ID or an IdP identifier)
+    principal: The owner of the data package (may be either an EDI-ID or an IdP identifier)
     eml: valid EML document as a string
     return:
         200 OK if successful
@@ -351,6 +351,32 @@ readResource(resource_key, descendents)
         authenticated: changePermission
 ```
 
+**3e. Read Resources**
+
+Goal: Return a list of resource keys owned by the principal.
+
+Use case:
+
+1. A client sends an authentication token to the *authorization service* in the message body.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* returns a success message if the user is authorized with the list of resource keys and resource labels in the body of the response.
+
+```
+GET: /auth/v1/resources
+
+getResources(principal)
+    principal: The owner of the data package (may be either an EDI-ID or an IdP identifier)
+    return:
+        200 OK if authorized
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method
+        404 If no resources are found
+    body:
+        Resource list structure if 200 OK error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
 **4a. Create Rule**
 
 Goal: To create an ACR
@@ -480,9 +506,9 @@ readRule(resource_key, principal)
         authenticated: changePermission
 ```
 
-**4e. List Rules**
+**4e. Read Principal Rules**
 
-Goal: To list rules of a specific principal
+Goal: To read rules of a specific principal
 
 Use case:
 
@@ -492,7 +518,7 @@ Use case:
 4. The *authorization service* returns a 200 OK and the structure to the client.
 
 ```
-GET: /auth/v1/rule/<principal>
+GET: /auth/v1/rules/principal/<principal>
 
 listRules(principal)
     principal: the principal of the ACRs
@@ -508,9 +534,9 @@ listRules(principal)
         authenticated: changePermission
 ```
 
-**5. Get ACL**
+**5. Read Resource Rules**
 
-Goal: To return the ACL from the *authorization service* ACR registry for a resource identifier.
+Goal: To read rules of a specific resource.
 
 Use case:
 
@@ -518,10 +544,10 @@ Use case:
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* verifies that the requesting principal is authorized to access the ACL.
 4, The *authorization service* creates an ACL structure.
-5. The *authorization service* returns a succes message and the structure to the client.
+5. The *authorization service* returns a success message and the structure to the client.
 
 ```
-GET: /auth/v1/rules/<key>
+GET: /auth/v1/rules/key/<key>
 
 getACL(resource_key)
     resource_key: the unique resource key
@@ -560,58 +586,6 @@ isAuthorized(token, resource_key, permission)
         404 If the resource_key is not found
     body:
         Empty if 200 OK, error message otherwise
-    permissions:
-        authenticated: changePermission
-```
-
-**7. Get Resources**
-
-Goal: Return a list of resource keys owned by the principal.
-
-Use case:
-
-1. A client sends an authentication token to the *authorization service* in the message body.
-2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
-3. The *authorization service* returns a success message if the user is authorized with the list of resource keys and resource labels in the body of the response.
-
-```
-GET: /auth/v1/resources
-
-getResources(token)
-    token: a valid authentication token
-    return:
-        200 OK if authorized
-        401 Unauthorized if the client does not provide a valid authentication token
-        403 Forbidden if client is not authorized to execute method
-        404 If no resources are found
-    body:
-        Resource list structure if 200 OK error message otherwise
-    permissions:
-        authenticated: changePermission
-```
-
-**8. Get Resource Tree**
-
-Goal: Return a resource tree structure given a resource key.
-
-Use case:
-
-1. A client sends an authentication token to the *authorization service* in the message body.
-2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
-3. The *authorization service* returns a success message if the user is authorized with the resource tree data structure in the body of the response.
-
-```
-GET: /auth/v1/resource_tree/{resource_key}
-
-getResources(resource_key)
-    resource_key: the unique resource key
-    return:
-        200 OK if authorized
-        401 Unauthorized if the client does not provide a valid authentication token
-        403 Forbidden if client is not authorized to execute method
-        404 If no resource is found for the given resource key
-    body:
-        Resource tree data structure if 200 OK error message otherwise
     permissions:
         authenticated: changePermission
 ```
