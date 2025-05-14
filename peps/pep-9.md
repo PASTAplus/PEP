@@ -7,7 +7,7 @@
 - Reviewed:
 - Final:
 
-[Use Cases and REST API Method Definitions](#Use Cases and REST API Method Definitions)
+[Use Cases and REST API Method Definitions](#Use-Cases-and-REST-API-Method-Definitions)
 
 ## Introduction
 
