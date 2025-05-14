@@ -7,8 +7,6 @@
 - Reviewed:
 - Final:
 
-[Use Cases and REST API Method Definitions](#Use-Cases-and-REST-API-Method-Definitions)
-
 ## Introduction
 
 Protecting digital resources through access control is paramount to the EDI Identity and Access Management (IAM) model (see [PEP-7](./pep-7.md)). Digital resources in the EDI ecosystem can be anything, inlcuding the elements of a data package (e.g., metadata, quality report, or data), web-service API methods, the scope values of data package identifiers, web-application actions (e.g., forms or links), or metadata models created and edited in *ezEML*. These resources require protection from malicious and non-malicious actions through the use of access control rules (ACRs), which codify how a user of an EDI application may act upon a resource.
