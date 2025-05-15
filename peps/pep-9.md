@@ -243,7 +243,8 @@ Use case:
 ```
 POST: /auth/v1/resource
 
-createResource(resource_key, resource_label, resource_type, parent_resource_key)
+createResource(principal, resource_key, resource_label, resource_type, parent_resource_key)
+    principal: The owner of the resource (may be either an EDI-ID or an IdP identifier)
     resource_key: the unique resource key of the resource
     resource_label: the human readable name of the resource
     resource_type: the type of resource
@@ -364,7 +365,7 @@ Use case:
 GET: /auth/v1/resources
 
 getResources(principal)
-    principal: The owner of the data package (may be either an EDI-ID or an IdP identifier)
+    principal: The owner of the resource (may be either an EDI-ID or an IdP identifier)
     return:
         200 OK if authorized
         401 Unauthorized if the client does not provide a valid authentication token
