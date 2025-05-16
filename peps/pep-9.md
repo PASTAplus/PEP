@@ -578,7 +578,7 @@ Use case:
 3. The *authorization service* processes the request and returns a success message if the principal is authorized.
 
 ```
-POST: /auth/v1/authorized
+GET: /auth/v1/authorized/<token>/<key>/<permission>
 
 isAuthorized(token, resource_key, permission)
     token: a valid authentication token
