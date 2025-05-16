@@ -336,8 +336,8 @@ Use case:
 ```
 GET : /auth/v1/resource/<key>?(descendants|ancestors|all))
 
-1. decendants AND ancestors EQUIVALENT TO all.
-2. all SUPERCEDES ONLY descendants OR ancestors.
+1. "descendants" and "ancestors" together are equivalent to "all"
+2. "all" supersedes "descendants" or "ancestors"
 
 readResource(resource_key, (descendants|ancestors|all))
     resource_key: the unique resource key of the resource
