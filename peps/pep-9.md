@@ -334,11 +334,13 @@ Use case:
 5. The *authorization service* returns a 200 OK and the resource structure to the client.
 
 ```
-GET : /auth/v1/resource/<key>?descendents
+GET : /auth/v1/resource/<key>?(descendants|ancestors|all))
 
-readResource(resource_key, descendents)
+readResource(resource_key, (descendants|ancestors|all))
     resource_key: the unique resource key of the resource
-    descendents: boolean if resource structure contains descendent children
+    descendants: boolean if resource structure contains descendants (optional)
+    ancestor: boolean if resource structure contains ancestors (optional)
+    all: boolean if resource structure contains full tree (optional)
     return:
         200 OK if successful
         400 Bad Request if resource is invalid
