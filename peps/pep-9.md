@@ -236,8 +236,8 @@ Use case:
 
 1. A client sends a resource to the *authorization service*.
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
-3. The *authorization service* verifies that the requesting principal is authorized to access the resource.
-4. The *authorization service* creates the resource.
+3. The *authorization service* creates the resource.
+4. The *authorization service* creates a rule where the principal owns the resource.
 5. The *authorization service* returns a 200 OK to the client.
 
 ```
