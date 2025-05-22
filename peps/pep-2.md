@@ -45,19 +45,67 @@ This resolves the issues mentioned in the Issue Statement. In addition, this has
 
 **1a. Create Profile**
 
-Goal: To create a new user profile using an IdP identifier.
+Goal: To create a new EDI profile identifier using an IdP identifier.
 
-**1b. Read Profile**
+Use case:
 
-Goal: To return a user profile associated with an EDI ID.
+1. A client sends an IdP identifier to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* creates the user profile.
+5. The *authorization service* returns a 200 OK to the client with the new EDI profile identiifer in the response body.
 
-**1c. Update Profile**
+```
+POST: /auth/v1/profile
 
-Goal: To update the attributes of a user profile associated with an EDI ID.
+createProfile(idp_identifier)
+    idp_identifier: the IdP identifier
+    return:
+        200 OK if successful
+        400 Bad Request if a profile already exists
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+    body:
+        EDI profile identifier if 200 OK, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
 
-**1d. Delete Profile**
+**1b. Delete Profile**
 
-Goal: To delete a user profile associated with an EDI ID.
+Goal: To delete a user profile associated with an EDI profile identifier.
+
+Use case:
+
+1. A client sends an EDI profile identifier to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* deletes the user profile.
+4. The *authorization service* returns a 200 OK to the client.
+
+```
+DELETE: /auth/v1/profile/<edi_identifier>
+
+deleteProfile(edi_identifier)
+    edi_identifier: the EDU profile identifier
+    return:
+        200 OK if successful
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+        404 If EDI profile identifier not found
+    body:
+        Empty if 200 OK, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**1c. Read Profile**
+
+Goal: To return an EDI profile associated with an EDI profile identifier.
+
+Use case:
+
+1. A client sends an EDI profile identifier to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* returns a 200 OK to the client with the EDI profile in the response body.
 
 ## Open issue(s)
 
