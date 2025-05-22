@@ -70,7 +70,38 @@ createProfile(idp_identifier)
         authenticated: changePermission
 ```
 
-**1b. Delete Profile**
+**1b. Update Profile**
+
+Goal: To update the attributes of a user profile associated with an EDI profile identifier.
+
+
+Use case:
+
+1. A client sends an EDI profile identifier and profile attributes to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* updates the attributes of the profile.
+4. The *authorization service* returns a 200 OK to the client.
+
+```
+PUT: /auth/v1/profile/<edi_identifier>
+
+Profile(edi_identifier, given_name, family_name, email)
+    edi_identifier: the EDU profile identifier
+    given_name: the user given name
+    family_name: the user family name
+    email: the user preferred email address
+    return:
+        200 OK if successful
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+        404 If EDI profile identifier not found
+    body:
+        Empty if 200 OK, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+**1c. Delete Profile**
 
 Goal: To delete a user profile associated with an EDI profile identifier.
 
