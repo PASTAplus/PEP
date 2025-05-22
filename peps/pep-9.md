@@ -167,7 +167,7 @@ Goal: To parse a valid EML document and add its ACRs to the ACR registry for the
 
 Use case:
 
-1. A client sends and EML document to the *authorization service*.
+1. A client sends an EML document to the *authorization service*.
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* parses the EML and extracts the ACRs.
 4. The *authorization service* adds the ACL ACRs to the ACR registry.
@@ -184,7 +184,7 @@ addEML(principal, eml)
     eml: valid EML document as a string
     return:
         200 OK if successful
-        400 Bad Request if EML is invalid
+        400 Bad Request if EML is invalid or if related resources already exist
         401 Unauthorized if the client does not provide a valid authentication token
         403 Forbidden if client is not authorized to execute method
     body:
@@ -217,7 +217,7 @@ addAccess(access, resource_key, resource_label, resource_type):
     resource_type: the type of resource
     return:
         200 OK if successful
-        400 Bad Request if <access> element or the other parameters are invalid
+        400 Bad Request if <access> element invalid or related resources already exist
         401 Unauthorized if the client does not provide a valid authentication token
         403 Forbidden if client is not authorized to execute method
     body:
@@ -251,7 +251,7 @@ createResource(principal, resource_key, resource_label, resource_type, parent_re
     parent_resource_key: the resource key of the parent (may be `None` for top-level parent (root))
     return:
         200 OK if successful
-        400 Bad Request if resource is invalid
+        400 Bad Request if a resource already exists
         401 Unauthorized if the client does not provide a valid authentication token
         403 Forbidden if client is not authorized to execute method or access resource
     body:
@@ -388,7 +388,7 @@ Goal: To create an ACR
 
 Use case:
 
-1. A client sends an ACR to the *authorization service*.
+1. A client sends an ACR containing a resource key, principal, and permission to the *authorization service*.
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* verifies that the requesting principal is authorized to access the ACR, if the ACR exists.
 4. The *authorization service* creates the ACR.
@@ -403,7 +403,7 @@ createRule(resource_key, principal, permission)
     permission: the permission of the ACR
     return:
         200 OK if successful
-        400 Bad Request if ACR is invalid
+        400 Bad Request if the ACR already exists
         401 Unauthorized if the client does not provide a valid authentication token
         403 Forbidden if client is not authorized to execute method or access ACR
     body:
@@ -412,7 +412,7 @@ createRule(resource_key, principal, permission)
         authenticated: changePermission
 ```
 
-Notes: The *authorization service* will create a user profile (along with a EDI-ID) if the principal is not a EDI-ID.
+Note: The *authorization service* will create a new EDI profile (along with an EDI-ID) if the principal is not a EDI profile or group identifier.
 
 **4b. Update Rule**
 
@@ -420,14 +420,14 @@ Goal: To update an ACR
 
 Use case:
 
-1. A client sends a rule identifier and ACR to the *authorization service*.
+1. A client sends a resource key, principal, and new permission to the *authorization service*.
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* verifies that the requesting principal is authorized to access the ACR, if the ACR exists.
 4. The *authorization service* updates the ACR.
 5. The *authorization service* returns a success message and the permission identifier to the client.
 
 ```
-PUT: /auth/v1/rule/<key>/<principal>
+PUT: /auth/v1/rule/<resource_key>/<principal>
 
 updateRule(resource_key, principal, permission)
     resource_key: the unique resource key of the resource
