@@ -128,7 +128,7 @@ deleteProfile(edi_identifier)
         authenticated: changePermission
 ```
 
-**1c. Read Profile**
+**1d. Read Profile**
 
 Goal: To return an EDI profile associated with an EDI profile identifier.
 
@@ -137,6 +137,22 @@ Use case:
 1. A client sends an EDI profile identifier to the *authorization service*.
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* returns a 200 OK to the client with the EDI profile in the response body.
+
+```
+GET: /auth/v1/profile/<edi_identifier>
+
+deleteProfile(edi_identifier)
+    edi_identifier: the EDU profile identifier
+    return:
+        200 OK if successful
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+        404 If EDI profile identifier not found
+    body:
+        Empty if 200 OK, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
 
 ## Open issue(s)
 
