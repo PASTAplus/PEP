@@ -161,9 +161,11 @@ Each integration point is selected to minimize the impact on the existing PASTA 
 
 ### Use Cases and REST API Method Definitions
 
+**Note:** All API methods require the client to provide a valid authentication token (JWT) with each request. Methods that create a resource use the token subject as the principal owner of that resource. Applications that operate on a user's behalf (e.g., PASTA or ezEML) must submit the user's token on the user's behalf when interacting with IAM API methods.
+
 **1. Add EML**
 
-Goal: To parse a valid EML document and add its ACRs to the ACR registry for the resources identified in the EML document.
+Goal: To parse a valid EML document, create a corresponding data package resource tree, and add its ACRs to the ACR registry for the resources identified in the EML document. The authentication token subject defines the owner of all associated resources.
 
 Use case:
 
@@ -179,8 +181,7 @@ Notes: This use case supports the existing PASTA data package upload process. Pa
 ```
 POST: /auth/v1/eml
 
-addEML(principal, eml)
-    principal: The owner of the data package (may be either an EDI-ID or an IdP identifier)
+addEML(eml)
     eml: valid EML document as a string
     return:
         200 OK if successful
@@ -193,11 +194,11 @@ addEML(principal, eml)
         pasta: changePermission
 ```
 
-Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the existing `access_matrix`. This should, however, change for consistency: the principal owner should be added into the ACR registry with the "changePermission" permission. This method should create a "Data Package" collection.
+Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the existing `access_matrix`. However, this should change for consistency: the principal owner (identified by the authentication token subject) should be added to the ACR registry with the "changePermission" permission. This method should create a data package resource tree.
 
 **2. Add Access**
 
-Goal: To parse a valid `<access>` element and add its ACRs to the *authorization service* ACR registry.
+Goal: To parse a valid `<access>` element, create corresponding resources, and add the resource ACRs to the *authorization service* ACR registry.
 
 Use case:
 
@@ -226,11 +227,11 @@ addAccess(access, resource_key, resource_label, resource_type):
         pasta: changePermission
 ```
 
-Notes: This use case supports adding ACLs for PASTA API methods through the `service.xml` file. In this case, the `service.xml` file is not a complete EML document; they consist of ACLs in the form of `<access>` elements. The principal owner of the service method (or other resource) should be added into the ACR registry with the "changePermission" permission; in the case of service methods, the principal owner will be "pasta."
+Notes: This use case supports adding ACLs for PASTA API methods through the `service.xml` file. In this case, the `service.xml` file is not a complete EML document; it consists of ACLs in the form of `<access>` elements. The principal owner of the service method (or other resource) identified by the authentication token subject should be added to the ACR registry with the "changePermission" permission; in the case of service methods, the principal owner will be "pasta."
 
 **3a. Create Resource**
 
-Goal: To create a resource
+Goal: To create a resource for access control in which the principal owner is defined by the authentication token subject.
 
 Use case:
 
@@ -243,8 +244,7 @@ Use case:
 ```
 POST: /auth/v1/resource
 
-createResource(principal, resource_key, resource_label, resource_type, parent_resource_key)
-    principal: The owner of the resource (may be either an EDI-ID or an IdP identifier)
+createResource(resource_key, resource_label, resource_type, parent_resource_key)
     resource_key: the unique resource key of the resource
     resource_label: the human readable name of the resource
     resource_type: the type of resource
@@ -262,7 +262,7 @@ createResource(principal, resource_key, resource_label, resource_type, parent_re
 
 **3b. Update Resource**
 
-Goal: To update a resource
+Goal: To update a resource.
 
 Use case:
 
@@ -294,11 +294,11 @@ updateResource(resource_key, resource_label, resource_type, parent_resource_key)
 
 **3c. Delete Resource**
 
-Goal: To delete a resource
+Goal: To delete a resource.
 
 Use case:
 
-1. A client sends resource identifier to the *authorization service*.
+1. A client sends a resource identifier to the *authorization service*.
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* verifies that the requesting principal is authorized to access the resource.
 4. The *authorization service* deletes the resource.
@@ -323,7 +323,7 @@ deleteResource(resource_key)
 
 **3d. Read Resource**
 
-Goal: To read a resource
+Goal: To read a resource.
 
 Use case:
 
@@ -358,7 +358,7 @@ readResource(resource_key, (descendants|ancestors|all))
 
 **3e. Read Resources**
 
-Goal: Return resource keys owned by the principal.
+Goal: Return resource keys owned by the subject identified in the authentication token.
 
 Use case:
 
@@ -369,8 +369,7 @@ Use case:
 ```
 GET: /auth/v1/resources
 
-getResources(principal)
-    principal: The owner of the resource (may be either an EDI-ID or an IdP identifier)
+getResources()
     return:
         200 OK if authorized
         401 Unauthorized if the client does not provide a valid authentication token
@@ -384,7 +383,7 @@ getResources(principal)
 
 **4a. Create Rule**
 
-Goal: To create an ACR
+Goal: To create an ACR for a resource owned by the authentication token subject.
 
 Use case:
 
@@ -412,11 +411,9 @@ createRule(resource_key, principal, permission)
         authenticated: changePermission
 ```
 
-Note: The *authorization service* will create a new EDI profile (along with an EDI-ID) if the principal is not a EDI profile or group identifier.
-
 **4b. Update Rule**
 
-Goal: To update an ACR
+Goal: To update an ACR..
 
 Use case:
 
@@ -450,7 +447,7 @@ Note: It is an error if the client attempts to modify the `changePermission` per
 
 **4c. Delete Rule**
 
-Goal: To delete an ACR
+Goal: To delete an ACR.
 
 Use case:
 
@@ -483,7 +480,7 @@ Note: It is an error if the client attempts to remove the `changePermission` per
 
 **4d. Read Rule**
 
-Goal: To read an ACR
+Goal: To read an ACR.
 
 Use case:
 
@@ -513,7 +510,7 @@ readRule(resource_key, principal)
 
 **4e. Read Principal Rules**
 
-Goal: To read rules of a specific principal
+Goal: To read the rules of the principal identified by the authentication token subject and principals.
 
 Use case:
 
@@ -525,8 +522,7 @@ Use case:
 ```
 GET: /auth/v1/rules/principal/<principal>
 
-listRules(principal)
-    principal: the principal of the ACRs
+listRules()
     return:
         200 OK if successful
         400 Bad Request if principal is invalid
@@ -541,7 +537,7 @@ listRules(principal)
 
 **5. Read Resource Rules**
 
-Goal: To read rules of a specific resource.
+Goal: To read the rules of a resource.
 
 Use case:
 
@@ -552,7 +548,7 @@ Use case:
 5. The *authorization service* returns a success message and the structure to the client.
 
 ```
-GET: /auth/v1/rules/key/<key>
+GET: /auth/v1/rules/key/<resource_key>
 
 getACL(resource_key)
     resource_key: the unique resource key
@@ -569,25 +565,24 @@ getACL(resource_key)
 
 **6. Is Authorized**
 
-Goal: To determine if a principal is authorized to access a resource.
+Goal: To determine if a principal identified in the authentication token subject or principals is authorized to access a resource.
 
 Use case:
 
-1. A client sends an authentication token, the resource key, and the requested permission to the *authorization service* in the message body.
+1. A client sends the resource key and the requested permission in the request query parameters to the *authorization service*.
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* processes the request and returns a success message if the principal is authorized.
 
 ```
-GET: /auth/v1/authorized?token=<token>&resource_key=<resource_key>&permission=<permission>
+GET: /auth/v1/authorized?resource_key=<resource_key>&permission=<permission>
 
-isAuthorized(token, resource_key, permission)
-    token: a valid authentication token
+isAuthorized(resource_key, permission)
     resource_key: the unique resource key
     permission: the permission being requested
     return:
         200 OK if authorized
         401 Unauthorized if the client does not provide a valid authentication token
-        403 Forbidden if client is not authorized to execute method or access the resource or if principal is not authorized to access the resource
+        403 Forbidden if client is not authorized to execute method or if principal is not authorized to access the resource
         404 If the resource_key is not found
     body:
         Empty if 200 OK, error message otherwise
