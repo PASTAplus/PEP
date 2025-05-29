@@ -161,7 +161,7 @@ Each integration point is selected to minimize the impact on the existing PASTA 
 
 ### Use Cases and REST API Method Definitions
 
-**Note:** All API methods require the client to provide a valid authentication token (JWT) with each request. Methods that create a resource use the token subject as the principal owner of that resource. Applications that operate on a user's behalf (e.g., PASTA or ezEML) must submit the user's token on the user's behalf when interacting with IAM API methods.
+**Note:** All API methods require the client to provide a valid authentication token (JWT) with each request. Methods that create a resource use the token subject as the principal owner of that resource. Applications that operate on a user's behalf (e.g., PASTA or ezEML) must submit the user's token in the request cookie when interacting with IAM API methods.
 
 **1. Add EML**
 
