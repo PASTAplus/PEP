@@ -520,9 +520,9 @@ Use case:
 4. The *authorization service* returns a 200 OK and the structure to the client.
 
 ```
-GET: /auth/v1/rules/principal/<principal>
+GET: /auth/v1/rules/principal
 
-listRules()
+read_principal_rules()
     return:
         200 OK if successful
         400 Bad Request if principal is invalid
@@ -548,9 +548,9 @@ Use case:
 5. The *authorization service* returns a success message and the structure to the client.
 
 ```
-GET: /auth/v1/rules/key/<resource_key>
+GET: /auth/v1/rules/resource/<resource_key>
 
-getACL(resource_key)
+read_resource_rules(resource_key)
     resource_key: the unique resource key
     return:
         200 OK if successful
