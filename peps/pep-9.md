@@ -273,7 +273,7 @@ Use case:
 5. The *authorization service* returns a 200 OK to the client.
 
 ```
-PUT: /auth/v1/resource/<key>
+PUT: /auth/v1/resource/<resource_key>
 
 updateResource(resource_key, resource_label, resource_type, parent_resource_key)
     resource_key: the unique resource key of the resource
@@ -305,7 +305,7 @@ Use case:
 5. The *authorization service* returns a 200 OK to the client.
 
 ```
-DELETE: /auth/v1/resource/<key>
+DELETE: /auth/v1/resource/<resource_key>
 
 deleteResource(resource_key)
     resource_key: the unique resource key of the resource
@@ -334,7 +334,7 @@ Use case:
 5. The *authorization service* returns a 200 OK and the resource structure to the client.
 
 ```
-GET : /auth/v1/resource/<key>?(descendants|ancestors|all))
+GET : /auth/v1/resource/<resource_key>?(descendants|ancestors|all))
 
 1. "descendants" and "ancestors" together are equivalent to "all"
 2. "all" supersedes "descendants" or "ancestors"
@@ -458,7 +458,7 @@ Use case:
 5. The *authorization service* returns a 200 OK and the rule identifier to the client.
 
 ```
-DELETE: /auth/v1/rule/<key>/<principal>
+DELETE: /auth/v1/rule/<resource_key>/<principal>
 
 deleteRule(resource_key, principal)
     resource_key: the unique resource key of the resource
@@ -491,7 +491,7 @@ Use case:
 5. The *authorization service* returns a 200 OK and the structure to the client.
 
 ```
-GET: /auth/v1/rule/<key>/<principal>
+GET: /auth/v1/rule/<resource_key>/<principal>
 
 readRule(resource_key, principal)
     resource_key: the unique resource key of the resource
