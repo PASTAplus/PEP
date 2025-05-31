@@ -55,22 +55,25 @@ A JWT token consists of three parts separated by dots: the header, the payload, 
 
 The following claims are included in the payload of JWT tokens returned by the EDI Authentication (Authn) service:
 
-| Claim           | Description                          |
-|-----------------|--------------------------------------|
-| sub             | EDI-ID of user profile               |
-| cn              | Common name                          |
-| gn              | Given name                           |
-| email           | Email address                        |
-| hd              | Hosted domain                        |
-| iss             | Issuer                               |
-| sn              | System notification                  |
-| iat             | Issued at                            |
-| nbf             | Not before                           |
-| exp             | Expiration                           |
-| principals      | List of EDI-ID principal identifiers |
-| isEmailEnabled  | Email notifications enabled          |
-| isEmailVerified | Email address verified               |
-| identityId      | Internal EDI Identity ID             |
+| Claim           | Description                                                                             |
+|-----------------|-----------------------------------------------------------------------------------------|
+| sub             | EDI-ID of user profile                                                                  |
+| cn              | Common name                                                                             |
+| gn              | Given name                                                                              |
+| email           | Email address                                                                           |
+| hd              | Hosted domain                                                                           |
+| iss             | Issuer                                                                                  |
+| sn              | System notification                                                                     |
+| iat             | Issued at                                                                               |
+| nbf             | Not before                                                                              |
+| exp             | Expiration                                                                              |
+| principals      | List of EDI-ID principal identifiers                                                    |
+| isEmailEnabled  | Email notifications enabled                                                             |
+| isEmailVerified | Email address verified                                                                  |
+| identityId      | Internal EDI Identity ID                                                                |
+| idpName         | Name of the identity provider used for signing in to the profile                        |
+| idpUid          | Identity provider's unique identifier for the user who signed in to the current session |
+| idpCname        | Identity provider's User's common name as provided by the identity provider             |
 
 Specifics on usage of these claims in the context of PASTA:
 
