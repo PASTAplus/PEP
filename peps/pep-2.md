@@ -52,7 +52,9 @@ Use case:
 1. A client sends an IdP identifier to the *authorization service*.
 2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
 3. The *authorization service* creates the user profile.
-5. The *authorization service* returns a 200 OK to the client with the new EDI profile identiifer in the response body.
+5. The *authorization service* returns a 200 OK to the client with the new EDI profile identifer in the response body.
+
+**Note:** This method is idempotent, so subsequent calls will return the EDI-ID rather than an error.
 
 ```
 POST: /auth/v1/profile
