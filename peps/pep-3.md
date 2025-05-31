@@ -131,8 +131,6 @@ Note that when client transitions are complete, we plan on deprecating and event
   ],
   "isEmailEnabled": true,
   "isEmailVerified": true,
-  "isVetted": false,
-  "isAuthenticated": true,
   "identityId": 49322,
   "profileHistory": [
     "EDI-ad7f1ed004494aabbb9324ea5467eab5",
