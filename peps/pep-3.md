@@ -145,6 +145,94 @@ Note that when client transitions are complete, we plan on deprecating and event
 }
 ```
 
+### Use Cases and REST API Method Definitions
+
+**1. Create Token**
+
+Goal: To create a new JWT authentication token based on an EDI profile identifier (EDI-ID).
+
+Use case:
+
+1. A client sends an EDI profile identifier to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* creates the JWT authentication token.
+5. The *authorization service* returns a 200 OK to the client with the new JWT in the response body.
+
+
+```
+POST: /auth/v1/token/<edi_id>
+
+createToken(edi_id)
+    edi_id: the EDI profile identifier
+    return:
+        200 OK if successful
+        400 Bad Request if a profile already exists
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+        404 Not Found if the EDI profile identity does not exist
+    body:
+        JWT if 200 OK, error message otherwise
+    permissions:
+        super_user: changePermission
+```
+ 
+**2. Revoke Token**
+
+Goal: To revoke the most recent JWT authentication token based on an EDI profile identifier (EDI-ID).
+
+Use case:
+
+1. A client sends an EDI profile identifier to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* revokes the JWT authentication token.
+5. The *authorization service* returns a 200 OK to the client.
+
+
+```
+POST: /auth/v1/token/<edi_id>
+
+revokeToken(edi_id)
+    edi_id: the EDI profile identifier
+    return:
+        200 OK if successful
+        400 Bad Request if a profile already exists
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+        404 Not Found if the EDI profile identity does not exist
+    body:
+        Empty if 200 OK, error message otherwise
+    permissions:
+        super_user: changePermission
+```
+
+**2. Lock Token**
+
+Goal: To lock a JWT authentication token from being created based on an EDI profile identifier (EDI-ID).
+
+Use case:
+
+1. A client sends an EDI profile identifier to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* locks the JWT authentication token from being created.
+5. The *authorization service* returns a 200 OK to the client.
+
+
+```
+DELETE: /auth/v1/token/<edi_id>
+
+lockToken(edi_id)
+    edi_id: the EDI profile identifier
+    return:
+        200 OK if successful
+        400 Bad Request if a profile already exists
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+        404 Not Found if the EDI profile identity does not exist
+    body:
+        Empty if 200 OK, error message otherwise
+    permissions:
+        super_user: changePermission
+```
 
 ## Open issue(s)
 
