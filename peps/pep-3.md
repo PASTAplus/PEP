@@ -189,7 +189,7 @@ Use case:
 
 
 ```
-POST: /auth/v1/token/<edi_id>
+PUT: /auth/v1/token/<edi_id>
 
 revokeToken(edi_id)
     edi_id: the EDI profile identifier
