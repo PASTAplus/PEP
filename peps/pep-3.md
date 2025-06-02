@@ -59,7 +59,6 @@ The following claims are included in the payload of JWT tokens returned by the E
 |-----------------|-----------------------------------------------------------------------------------------|
 | sub             | EDI-ID of user profile                                                                  |
 | cn              | Common name                                                                             |
-| gn              | Given name                                                                              |
 | email           | Email address                                                                           |
 | hd              | Hosted domain                                                                           |
 | iss             | Issuer                                                                                  |
@@ -78,8 +77,7 @@ The following claims are included in the payload of JWT tokens returned by the E
 Specifics on usage of these claims in the context of PASTA:
 
 - `sub`: Unique, immutable identifier for a user profile in PASTA. This identifies the user for which the token was issued. It is created when a user creates a profile. The identifier is on the form `EDI-<HEX-UUID>`, where `<HEX-UUID>` is a 32-character hexadecimal string. We refer to identifiers on this form as EDI identifiers. There are two types of EDI identifiers; one for users and one for groups.
-- `cn`: Full name of the user. This is a free form field which may be modified by the user. It is meant for display only and no semantics should be inferred.
-- `gn`: First name of the user. This contains the first word of the `cn`, or the full `cn` if the `cn` contains only one word.
+- `cn`: Common (full) name of the user. This is a free form field which may be modified by the user. It is meant for display only and no semantics should be inferred.
 - `email`: The user's email address. This is the email address provided by the user.
 
 Token metadata:
