@@ -162,8 +162,8 @@ Use case:
 ```
 POST: /auth/v1/token
 
-createToken(edi_id)
-    edi_id: the EDI profile identifier
+createToken(sub)
+    sub: the subject's EDI profile identifier
     return:
         200 OK if successful
         400 Bad Request if a profile already exists
@@ -191,8 +191,8 @@ Use case:
 ```
 PUT: /auth/v1/token/<edi_id>
 
-revokeToken(edi_id)
-    edi_id: the EDI profile identifier
+revokeToken(sub)
+    sub: the subject's EDI profile identifier
     return:
         200 OK if successful
         400 Bad Request if a profile already exists
@@ -220,8 +220,8 @@ Use case:
 ```
 DELETE: /auth/v1/token/<edi_id>
 
-lockToken(edi_id)
-    edi_id: the EDI profile identifier
+lockToken(sub)
+    sub: the subject's EDI profile identifier
     return:
         200 OK if successful
         400 Bad Request if a profile already exists
