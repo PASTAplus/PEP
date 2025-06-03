@@ -145,6 +145,8 @@ Note that when client transitions are complete, we plan on deprecating and event
 
 ### Use Cases and REST API Method Definitions
 
+**Note:** All API methods require the client to provide a valid authentication token (JWT) with each request. Methods that create a resource use the token subject as the principal owner of that resource. Applications that operate on a user's behalf (e.g., PASTA or ezEML) must submit the user's token in the request cookie when interacting with IAM API methods.
+
 **1. Create Token**
 
 Goal: To create a new JWT authentication token based on an EDI profile identifier (EDI-ID).
@@ -160,8 +162,9 @@ Use case:
 ```
 POST: /auth/v1/token
 
-createToken(sub)
-    sub: the subject's EDI profile identifier
+createToken(jwt_token, sub)
+    jwt_token: the token of the requesting client
+    sub: the subject's EDI profile identifier of whom the token should be generated
     return:
         200 OK if successful
         400 Bad Request if a profile already exists
@@ -189,7 +192,8 @@ Use case:
 ```
 PUT: /auth/v1/token/<edi_id>
 
-revokeToken(sub)
+revokeToken(jwt_token, sub)
+    jwt_token: the token of the requesting client
     sub: the subject's EDI profile identifier
     return:
         200 OK if successful
@@ -218,7 +222,8 @@ Use case:
 ```
 DELETE: /auth/v1/token/<edi_id>
 
-lockToken(sub)
+lockToken(jwt_token, sub)
+    jwt_token: the token of the requesting client
     sub: the subject's EDI profile identifier
     return:
         200 OK if successful

@@ -181,7 +181,8 @@ Notes: This use case supports the existing PASTA data package upload process. Pa
 ```
 POST: /auth/v1/eml
 
-addEML(eml)
+addEML(jwt_token, jwt_token, eml)
+    jwt_token: the token of the requesting client
     eml: valid EML document as a string
     return:
         200 OK if successful
@@ -211,7 +212,8 @@ Use case:
 ```
 POST: /auth/v1/access
 
-addAccess(access, resource_key, resource_label, resource_type):
+addAccess(jwt_token, access, resource_key, resource_label, resource_type):
+    jwt_token: the token of the requesting client
     access: valid <access> element
     resource_key: resource key for the <access> element
     resource_label: the human readable name of the resource
@@ -244,7 +246,8 @@ Use case:
 ```
 POST: /auth/v1/resource
 
-createResource(resource_key, resource_label, resource_type, parent_resource_key)
+createResource(jwt_token, resource_key, resource_label, resource_type, parent_resource_key)
+    jwt_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     resource_label: the human readable name of the resource
     resource_type: the type of resource
@@ -275,7 +278,8 @@ Use case:
 ```
 PUT: /auth/v1/resource/<resource_key>
 
-updateResource(resource_key, resource_label, resource_type, parent_resource_key)
+updateResource(jwt_token, resource_key, resource_label, resource_type, parent_resource_key)
+    jwt_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     resource_label: the human readable name of the resource
     resource_type: the type of resource
@@ -307,7 +311,8 @@ Use case:
 ```
 DELETE: /auth/v1/resource/<resource_key>
 
-deleteResource(resource_key)
+deleteResource(jwt_token, resource_key)
+    jwt_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     return:
         200 OK if successful
@@ -339,7 +344,8 @@ GET : /auth/v1/resource/<resource_key>?(descendants|ancestors|all))
 1. "descendants" and "ancestors" together are equivalent to "all"
 2. "all" supersedes "descendants" or "ancestors"
 
-readResource(resource_key, (descendants|ancestors|all))
+readResource(jwt_token, resource_key, (descendants|ancestors|all))
+    jwt_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     descendants: boolean if resource structure contains descendants (optional)
     ancestor: boolean if resource structure contains ancestors (optional)
@@ -369,7 +375,8 @@ Use case:
 ```
 GET: /auth/v1/resources
 
-getResources()
+getResources(jwt_token)
+    jwt_token: the token of the requesting client
     return:
         200 OK if authorized
         401 Unauthorized if the client does not provide a valid authentication token
@@ -396,7 +403,8 @@ Use case:
 ```
 POST: /auth/v1/rule
 
-createRule(resource_key, principal, permission)
+createRule(jwt_token, resource_key, principal, permission)
+    jwt_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     principal: the principal of the ACR
     permission: the permission of the ACR
@@ -426,7 +434,8 @@ Use case:
 ```
 PUT: /auth/v1/rule/<resource_key>/<principal>
 
-updateRule(resource_key, principal, permission)
+updateRule(jwt_token, esource_key, principal, permission)
+    jwt_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     principal: the principal of the ACR
     permission: the permission of the ACR (may be `None` if DELETE)
@@ -460,7 +469,8 @@ Use case:
 ```
 DELETE: /auth/v1/rule/<resource_key>/<principal>
 
-deleteRule(resource_key, principal)
+deleteRule(jwt_token, resource_key, principal)
+    jwt_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     principal: the principal of the ACR
     return:
@@ -493,7 +503,8 @@ Use case:
 ```
 GET: /auth/v1/rule/<resource_key>/<principal>
 
-readRule(resource_key, principal)
+readRule(jwt_token, resource_key, principal)
+    jwt_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     principal: the principal of the ACR
     return:
@@ -522,7 +533,8 @@ Use case:
 ```
 GET: /auth/v1/rules/principal
 
-read_principal_rules()
+read_principal_rules(jwt_token)
+    jwt_token: the token of the requesting client
     return:
         200 OK if successful
         400 Bad Request if principal is invalid
@@ -550,7 +562,8 @@ Use case:
 ```
 GET: /auth/v1/rules/resource/<resource_key>
 
-read_resource_rules(resource_key)
+read_resource_rules(jwt_token, resource_key)
+    jwt_token: the token of the requesting client
     resource_key: the unique resource key
     return:
         200 OK if successful
@@ -576,7 +589,8 @@ Use case:
 ```
 GET: /auth/v1/authorized?resource_key=<resource_key>&permission=<permission>
 
-isAuthorized(resource_key, permission)
+isAuthorized(jwt_token, resource_key, permission)
+    jwt_token: the token of the requesting client
     resource_key: the unique resource key
     permission: the permission being requested
     return:

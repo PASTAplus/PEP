@@ -43,6 +43,8 @@ This resolves the issues mentioned in the Issue Statement. In addition, this has
 
 ### Use Cases and REST API Method Definitions
 
+**Note:** All API methods require the client to provide a valid authentication token (JWT) with each request. Methods that create a resource use the token subject as the principal owner of that resource. Applications that operate on a user's behalf (e.g., PASTA or ezEML) must submit the user's token in the request cookie when interacting with IAM API methods.
+
 **1a. Create Profile**
 
 Goal: To create a new EDI profile identifier using an IdP identifier.
@@ -59,7 +61,8 @@ Use case:
 ```
 POST: /auth/v1/profile
 
-createProfile(idp_identifier)
+createProfile(jwt_token, idp_identifier)
+    jwt_token: the token of the requesting client
     idp_identifier: the IdP identifier
     return:
         200 OK if successful
@@ -87,7 +90,8 @@ Use case:
 ```
 PUT: /auth/v1/profile/<edi_identifier>
 
-Profile(edi_identifier, given_name, family_name, email)
+Profile(jwt_token, edi_identifier, given_name, family_name, email)
+    jwt_token: the token of the requesting client
     edi_identifier: the EDU profile identifier
     given_name: the user given name
     family_name: the user family name
@@ -117,7 +121,8 @@ Use case:
 ```
 DELETE: /auth/v1/profile/<edi_identifier>
 
-deleteProfile(edi_identifier)
+deleteProfile(jwt_token, edi_identifier)
+    jwt_token: the token of the requesting client
     edi_identifier: the EDU profile identifier
     return:
         200 OK if successful
@@ -143,7 +148,8 @@ Use case:
 ```
 GET: /auth/v1/profile/<edi_identifier>
 
-deleteProfile(edi_identifier)
+deleteProfile(jwt_token, edi_identifier)
+    jwt_token: the token of the requesting client
     edi_identifier: the EDU profile identifier
     return:
         200 OK if successful
