@@ -90,11 +90,10 @@ Use case:
 ```
 PUT: /auth/v1/profile/<edi_identifier>
 
-Profile(jwt_token, edi_identifier, given_name, family_name, email)
+Profile(jwt_token, edi_identifier, common_name, email)
     jwt_token: the token of the requesting client
     edi_identifier: the EDU profile identifier
-    given_name: the user given name
-    family_name: the user family name
+    common_name: the user common name
     email: the user preferred email address
     return:
         200 OK if successful
