@@ -61,19 +61,97 @@ Use case:
 ```
 POST: /auth/v1/profile
 
-createProfile(jwt_token, idp_identifier)
-    jwt_token: the token of the requesting client
-    idp_identifier: the IdP identifier
-    return:
-        200 OK if successful
-        400 Bad Request if a profile already exists
-        401 Unauthorized if the client does not provide a valid authentication token
-        403 Forbidden if client is not authorized to execute method or access resource
-    body:
-        EDI profile identifier if 200 OK, error message otherwise
-    permissions:
-        authenticated: changePermission
+createProfile(
+    jwt_token
+        - The authentication token of the requesting client
+        - Passed in the request header as 'Authorization: Bearer <token>'
+    idp_uid
+        - The unique user identifier provided by the IdP
+        - E.g., LDAP DN, Google UID, Microsoft UID, GitHub URL, ORCID, email address
+        - This identifier must be unique across all users in the system
+        - Passed in the request body as JSON (see example below)
+    xml
+        - Optional parameter to receive the response body in XML instead of the default JSON
+        - Passed in the request header as 'Accept: application/xml' or 'Accept: text/xml'
+        - 'Accept: application/json' is implicit if this parameter is unset
+)
+        
+Returns:
+    200 OK
+        - The API call completed successfully
+        - The response body will contain JSON or XML that includes the EDI profile
+          identifier (field `edi_id`) and a message (field `msg`) indicating whether
+          a new profile was created or an existing profile was used
+    400 Bad Request
+        - The request was invalid and could not be processed
+        - The reason will be included in the `msg` field of the response
+        - Possible reasons include:
+            - The body was not well-formed JSON
+            - The body JSON had incorrect structure or was missing a required field
+            - An unsupported MIME type was specified in the Accept header
+    401 Unauthorized
+        - The client did not provide a valid authentication token
+    403 Forbidden
+        - The client is not authorized to execute method or access resource
+    5xx Internal Server Error
+        - An unexpected error occurred on the server
+        - The response body may not be well-formed JSON or XML in this case.
+
+Permissions: 
+    authenticated: changePermission
 ```
+
+#### Examples
+
+Example request body:
+
+```json
+{
+  "idp_uid": "6789000006297235623708"
+}
+```
+
+The `idp_uid` holds the unique identifier provided by the IdP for the user. E.g.: 
+
+- **LDAP**: `uid=username,o=EDI,dc=edirepository,dc=org`
+- **Google (old)**: `username@gmail.com`
+- **Google (new)**: `123456789012345678901`
+- **Microsoft**: `AAAAAAAAAAAAAAAAAAAAAxyz`
+- **ORCID**: `https://orcid.org/1234-5678-90AB-CDEF` (URL form)
+- **GitHub**: `https://github.com/username`
+
+Example JSON response body for `200 OK`:
+
+```json
+{
+  "method": "createProfile",
+  "edi_id": "edi-1234567890abcdef1234567890abcdef",
+  "msg": "A new profile was created"
+}
+```
+
+Or as XML:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<result>
+    <method>createProfile</method>
+    <edi_id>edi-1234567890abcdef1234567890abcdef</edi_id>
+    <msg>A new profile was created.</msg>
+</result>
+```
+
+If a profile already exists for the `edi_id`,  the `msg` field will instead indicate that an existing profile was used. The response is otherwise the same.
+
+Example response body for `400 Bad Request`:
+
+```json
+{
+  "method": "createProfile",
+  "msg": "Request body is not well-formed JSON"
+}
+```
+
 
 **1b. Update Profile**
 
