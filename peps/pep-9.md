@@ -1,5 +1,5 @@
 # PEP-9: Implementing Authorization of the IAM Model
-- Author(s): Mark Servilla, Roger Dahl
+- Author(s): Mark Servilla, Roger Dahl, Jon ide
 - Contact: mark.servilla@gmail.com
 - Status: Draft
 - Type: Application
@@ -618,6 +618,43 @@ For each data package, an entry in the *authorization service* ACR registry for 
 
 #### Updating the Data Package Manager Service
 
+## Integration with ezEML
+
+### IAM APIs Needed by ezEML
+
+Details TBD.
+
+1. GET to retrieve a list of all users (profiles) and a list of groups of which the ezEML user is a member
+2. POST to register an ezEML document as a resource
+3. POST to tell IAM to grant specified users and groups write access to an ezEML document
+4. POST to tell IAM to remove write access for specified users and groups to an ezEML document
+5. GET to retrieve all users/groups who have write access to a specified resource
+
+#### User-Data Directory Naming in ezEML
+
+ezEML user-data directories currently are named as follows (referred to herein as "old-style" naming):
+
+```python
+uid_hash = hashlib.md5(self._uid.encode("utf-8")).hexdigest()_
+cname_clean = self._cname.replace(" ", "_")
+dir_name = cname_clean + "-" + uid_hash
+```
+
+With the advent of IAM profiles, user-data directories will be named in a similar fashion except that IAM profile IDs will replace the hashed UIDs (referred to herein as "new-style" naming). We will continue to use the cleaned cname as a prefix to facilitate manual tasks that necessitate finding a user's data and looking in the directories. Note, however, that cnames may change. ezEML will fix up new-style directory names when cnames change. I.e., at login, ezEML will locate directories via the profile ID and will update the directory name if the cname has changed.
+
+#### Fixing Up User-Data Directories at Login Time 
+
+Existing "old-style" data directories correspond to user identities. Under the new IAM scheme, we will migrate data to "new-style" data directories that correspond instead to user profiles.
+
+At login time, ezEML will check the data directories for the user. It will construct the old-style directory name and determine if such a directory exists. If so, it will move the data to a new-style directory and delete the old-style directory. If the new-style directory already exists, there is the possibility for name collisions where a package with a given name already exists in the directory. In cases of name collisions, ezEML will rename packages by appending a datetime string and will alert the user and invite the user to decide which version to retain.
+
+In addition to the case just described, there is the possibility that a given user identity has been linked to more than one profile in between ezEML logins. The login JWT will contain IAM profile IDs for profiles to which the identity is linked or has been linked in the past. So that ezEML can find the corresponding old-style user data directory, if any, the uid and cnames will also be needed, and the profiles will need to be date-sorted.
+
+For each profile, starting with the oldest first if there is more than one, ezEML will see if there is an old-style data directory for the user. If so, the data will be moved to a new-style data directory and the old-style directory will be deleted. ezEML will start with the oldest profile first. Name collisions will be treated in the same way as was already described.
+
+The end result will be to have the user’s data in a directory named via the new convention, corresponding to a profile. I.e., data will belong to a profile. The various identities linked to a profile define ways to log in to the profile.
+
+When data directories are combined under a single profile, there will be no way to undo that combination. I.e., if [foo@gmail.com](mailto:foo@gmail.com) and [bar@gmail.com](mailto:bar@gmail.com) are both linked to a profile-1 and then [bar@gmail.com](mailto:bar@gmail.com) is linked to a different profile-2, the data that had been in an old-style data directory for [bar@gmail.com](mailto:bar@gmail.com) will stay with profile-1.
 
 ## Open issue(s)
 
@@ -627,15 +664,13 @@ Because the "deny" verb is rarely used in practice, it will not be supported in 
 
 ### 2. How will the current `DataPackageManager.access_matrix` table be migrated to the *authorization service* ACR registry?
 
-### 3. How will ezEML interact with the *authorization service* service?
-
-### 4. Will the data package "principal" owner be represented in the ACR registry?
+### 3. Will the data package "principal" owner be represented in the ACR registry?
 
 Currently, the data package owner is passed to the "isAuthorized" method through a separate parameter, `principalOwner`, which is obtained by querying the data package manager resource registry. The `principalOwner` is compared to the submitter of the resource access request to determine if the submitter is the owner of the data package, and if so, the submitter is granted "changePermission" access to the data resource in question without the need for an ACR. This is an implicit ACR that is not stored in the ACR registry.
 
-### 5. How will legacy `<access>` elements that contain IdP user identifiers and group identifiers work within the *authorization service* service?
+### 4. How will legacy `<access>` elements that contain IdP user identifiers and group identifiers work within the *authorization service* service?
 
-### 6. Should the *authorization service* expose a UI for managing ACRs or should each client application provide its own UI?
+### 5. Should the *authorization service* expose a UI for managing ACRs or should each client application provide its own UI?
 
 ## References
 
