@@ -22,11 +22,11 @@ Units annotations are valuable additions to the metadata describing data entitie
 
 ## Proposed Solution
 
-EDI will utilize the Units WG's data files, hosted on GitHub. EDI will substitue Python versions of the R services authored by John Porter and host these services on EDI servers. The GitHub data files will also be copied to EDI servers periodically so that EDI is not dependent on internet access either to John Porter's servers or GitHub's. The EDI services will be exposed as REST endpoints so they can be used by EDI applications in addition to ezEML.
+EDI will utilize the Units WG's data files, hosted on GitHub. EDI will substitue Python versions of the R services authored by John Porter and host these services on EDI servers. The GitHub data files will also be copied to EDI servers periodically so that EDI is not dependent on internet access either to John Porter's servers or GitHub's. The EDI services will be exposed as REST endpoints so they can be used by other EDI applications in addition to ezEML.
 
-One such service will accept an EML file and return an annotated EML file and, optionally, a corresponding JSON file. Another such service will return the annotation for a single unit instance.
+One such service will accept an EML file and return an annotated EML file and, optionally, the corresponding MetaPype JSON file. Another such service will return the annotation for a single unit instance.
 
-When a package is fetched or imported into ezEML, ezEML will add annotations to attributes (unless the user opts out via the Settings page). These will be added within the attribute blocks rather than in a separate annotations section. Users will have the option of  replacing existing annotations or not (again, via the Settings page).
+When a package is fetched or imported into ezEML, ezEML will add annotations to attributes (unless the user opts out via the Settings page). These will be added within the attribute blocks rather than in a separate annotations section. Users will have the option of replacing existing annotations or not if some QUDT units annotations already exist (again, via the Settings page).
 
 In addition, attribute IDs will be added to all attributes, and the EML version will be updated to EML.2.2.
 
@@ -48,11 +48,13 @@ ezEML will log the following cases:
 
 - a QUDT mapping was not found
 - a QUDT mapping was rejected by the user
-- a QUDT mapping already exists but is different from our mapping
+- a QUDT annotation already exists but is different from our mapping
 
 ## Open issue(s)
 
 What should attribute IDs look like? GUIDs have much to recommend them but are a bit ugly.
+
+Should we enable the user to enter a different QUDT code?
 
 ## References
 
