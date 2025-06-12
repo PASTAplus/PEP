@@ -56,6 +56,8 @@ What should attribute IDs look like? GUIDs have much to recommend them but are a
 
 Should we enable the user to enter a different QUDT code?
 
+We should give credit to the LTER Units WG, perhaps by citing their paper. Details TBD.
+
 ## References
 
 ## Rejection
