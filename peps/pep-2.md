@@ -90,7 +90,7 @@ Use case:
 ```
 PUT: /auth/v1/profile/<edi_identifier>
 
-Profile(jwt_token, edi_identifier, common_name, email)
+updateProfile(jwt_token, edi_identifier, common_name, email)
     jwt_token: the token of the requesting client
     edi_identifier: the EDU profile identifier
     common_name: the user common name
@@ -147,7 +147,7 @@ Use case:
 ```
 GET: /auth/v1/profile/<edi_identifier>
 
-deleteProfile(jwt_token, edi_identifier)
+readProfile(jwt_token, edi_identifier)
     jwt_token: the token of the requesting client
     edi_identifier: the EDU profile identifier
     return:
