@@ -92,7 +92,7 @@ PUT: /auth/v1/profile/<edi_identifier>
 
 updateProfile(jwt_token, edi_identifier, common_name, email)
     jwt_token: the token of the requesting client
-    edi_identifier: the EDU profile identifier
+    edi_identifier: the EDI profile identifier
     common_name: the user common name
     email: the user preferred email address
     return:
@@ -122,7 +122,7 @@ DELETE: /auth/v1/profile/<edi_identifier>
 
 deleteProfile(jwt_token, edi_identifier)
     jwt_token: the token of the requesting client
-    edi_identifier: the EDU profile identifier
+    edi_identifier: the EDI profile identifier
     return:
         200 OK if successful
         401 Unauthorized if the client does not provide a valid authentication token
@@ -149,7 +149,7 @@ GET: /auth/v1/profile/<edi_identifier>
 
 readProfile(jwt_token, edi_identifier)
     jwt_token: the token of the requesting client
-    edi_identifier: the EDU profile identifier
+    edi_identifier: the EDI profile identifier
     return:
         200 OK if successful
         401 Unauthorized if the client does not provide a valid authentication token
