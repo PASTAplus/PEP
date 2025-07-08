@@ -145,7 +145,7 @@ def is_authorized(resource, principals, permission) -> bool:
     for principal in principals:
         for acr in acl:
             if acr.principal == principal:
-                if acr.permission <= permission:
+                if acr.permission >= permission:
                     authorized = True
     return authorized
 ```
