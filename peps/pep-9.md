@@ -81,33 +81,25 @@ This service will be responsible for the following:
 
 ### Access Control Rule Registry
 
-The ACR registry will be implemented as RDBMS tables with the following schema (Figure 3):
+The Access Control Rule (ACR) registry holds information about resources (items requiring protection), principals (actors wishing to access a resource), and rules (a condition or set of conditions that determines whether a principal is granted or denied a specific type of access (e.g., read, write, changePermission) to a resource). The registry is dynamic, changing as new resources and principals are added to the system, along with existing and new rules that govern access.
+
+The ACR Registry will be implemented as a relational database and store ACRs for all application resources within the EDI ecosystem. The model will contain tables for *resources*, *principals*, and *rules*, and will have the following schema (Figure 3):
 
 ![](./images/pep9-acl-tables.png)
 
 **Figure 3:** Authorization service ACR registry table schema.
 
-The ACR Registry will store ACRs for all application resources in the EDI ecosystem. We will use a structure with *resources*, *rules*, and *principals*:
+
 
 #### Resource
 
-A resource may be singular or consist of a hierarchical set (as for data packages) where a resource object is the child of another resource, forming a directed acyclic graph (DAG) where children may have only one parent. Resources have zero to many access rules, each containing a permission and a principal, the subject of the rule. Resources are identified by a unique key provided by the application and a human-readable label (the label does not have to be unique).
+A resource record describes a physical or virtual object that requires controlled access Objects may include application service APIs, data packages and their composition (metadata, data, quality report), ezEML models, or just about anything. A resource may be singular or consist of a hierarchical set of related resources (as with data packages), composing a "resource tree" (see below). Resources are identified by a unique key, but also include a human-readable, non-unique label for easy interpretation. In addition to the key and label, resources can have a foreign reference to a parent resource, when part of a resource tree, and a "type" attribute that classifies the resource into a category (e.g., package, data, metadata, collection, or ezeml model) from a set of system defined categories.
 
 - `resource.id` - Row ID of the resource (referenced in rules).
 - `resource.parent_id` - An optional reference to a parent resource, making this resource a child of the parent resource.
 - `resource.key` - A unique system identifier for the resource.
 - `resource.label` - A human-readable name for the resource.
 - `resource.type` - The resource type.
-
-#### Rule
-
- Each rule uniquely maps a resource to a principal subject (i.e., user profile or group) and a permission (*read*, *write* or *changePermission*), defining how the principal can access the resource.
-
-- `rule.id` - Row ID of the rule.
-- `rule.resource_id` - A reference to the resource to which the rule applies.
-- `rule.principal_id` - A reference to the user profile or group to which the rule is granted.
-- `rule.permission` - The access permission granted by this rule (enum of `read`, `write` or `changePermission`).
-- `rule.granted_date` - The grant date and time of the rule.
 
 #### Principal
 
@@ -117,7 +109,37 @@ The principal references either a user profile or a group. A user profile can be
 - `principal.subject_id` - A reference to the subject, either a profile or group.
 - `principal.subject_type` - The principal subject type (enum of `PROFILE` or `GROUP`).
 
-For example, if we are tracking permissions for a data package with metadata and data entities, we would set up an inverted tree (DAG) of resources (Figure 4). The `resource.label` of the root resource might be `knb-lter-bes.1234.5`, and the `resource.type` would be `package`. To this parent, we would add two child resources of `resource.type` `collection` and with labels `data` and `metadata`. These child resources would then have their own children, representing the individual data and metadata entities in the package. So a resource with parent `data` might have `resource.label` of `water.csv` while the `resource.key` would be the PASTA URI `https://pasta.lternet.edu/package/data/eml/knb-lter-bes.1234.5/3fb3ef2e559fa42956b69226e9069058`. The `resource.type` would be `data`. Rules would then be linked to these resources via `rule.resource_id`. Each rule would have a `rule.principal_id` of a user profile or user group. The `rule.permission` would specify the permission of access granted to the principal, and would be `read`, `write` or `changePermission`. The principal would be linked to the `principal.id` of the principal table. The `principal.subject_id` would be the row ID of a row in the Profile or Group table, and `principal.subject_type` would be `PROFILE` or `GROUP`.
+#### Rule
+
+Each rule uniquely maps a resource to a principal subject (i.e., user profile or group) and a permission (*read*, *write* or *changePermission*), defining how the principal can access the resource.
+
+Resources have zero to many access rules, each containing a permission and a principal, the subject of the rule.
+
+- `rule.id` - Row ID of the rule.
+- `rule.resource_id` - A reference to the resource to which the rule applies.
+- `rule.principal_id` - A reference to the user profile or group to which the rule is granted.
+- `rule.permission` - The access permission granted by this rule (enum of `read`, `write` or `changePermission`).
+- `rule.granted_date` - The grant date and time of the rule.
+
+
+#### Conditions for a Valid Resource Tree
+
+As noted above, a *resource* may be composed of a hierarchical set of related resources structured as an a-cyclic graph, called a resource tree. A resource tree permits the organization of related resources so they can be managed more easily as a single unit: resource trees are modeled after the organization of a EDI data package where the data package is a virtual container for metadata, a quality report, and one or more data objects. Other resources may organize as a resource tree, but the resource tree structure is designed around the data package and, more specifically, the assignment of access control rules for each data package resource.
+
+In PASTA, the heirarchical structure of the EML metadata and, critically, the `<access>` elements within the EML metadata set the stage for determining access cotnrol of the data package resources. The EML XML schema permits `<access>` elements to appear at (1) the dataset-level (global scope), (2) as part of each data object description within the metadata (data object scope), or (3) a combination of both global and data object scope access control, leaving four possible acccess control states within the metadata:
+
+1. no `<access>` elements: all resources are inaccessible except for the publishing principal (this is an implicit deny rule for all resources);
+2. global scope `<access>` element: access control derived from the global scope `<access>` element is applied to all resources in the data package, including the data package itself, metadata, the quality report, and all data objects (this is the most common state);
+3. data-object scope `<access>` elements: data package metadata having `<access>` elements only at the data object level effectively limits direct access to only the data object, and no other information, including information within the metadata describing how to access the data object (this state is rarely seen and will not be supported in the resource tree); and
+4. mixed global and data object scope `<access>` elements: mixed scope `<access>` elements provide the mechanism to expose metadata and the quality report to a broad set of principals (e.g., public access), while restricting access to data objects. In this case, data objects without an `<access>` element inherit the access control defined at the global scope, where as data objects with a local scope take precendence over those at the global scope, which are effectively ignored.
+
+To replicate the existing access control scheme for states 1, 2, and 4, the resource tree is designed as an a-cyclic graph (that is, a traverse of the graph can never end up at the starting node) with a single root node - the data package resource node, forming a tree-like graph structure. Leaf nodes of the tree consist of metadata, quality report, and data object resource nodes, with intermediate resource nodes of type "collection" that provide a natural hierarchy from the data package root node to leaf nodes (see Figure 4). When assiging access control rules to the resource tree, certain guidelines are enforced:
+
+1. Each resource node must have at least one access control rule specifying an "owner" (with changePermission) principal. As a consequence of this condition, it is error to remove an access control rule for an owner if the owner is solitary.
+2. Adding an access control rule to any resource tree node requires that the access-level (i.e., permission) of the access control rule for the given principal must be equal or greater for each parent node in the path from the resource node from which the rule was added to the root node. Although the access-level can be determined through multiple means (e.g., group membership at a higher level, for example), in practice, the mechanism will be to add the principle (or group) to each parent node in the path: this prevent inadvertant loss of access if an associated principal is removed at a higher level.
+3. If a principal has at least "write" permission on a resource node, they may add a new child resource to the resouce node in which they have "write" permission. The prinicipal would then be the "owner" (i.e., have changePermission permission) on the new child resouce node.
+
+The following is a more realistic example of a data package resource tree: if we are tracking permissions for a data package with metadata and data entities, we would set up an inverted tree (DAG) of resources (Figure 4). The `resource.label` of the root resource might be `knb-lter-bes.1234.5`, and the `resource.type` would be `package`. To this parent, we would add two child resources of `resource.type` `collection` and with labels `data` and `metadata`. These child resources would then have their own children, representing the individual data and metadata entities in the package. So a resource with parent `data` might have `resource.label` of `water.csv` while the `resource.key` would be the PASTA URI `https://pasta.lternet.edu/package/data/eml/knb-lter-bes.1234.5/3fb3ef2e559fa42956b69226e9069058`. The `resource.type` would be `data`. Rules would then be linked to these resources via `rule.resource_id`. Each rule would have a `rule.principal_id` of a user profile or user group. The `rule.permission` would specify the permission of access granted to the principal, and would be `read`, `write` or `changePermission`. The principal would be linked to the `principal.id` of the principal table. The `principal.subject_id` would be the row ID of a row in the Profile or Group table, and `principal.subject_type` would be `PROFILE` or `GROUP`.
 
 ![](./images/pep9-resource_tree.png)
 
