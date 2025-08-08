@@ -60,7 +60,7 @@ Both the `service.xml` file and EML metadata use the same XML `<access>` element
 
 For ezEML, there is an implicit **write** permission for the owner of a resource. In this case, the owner is identified through the IdP identifier provided through the PASTA authentication token. Resources are held in filesystem directories that map to the owner's identifier, and only the owner of the directory may create or modify resources within it. There is an exception to this rule where the owner of the resource may grant temporary **write** access to another user of ezEML, enabling collaboration. This process, however, does not provide permanent access to the resource and is revoked when the proxy user completes their actions.
 
-## <a id="issue_statement" />Issue Statement
+## <a id="issue_statement"/>Issue Statement
 
 The current use of access management within EDI applications has the following issues:
 
