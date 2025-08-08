@@ -7,6 +7,13 @@
 - Reviewed:
 - Final:
 
+## Table of Contents
+* [Introduction](#Introduction)
+* [Background](#Background)
+* [Issue Statement](#Issue_Statement)
+* [Proposed Solution](#Proposed_Solution)
+  * [Access Control Rule Registry](#Access_Control_Rule_Registry)
+
 ## Introduction
 
 Protecting digital resources through access control is paramount to the EDI Identity and Access Management (IAM) model (see [PEP-7](./pep-7.md)). Digital resources in the EDI ecosystem can be anything, including the elements of a data package (e.g., metadata, quality report, or data), web-service API methods, the scope values of data package identifiers, web-application actions (e.g., forms or links), or metadata models created and edited in *ezEML*. These resources require protection from malicious and non-malicious actions through access control rules (ACRs), which codify how a user of an EDI application may act upon a resource.
@@ -203,8 +210,8 @@ Notes: This use case supports the existing PASTA data package upload process. Pa
 ```
 POST: /auth/v1/eml
 
-addEML(jwt_token, jwt_token, eml)
-    jwt_token: the token of the requesting client
+addEML(edi_token, eml)
+    edi_token: the token of the requesting client
     eml: valid EML document as a string
     return:
         200 OK if successful
@@ -234,8 +241,8 @@ Use case:
 ```
 POST: /auth/v1/access
 
-addAccess(jwt_token, access, resource_key, resource_label, resource_type):
-    jwt_token: the token of the requesting client
+addAccess(edi_token, access, resource_key, resource_label, resource_type):
+    edi_token: the token of the requesting client
     access: valid <access> element
     resource_key: resource key for the <access> element
     resource_label: the human readable name of the resource
@@ -268,8 +275,8 @@ Use case:
 ```
 POST: /auth/v1/resource
 
-createResource(jwt_token, resource_key, resource_label, resource_type, parent_resource_key)
-    jwt_token: the token of the requesting client
+createResource(edi_token, resource_key, resource_label, resource_type, parent_resource_key)
+    edi_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     resource_label: the human readable name of the resource
     resource_type: the type of resource
@@ -300,8 +307,8 @@ Use case:
 ```
 PUT: /auth/v1/resource/<resource_key>
 
-updateResource(jwt_token, resource_key, resource_label, resource_type, parent_resource_key)
-    jwt_token: the token of the requesting client
+updateResource(edi_token, resource_key, resource_label, resource_type, parent_resource_key)
+    edi_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     resource_label: the human readable name of the resource
     resource_type: the type of resource
@@ -333,8 +340,8 @@ Use case:
 ```
 DELETE: /auth/v1/resource/<resource_key>
 
-deleteResource(jwt_token, resource_key)
-    jwt_token: the token of the requesting client
+deleteResource(edi_token, resource_key)
+    edi_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     return:
         200 OK if successful
@@ -366,8 +373,8 @@ GET : /auth/v1/resource/<resource_key>?(descendants|ancestors|all))
 1. "descendants" and "ancestors" together are equivalent to "all"
 2. "all" supersedes "descendants" or "ancestors"
 
-readResource(jwt_token, resource_key, (descendants|ancestors|all))
-    jwt_token: the token of the requesting client
+readResource(edi_token, resource_key, (descendants|ancestors|all))
+    edi_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     descendants: boolean if resource structure contains descendants (optional)
     ancestor: boolean if resource structure contains ancestors (optional)
@@ -397,8 +404,8 @@ Use case:
 ```
 GET: /auth/v1/resources
 
-getResources(jwt_token)
-    jwt_token: the token of the requesting client
+getResources(edi_token)
+    edi_token: the token of the requesting client
     return:
         200 OK if authorized
         401 Unauthorized if the client does not provide a valid authentication token
@@ -425,8 +432,8 @@ Use case:
 ```
 POST: /auth/v1/rule
 
-createRule(jwt_token, resource_key, principal, permission)
-    jwt_token: the token of the requesting client
+createRule(edi_token, resource_key, principal, permission)
+    edi_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     principal: the principal of the ACR
     permission: the permission of the ACR
@@ -456,8 +463,8 @@ Use case:
 ```
 PUT: /auth/v1/rule/<resource_key>/<principal>
 
-updateRule(jwt_token, esource_key, principal, permission)
-    jwt_token: the token of the requesting client
+updateRule(edi_token, esource_key, principal, permission)
+    edi_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     principal: the principal of the ACR
     permission: the permission of the ACR (may be `None` if DELETE)
@@ -491,8 +498,8 @@ Use case:
 ```
 DELETE: /auth/v1/rule/<resource_key>/<principal>
 
-deleteRule(jwt_token, resource_key, principal)
-    jwt_token: the token of the requesting client
+deleteRule(edi_token, resource_key, principal)
+    edi_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     principal: the principal of the ACR
     return:
@@ -525,8 +532,8 @@ Use case:
 ```
 GET: /auth/v1/rule/<resource_key>/<principal>
 
-readRule(jwt_token, resource_key, principal)
-    jwt_token: the token of the requesting client
+readRule(edi_token, resource_key, principal)
+    edi_token: the token of the requesting client
     resource_key: the unique resource key of the resource
     principal: the principal of the ACR
     return:
@@ -555,8 +562,8 @@ Use case:
 ```
 GET: /auth/v1/rules/principal
 
-read_principal_rules(jwt_token)
-    jwt_token: the token of the requesting client
+read_principal_rules(edi_token)
+    edi_token: the token of the requesting client
     return:
         200 OK if successful
         400 Bad Request if principal is invalid
@@ -584,8 +591,8 @@ Use case:
 ```
 GET: /auth/v1/rules/resource/<resource_key>
 
-read_resource_rules(jwt_token, resource_key)
-    jwt_token: the token of the requesting client
+read_resource_rules(edi_token, resource_key)
+    edi_token: the token of the requesting client
     resource_key: the unique resource key
     return:
         200 OK if successful
@@ -611,8 +618,8 @@ Use case:
 ```
 GET: /auth/v1/authorized?resource_key=<resource_key>&permission=<permission>
 
-isAuthorized(jwt_token, resource_key, permission)
-    jwt_token: the token of the requesting client
+isAuthorized(edi_token, resource_key, permission)
+    edi_token: the token of the requesting client
     resource_key: the unique resource key
     permission: the permission being requested
     return:
