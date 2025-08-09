@@ -7,14 +7,7 @@
 - Reviewed:
 - Final:
 
-## Table of Contents
-* [Introduction](#introduction)
-* [Background](#Background)
-* [Issue Statement](#issue_statement)
-* [Proposed Solution](#Proposed_Solution)
-  * [Access Control Rule Registry](#Access_Control_Rule_Registry)
-
-## <a id="introduction" />Introduction
+## Introduction
 
 Protecting digital resources through access control is paramount to the EDI Identity and Access Management (IAM) model (see [PEP-7](./pep-7.md)). Digital resources in the EDI ecosystem can be anything, including the elements of a data package (e.g., metadata, quality report, or data), web-service API methods, the scope values of data package identifiers, web-application actions (e.g., forms or links), or metadata models created and edited in *ezEML*. These resources require protection from malicious and non-malicious actions through access control rules (ACRs), which define how a user of an EDI application may interact with a resource.
 
@@ -60,7 +53,7 @@ Both the `service.xml` file and EML metadata use the same XML `<access>` element
 
 For ezEML, there is an implicit **write** permission for the owner of a resource. In this case, the owner is identified through the IdP identifier provided through the PASTA authentication token. Resources are held in filesystem directories that map to the owner's identifier, and only the owner of the directory may create or modify resources within it. There is an exception to this rule where the owner of the resource may grant temporary **write** access to another user of ezEML, enabling collaboration. This process, however, does not provide permanent access to the resource and is revoked when the proxy user completes their actions.
 
-## <a id="issue_statement"/>Issue Statement
+## Issue Statement
 
 The current use of access management within EDI applications has the following issues:
 
