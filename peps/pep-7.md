@@ -8,6 +8,15 @@ Created: 2024-08-27
 Reviewed:  
 Final:
 
+## Table of Contents
+* [Introduction](#introduction)
+* [Background](#background)
+* [Issue Statement](#issue-statement)
+* [Proposed Solution](#proposed-solution)
+* [Open issue(s)](#open-issues)
+* [References](#references)
+<!-- TOC -->
+
 # Introduction <a id="introduction"></a> [^](#top)
 
 The Environmental Data Initiative (EDI) proposes to upgrade its Identity and Access Management (IAM) model across all its applications. Identity and access management is a framework of policies and technologies ensuring that only users who have proven their identity and with appropriate permissions can access repository services and data resources. For years, EDI has relied on a local LDAP user registry as its internal identity provider (IdP) for users who need to archive and publish scientific data through the EDI data repository. More recently, EDI has embraced single sign-on (SSO) authentication using external IdPs, providing users with more straightforward options for identity verification, albeit with fewer privileges in EDI applications. Although this approach has worked well over the years, EDI believes that updating the IAM model will significantly improve usability and security throughout the EDI application ecosystem in the following areas:
