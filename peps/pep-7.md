@@ -17,7 +17,7 @@ Final:
 * [References](#references)
 <!-- TOC -->
 
-# Introduction <a id="introduction"></a> [^](#top)
+## Introduction <a id="introduction"></a> [^](#top)
 
 The Environmental Data Initiative (EDI) proposes to upgrade its Identity and Access Management (IAM) model across all its applications. Identity and access management is a framework of policies and technologies ensuring that only users who have proven their identity and with appropriate permissions can access repository services and data resources. For years, EDI has relied on a local LDAP user registry as its internal identity provider (IdP) for users who need to archive and publish scientific data through the EDI data repository. More recently, EDI has embraced single sign-on (SSO) authentication using external IdPs, providing users with more straightforward options for identity verification, albeit with fewer privileges in EDI applications. Although this approach has worked well over the years, EDI believes that updating the IAM model will significantly improve usability and security throughout the EDI application ecosystem in the following areas:
 
@@ -35,7 +35,7 @@ The Environmental Data Initiative (EDI) proposes to upgrade its Identity and Acc
 
 **Identity API Keys**. Adopting API keys for users to identify themselves when using REST API methods within the EDI application ecosystem allows autonomy for workflows and other software that require authentication to access resources without having to repeatedly sign-in through a web browser.
  
-# Background <a id="background"></a> [^](#top)
+## Background <a id="background"></a> [^](#top)
 
 There are currently five EDI applications that use some form of IAM:
 
@@ -70,7 +70,7 @@ The data repository, running the PASTA software, uses structured access control 
 
 Authorization for the Data Portal, ezEML, and the Dashboard all use web browser session-based information to determine whether a user is permitted to access a resource. These sessions persist across browser restarts, but vary in the length of time they are valid. The Data Portal and Dashboard use access control to restrict non-privileged users from executing specific web functionality, while ezEML uses discretionary access control for restricting access to metadata and data resources to the resource owner, only (ezEML does support collaborative sharing of resources through the possession of a resource token that can be passed to anyone the owner wishes to access the resource). 
 
-# Issue Statement <a id="issue-statement"></a> [^](#top)
+## Issue Statement <a id="issue-statement"></a> [^](#top)
 
 EDI’s IAM model works as expected but can be improved. Its original design was intended for a single community of users, the LTER Network. A locally managed LDAP registry, along with LDAP "distinguished names," was the only framework needed to achieve authentication and authorization goals. Years later, single sign-on (SSO) using third-party identity providers was added to the framework to support LTER sites wishing to track consumers of their data products more effectively. Today, the different identity providers and the simple use of their unique identifiers in the authentication token limits EDI’s ability to serve a broad community user base. The issues follow:
 
@@ -98,7 +98,7 @@ For data resources, all access control rules must be in EML metadata `<access>` 
 
 The EML 2.2.0 standard used by the EDI data repository and ezEML has officially deprecated the EML metadata `<access>` element. This XML element will eventually be removed from the schema, resulting in validation errors if not removed from the EML metadata document. EDI must provide an alternative mechanism to meet the goal of data resource authorization.
 
-# Proposed Solution <a id="proposed-solution"></a> [^](#top)
+## Proposed Solution <a id="proposed-solution"></a> [^](#top)
 
 The EDI software development team proposes a multi-faceted solution to ensure the goals of the IAM model are met while expanding the user and group management features provided to end users. Six areas of the IAM model will be upgraded:
 
@@ -181,7 +181,7 @@ We will provide a mechanism by which the owner of a data resource or any user wh
 
 We will modify the process by which EML 2.2.0 (or greater) parses and extracts access control rules from the EML metadata `<access>` element to one that identifies similar access control rule schemas within the `<additionalMetadata>` element of the EML document (the `<additionalMetadata>` element of the EML metadata schema permits any valid XML content that is not within the EML schema namespace). We will continue to extract access control rules using the existing `<access>` elements of the EML metadata for EML versions before and up to 2.2.0, but be ready for versions greater than 2.2.0 if the `<access>` element is no longer schema-valid. We believe access control rules within the EML metadata are important for scenarios where users would like a default set of access control rules added as part of the publication workflow.
 
-# Open issue(s) <a id="open-issues"></a> [^](#top)
+## Open issue(s) <a id="open-issues"></a> [^](#top)
 
 **1. ezEML user spaces**
 
@@ -195,7 +195,7 @@ ezEML currently creates a user space based on the identity provider's unique ide
 1. The transport protocol in the HTTP Authorization header for JWTs will affect any non-EDI client using PASTA authentication tokens for replay requests since the authentication tokens are sent through the request's Cookie header. A suggested solution is to insert the JWT in both the Authorization and Cookies headers until a recommended deprecation period is met and then transition to only using the Authorization header.  
 2. Embracing JWTs will require rewriting PASTA’s internal decoding of authentication tokens. To avoid a complete rewrite, only public-facing services (e.g., Data Portal, Gatekeeper, and ezEML) would initially need to support JWTs. The Gatekeeper could decode the JWT as the externally defined token and recast essential information into a PASTA authentication token for internal purposes.
 
-# References <a id="references"></a> [^](#top)
+## References <a id="references"></a> [^](#top)
 
 1. About Oauth2: https://oauth.net/2/  
 2. About JSON web Tokens: https://jwt.io/introduction  

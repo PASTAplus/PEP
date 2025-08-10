@@ -12,19 +12,8 @@
 * [Background](#background)
 * [Issue Statement](#issue-statement)
 * [Proposed Solution](#proposed-solution)
-    * [Access Control Rule Registry](#access-control-rule-registry)
-    * [Authorization algorithm](#authorization-algorithm)
-    * [PASTA Integration](#pasta-integration)
-    * [Use Cases and REST API Method Definitions](#use-cases-and-rest-api-method-definitions)
-    * [Implementation Strategy for PASTA](#implementation-strategy-for-pasta)
 * [Integration with ezEML](#integration-with-ezeml)
-    * [IAM APIs Needed by ezEML](#iam-apis-needed-by-ezeml)
 * [Open issue(s)](#open-issues)
-    * [1. Will the *authorization service* support "deny" verbs in ACRs?](#1-will-the-authorization-service-support-deny-verbs-in-acrs)
-    * [2. How will the current `DataPackageManager.access_matrix` table be migrated to the *authorization service* ACR registry?](#2-how-will-the-current-datapackagemanageraccess_matrix-table-be-migrated-to-the-authorization-service-acr-registry)
-    * [3. Will the data package "principal" owner be represented in the ACR registry?](#3-will-the-data-package-principal-owner-be-represented-in-the-acr-registry)
-    * [4. How will legacy `<access>` elements that contain IdP user identifiers and group identifiers work within the *authorization service* service?](#4-how-will-legacy-elements-that-contain-idp-user-identifiers-and-group-identifiers-work-within-the-authorization-service-service)
-    * [5. Should the *authorization service* expose a UI for managing ACRs or should each client application provide its own UI?](#5-should-the-authorization-service-expose-a-ui-for-managing-acrs-or-should-each-client-application-provide-its-own-ui)
 * [References](#references)
 * [Rejection](#rejection)
 <!-- TOC -->
@@ -101,7 +90,7 @@ This service will be responsible for the following:
 
 **TODO: This section needs to be rewritten with the current model in mind**
 
-### Access Control Rule Registry <a id="access-control-rule-registry"></a> [^](#top)
+### Access Control Rule Registry
 
 The Access Control Rule (ACR) registry holds information about resources (items requiring protection), principals (actors wishing to access a resource), and rules (a condition or set of conditions that determines whether a principal is granted or denied a specific type of access (e.g., read, write, changePermission) to a resource). The registry is dynamic, changing as new resources and principals are added to the system, along with existing and new rules that govern access.
 
@@ -167,7 +156,7 @@ The following is a more realistic example of a data package resource tree: if we
 
 **Figure 4:** Resource tree for a data package with metadata and data entities.
 
-### Authorization algorithm <a id="authorization-algorithm"></a> [^](#top)
+### Authorization algorithm
 
 Premises:
 
@@ -193,7 +182,7 @@ def is_authorized(resource, principals, permission) -> bool:
                     authorized = True
     return authorized
 ```
-### PASTA Integration <a id="pasta-integration"></a> [^](#top)
+### PASTA Integration
 
 There are three primary integration points between the *authorization service* and PASTA:
 
@@ -203,7 +192,7 @@ There are three primary integration points between the *authorization service* a
 
 Each integration point is selected to minimize the impact on the existing PASTA architecture and to provide a seamless transition to the new *authorization service*.
 
-### Use Cases and REST API Method Definitions <a id="use-cases-and-rest-api-method-definitions"></a> [^](#top)
+### Use Cases and REST API Method Definitions
 
 **Note:** All API methods require the client to provide a valid authentication token (JWT) with each request. Methods that create a resource use the token subject as the principal owner of that resource. Applications that operate on a user's behalf (e.g., PASTA or ezEML) must submit the user's token in the request cookie when interacting with IAM API methods.
 
@@ -648,7 +637,7 @@ isAuthorized(edi_token, resource_key, permission)
         authenticated: changePermission
 ```
 
-### Implementation Strategy for PASTA <a id="implementation-strategy-for-pasta"></a> [^](#top)
+### Implementation Strategy for PASTA
 
 The *authorization service* service must integrate seamlessly into PASTA's current authorization workflow. Three separate tasks must be addressed: (1) Service method ACRs for both the DPM and AM services must be migrated to the *authorization service* ACR registry; (2) the existing `access_matrix` database table, including principal owners stored in the DPM `resource_registry` database table, must be migrated to the *authorization service* ACR registry with PASTA IDs; and (3) the DPM service must be modified to use the REST API methods of the *authorization service* service (above) in lieu of its internal authorization processing.
 
@@ -664,7 +653,7 @@ For each data package, an entry in the *authorization service* ACR registry for 
 
 ## Integration with ezEML <a id="integration-with-ezeml"></a> [^](#top)
 
-### IAM APIs Needed by ezEML <a id="iam-apis-needed-by-ezeml"></a> [^](#top)
+### IAM APIs Needed by ezEML
 
 Details TBD.
 
@@ -702,19 +691,19 @@ When data directories are combined under a single profile, there will be no way 
 
 ## Open issue(s) <a id="open-issues"></a> [^](#top)
 
-### 1. Will the *authorization service* support "deny" verbs in ACRs? <a id="1-will-the-authorization-service-support-deny-verbs-in-acrs"></a> [^](#top)
+### 1. Will the *authorization service* support "deny" verbs in ACRs?
 
 Because the "deny" verb is rarely used in practice, it will not be supported in the initial implementation of the *authorization service* service. However, this feature may be added in a future release.
 
-### 2. How will the current `DataPackageManager.access_matrix` table be migrated to the *authorization service* ACR registry? <a id="2-how-will-the-current-datapackagemanageraccess_matrix-table-be-migrated-to-the-authorization-service-acr-registry"></a> [^](#top)
+### 2. How will the current `DataPackageManager.access_matrix` table be migrated to the *authorization service* ACR registry?
 
-### 3. Will the data package "principal" owner be represented in the ACR registry? <a id="3-will-the-data-package-principal-owner-be-represented-in-the-acr-registry"></a> [^](#top)
+### 3. Will the data package "principal" owner be represented in the ACR registry?
 
 Currently, the data package owner is passed to the "isAuthorized" method through a separate parameter, `principalOwner`, which is obtained by querying the data package manager resource registry. The `principalOwner` is compared to the submitter of the resource access request to determine if the submitter is the owner of the data package, and if so, the submitter is granted "changePermission" access to the data resource in question without the need for an ACR. This is an implicit ACR that is not stored in the ACR registry.
 
-### 4. How will legacy `<access>` elements that contain IdP user identifiers and group identifiers work within the *authorization service* service? <a id="4-how-will-legacy-elements-that-contain-idp-user-identifiers-and-group-identifiers-work-within-the-authorization-service-service"></a> [^](#top)
+### 4. How will legacy `<access>` elements that contain IdP user identifiers and group identifiers work within the *authorization service* service?
 
-### 5. Should the *authorization service* expose a UI for managing ACRs or should each client application provide its own UI? <a id="5-should-the-authorization-service-expose-a-ui-for-managing-acrs-or-should-each-client-application-provide-its-own-ui"></a> [^](#top)
+### 5. Should the *authorization service* expose a UI for managing ACRs or should each client application provide its own UI?
 
 ## References <a id="references"></a> [^](#top)
 
