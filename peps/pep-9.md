@@ -208,8 +208,7 @@ Use case:
 4. The *authorization service* adds the ACL ACRs to the ACR registry.
 5. The *authorization service* returns a success message to client.
 
-
-Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the existing `access_matrix`. This should, however, change for consistency: the principal owner should be added into the ACR registry with the "changePermission" permission. This method should create a "Data Package" resource tree.
+Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the existing `access_matrix`. However, this should change for consistency: the principal owner (identified by the authentication token subject) should be added to the ACR registry with the "changePermission" permission. This method should create a data package resource tree.
 
 ```
 POST: /auth/v1/eml
@@ -227,8 +226,6 @@ addEML(edi_token, eml)
     permissions:
         pasta: changePermission
 ```
-
-Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the existing `access_matrix`. However, this should change for consistency: the principal owner (identified by the authentication token subject) should be added to the ACR registry with the "changePermission" permission. This method should create a data package resource tree.
 
 **2. Add Access**
 
