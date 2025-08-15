@@ -21,8 +21,8 @@
     * [2b. Read Group](#2b-read-group)
     * [2c. Update Group](#2c-update-group)
     * [2d. Delete Group](#2d-delete-group)
-    * [2e. Add Users to Group](#2e-add-users-to-group)
-    * [2f. Remove Users from Group](#2f-remove-users-from-group)
+    * [2e. Add User to Group](#2e-add-user-to-group)
+    * [2f. Remove User from Group](#2f-remove-user-from-group)
 * [Open issue(s)](#open-issues)
 * [References](#references)
 <!-- TOC -->
@@ -296,7 +296,7 @@ deleteGroup(edi_token, group_name)
         authenticated: changePermission
 ```
 
-### 2e. Add Users to Group <a id="2e-add-users-to-group"></a> [^](#top)
+### 2e. Add User to Group <a id="2e-add-user-to-group"></a> [^](#top)
 Goal: To add an EDI user to a group.
 
 Use case: 
@@ -326,7 +326,7 @@ addGroupUser(edi_token, group_edi_id, profile_edi_id)
     permissions:
         authenticated: changePermission
 ```
-### 2f. Remove User from Group <a id="2f-remove-users-from-group"></a> [^](#top)
+### 2f. Remove User from Group <a id="2f-remove-user-from-group"></a> [^](#top)
 Goal: To remove an EDI user from a group.
 
 Use case: 
