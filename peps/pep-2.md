@@ -1,4 +1,4 @@
-# PEP-2: Add level of abstraction between IdP identifiers and EDI applications using unique random EDI identifiers (EDI ID) for users
+# PEP-2: Add level of abstraction between IdP identifiers and EDI applications using unique random EDI identifiers (EDI ID) for users <a id="top"></a>
 
 - Author(s): Roger Dahl
 - Contact: dahl at unm edu
@@ -8,12 +8,30 @@
 - Reviewed: 2024-08-28
 - Final:
 
+## Table of Contents
+* [Introduction](#introduction)
+* [Issue Statement](#issue-statement)
+* [Proposed Solution](#proposed-solution)
+* [Use Cases and REST API Method Definitions](#use-cases-and-rest-api-method-definitions)
+    * [1a. Create Profile](#1a-create-profile)
+    * [1b. Update Profile](#1b-update-profile)
+    * [1c. Delete Profile](#1c-delete-profile)
+    * [1d. Read Profile](#1d-read-profile)
+    * [2a. Create Group](#2a-create-group)
+    * [2b. Read Group](#2b-read-group)
+    * [2c. Update Group](#2c-update-group)
+    * [2d. Delete Group](#2d-delete-group)
+    * [2e. Add User to Group](#2e-add-user-to-group)
+    * [2f. Remove User from Group](#2f-remove-user-from-group)
+* [Open issue(s)](#open-issues)
+* [References](#references)
+<!-- TOC -->
 
-## Introduction
+## Introduction <a id="introduction"></a> [^](#top)
 
 The Environmental Data Initiative (EDI) provides data repository services accessible through the Internet. Many of these services (e.g., publishing data) require an authorized identity to fulfill, an identity authenticated through one or more Identity Providers (IdPs). However, the current implementation of ACLs is tightly coupled to the unique identifier provided by the IdP. This has the potential of affecting authorization and access for the user in PASTA. This PEP proposes adding a level of abstraction between ACLs and IdPs, in the form of a randomly generated user identifier, called a user PASTA ID, to resolve this and other issues.
 
-## Issue Statement
+## Issue Statement <a id="issue-statement"></a> [^](#top)
 
 We support multiple IdPs for sign in. Currently, user information provided by the IdP with which the user signed in, is used directly in package entity access control lists (ACLs), and the user's PASTA token. This has the following issues:
 
@@ -23,7 +41,7 @@ We support multiple IdPs for sign in. Currently, user information provided by th
 
 - The person who assigns access to entities must know how the user signs in, and depending on that information, use their email address, ORCID, or LDAP DN in the ACLs.
 
-## Proposed Solution
+## Proposed Solution <a id="proposed-solution"></a> [^](#top)
 
 We will add a level of abstraction between ACLs and IdPs, in the form of an internal unique identifier called a PASTA ID. The PASTA ID uniquely identifies a user or group in the system. 
 
@@ -41,11 +59,11 @@ This resolves the issues mentioned in the Issue Statement. In addition, this has
 
 - This will not prevent users from having separate identities in PASTA, as we plan on a mapping process between accounts, which will be optional.
 
-### Use Cases and REST API Method Definitions
+## Use Cases and REST API Method Definitions <a id="use-cases-and-rest-api-method-definitions"></a> [^](#top)
 
 **Note:** All API methods require the client to provide a valid authentication token (JWT) with each request. Methods that create a resource use the token subject as the principal owner of that resource. Applications that operate on a user's behalf (e.g., PASTA or ezEML) must submit the user's token in the request cookie when interacting with IAM API methods.
 
-**1a. Create Profile**
+### 1a. Create Profile <a id="1a-create-profile"></a> [^](#top)
 
 Goal: To create a new EDI profile identifier using an IdP identifier.
 
@@ -61,8 +79,8 @@ Use case:
 ```
 POST: /auth/v1/profile
 
-createProfile(jwt_token, idp_identifier)
-    jwt_token: the token of the requesting client
+createProfile(edi_token, idp_identifier)
+    edi_token: the token of the requesting client
     idp_identifier: the IdP identifier
     return:
         200 OK if successful
@@ -75,7 +93,7 @@ createProfile(jwt_token, idp_identifier)
         authenticated: changePermission
 ```
 
-**1b. Update Profile**
+### 1b. Update Profile <a id="1b-update-profile"></a> [^](#top)
 
 Goal: To update the attributes of a user profile associated with an EDI profile identifier.
 
@@ -90,8 +108,8 @@ Use case:
 ```
 PUT: /auth/v1/profile/<edi_identifier>
 
-updateProfile(jwt_token, edi_identifier, common_name, email)
-    jwt_token: the token of the requesting client
+updateProfile(edi_token, edi_identifier, common_name, email)
+    edi_token: the token of the requesting client
     edi_identifier: the EDI profile identifier
     common_name: the user common name
     email: the user preferred email address
@@ -106,7 +124,7 @@ updateProfile(jwt_token, edi_identifier, common_name, email)
         authenticated: changePermission
 ```
 
-**1c. Delete Profile**
+### 1c. Delete Profile <a id="1c-delete-profile"></a> [^](#top)
 
 Goal: To delete a user profile associated with an EDI profile identifier.
 
@@ -120,8 +138,8 @@ Use case:
 ```
 DELETE: /auth/v1/profile/<edi_identifier>
 
-deleteProfile(jwt_token, edi_identifier)
-    jwt_token: the token of the requesting client
+deleteProfile(edi_token, edi_identifier)
+    edi_token: the token of the requesting client
     edi_identifier: the EDI profile identifier
     return:
         200 OK if successful
@@ -134,7 +152,7 @@ deleteProfile(jwt_token, edi_identifier)
         authenticated: changePermission
 ```
 
-**1d. Read Profile**
+### 1d. Read Profile <a id="1d-read-profile"></a> [^](#top)
 
 Goal: To return an EDI profile associated with an EDI profile identifier.
 
@@ -147,8 +165,8 @@ Use case:
 ```
 GET: /auth/v1/profile/<edi_identifier>
 
-readProfile(jwt_token, edi_identifier)
-    jwt_token: the token of the requesting client
+readProfile(edi_token, edi_identifier)
+    edi_token: the token of the requesting client
     edi_identifier: the EDI profile identifier
     return:
         200 OK if successful
@@ -161,7 +179,179 @@ readProfile(jwt_token, edi_identifier)
         authenticated: changePermission
 ```
 
-## Open issue(s)
+### 2a. Create Group <a id="2a-create-group"></a> [^](#top)
+
+Goal: To create an EDI group.
+
+Use case: 
+
+1. A client sends a new group name to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* returns a 200 OK to the client.
+
+```
+POST: /auth/v1/group/<group_name>
+
+createGroup(edi_token, group_name)
+    edi_token: the token of the requesting client
+    group_name: the name of the group to create
+    return:
+        200 OK if successful
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+    body:
+        Empty if 200 OK, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+### 2b. Read Group <a id="2b-read-group"></a> [^](#top)
+
+Goal: To list the members of an EDI group.
+
+Use case: 
+
+1. A client sends a group name to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* returns a 200 OK to the client with the list 
+   of members (as EDI-IDs) in the response body.
+
+```
+GET: /auth/v1/group/<group_name>
+
+readGroup(edi_token, group_name)
+    edi_token: the token of the requesting client
+    group_name: the name of the group to create
+    return:
+        200 OK if successful
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+        404 If the group does not exist
+    body:
+        List of group members (EDI-IDs) if 200 OK, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+### 2c. Update Group <a id="2c-update-group"></a> [^](#top)
+Goal: To change the visible name of an EDI group.
+
+Use case: 
+
+1. A client sends an existing group name to the *authorization service*, 
+   along with a new group name.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* returns a 200 OK to the client indicating 
+   that the group name was updated.
+
+```
+PUT: /auth/v1/group/<group_name>?new_name=<new_name>
+
+updateGroup(edi_token, group_name, new_name)
+    edi_token: the token of the requesting client
+    group_name: the name of the group to create
+    new_name: the new name of the group
+    return:
+        200 OK if successful
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+        404 If the group does not exist
+    body:
+        Empty if 200 OK, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+### 2d. Delete Group <a id="2d-delete-group"></a> [^](#top)
+Goal: To delete an EDI group.
+
+Use case: 
+
+1. A client sends an existing group name to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+3. The *authorization service* deletes the group, along with all associated 
+   access control rules.
+4. The *authorization service* returns a 200 OK to the client indicating 
+   that the group has been deleted.
+
+```
+DELETE: /auth/v1/group/<group_name>
+
+updateGroup(edi_token, group_name)
+    edi_token: the token of the requesting client
+    group_name: the name of the group to create
+    return:
+        200 OK if successful
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+        404 If the group does not exist
+    body:
+        Empty if 200 OK, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+
+### 2e. Add User to Group <a id="2e-add-user-to-group"></a> [^](#top)
+Goal: To add an EDI user to a group.
+
+Use case: 
+
+1. A client sends a group name and an EDI user (EDI-ID) to the 
+   *authorization service*.
+2. The *authorization service* verifies that the requesting principal is 
+   authorized to execute the method.
+3. The *authorization service* adds the user (EDI-ID) to the group.
+4. The *authorization service* returns a 200 OK indicating that the user 
+   has been added to the group.
+
+```
+POST: /auth/v1/group/<group_name>/<edi_id>
+
+updateGroup(edi_token, group_name, edi_id)
+    edi_token: the token of the requesting client
+    group_name: the name of the group to create
+    edi_id: the EDI-ID of the user to add to the group
+    return:
+        200 OK if successful
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+        404 If the group does not exist or if the user does not exist
+    body:
+        Empty if 200 OK, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+### 2f. Remove User from Group <a id="2f-remove-user-from-group"></a> [^](#top)
+Goal: To remove an EDI user from a group.
+
+Use case: 
+
+1. A client sends a group name and an EDI user (EDI-ID) to the 
+   *authorization service*.
+2. The *authorization service* verifies that the requesting principal is 
+   authorized to execute the method.
+3. The *authorization service* removes the user (EDI-ID) from the group.
+4. The *authorization service* returns a 200 OK indicating that the user 
+   has been removed from the group.
+
+```
+DELETE: /auth/v1/group/<group_name>/<edi_id>
+
+updateGroup(edi_token, group_name, edi_id)
+    edi_token: the token of the requesting client
+    group_name: the name of the group to create
+    edi_id: the EDI-ID of the user to remove from the group
+    return:
+        200 OK if successful
+        401 Unauthorized if the client does not provide a valid authentication token
+        403 Forbidden if client is not authorized to execute method or access resource
+        404 If the group does not exist or if the user does not exist
+    body:
+        Empty if 200 OK, error message otherwise
+    permissions:
+        authenticated: changePermission
+```
+## Open issue(s) <a id="open-issues"></a> [^](#top)
 
 Implementing the proposed solution will require changes to the PASTA software. The following are some of the issues that will need to be addressed:
 
@@ -170,5 +360,5 @@ Implementing the proposed solution will require changes to the PASTA software. T
 3. Group identifiers will be addressed in a similar manner as that for users. Groups will be assigned a PASTA ID. Issues 1 and 2 also apply to groups.
 
 
-## References
+## References <a id="references"></a> [^](#top)
 
