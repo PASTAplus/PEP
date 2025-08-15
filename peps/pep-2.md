@@ -21,8 +21,8 @@
     * [2b. Read Group](#2b-read-group)
     * [2c. Update Group](#2c-update-group)
     * [2d. Delete Group](#2d-delete-group)
-    * [2e. Add User to Group](#2e-add-user-to-group)
-    * [2f. Remove User from Group](#2f-remove-user-from-group)
+    * [2e. Add Users to Group](#2e-add-users-to-group)
+    * [2f. Remove Users from Group](#2f-remove-users-from-group)
 * [Open issue(s)](#open-issues)
 * [References](#references)
 <!-- TOC -->
@@ -181,76 +181,81 @@ readProfile(edi_token, edi_identifier)
 
 ### 2a. Create Group <a id="2a-create-group"></a> [^](#top)
 
-Goal: To create an EDI group.
+Goal: To create an EDI user group.
 
 Use case: 
 
-1. A client sends a new group name to the *authorization service*.
-2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
-3. The *authorization service* returns a 200 OK to the client.
+1. A client sends group details, including its name, to the *authorization 
+   service* in the request body.
+2. The *authorization service* verifies that the requesting principal is 
+   authorized to execute the method.
+3. The *authorization service* creates the group.
+4. The *authorization service* returns a 200 OK to the client, along with 
+   the created group's EDI-ID in the response body.
 
 ```
-POST: /auth/v1/group/<group_name>
+POST: /auth/v1/group
 
-createGroup(edi_token, group_name)
+createGroup(edi_token, group_details)
     edi_token: the token of the requesting client
-    group_name: the name of the group to create
+    group_details: the group details
     return:
         200 OK if successful
         401 Unauthorized if the client does not provide a valid authentication token
         403 Forbidden if client is not authorized to execute method or access resource
     body:
-        Empty if 200 OK, error message otherwise
+        Group's EDI-ID if 200 OK, error message otherwise
     permissions:
         authenticated: changePermission
 ```
 
 ### 2b. Read Group <a id="2b-read-group"></a> [^](#top)
 
-Goal: To list the members of an EDI group.
+Goal: To retrieve a list of members from an EDI user group.
 
 Use case: 
 
-1. A client sends a group name to the *authorization service*.
-2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
-3. The *authorization service* returns a 200 OK to the client with the list 
-   of members (as EDI-IDs) in the response body.
+1. A client sends a group EDI-ID to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is 
+   authorized to execute the method.
+3. The *authorization service* returns a 200 OK to the client, along with a 
+   list of member profile EDI-IDs in the response body.
 
 ```
-GET: /auth/v1/group/<group_name>
+GET: /auth/v1/group/<group_edi_id>
 
-readGroup(edi_token, group_name)
+readGroup(edi_token, group_edi_id)
     edi_token: the token of the requesting client
-    group_name: the name of the group to create
+    group_edi_id: the group EDI-ID
     return:
         200 OK if successful
         401 Unauthorized if the client does not provide a valid authentication token
         403 Forbidden if client is not authorized to execute method or access resource
         404 If the group does not exist
     body:
-        List of group members (EDI-IDs) if 200 OK, error message otherwise
+        List of group member profile EDI-IDs if 200 OK, error message otherwise
     permissions:
         authenticated: changePermission
 ```
 
 ### 2c. Update Group <a id="2c-update-group"></a> [^](#top)
-Goal: To change the visible name of an EDI group.
+Goal: To change the details of an EDI user group, including its display name.
 
 Use case: 
 
-1. A client sends an existing group name to the *authorization service*, 
-   along with a new group name.
-2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
-3. The *authorization service* returns a 200 OK to the client indicating 
-   that the group name was updated.
+1. A client sends the group EDI-ID and new group details to the *authorization 
+   service*.
+2. The *authorization service* verifies that the requesting principal is 
+   authorized to execute the method.
+3. The *authorization service* returns a 200 OK to the client.
 
 ```
-PUT: /auth/v1/group/<group_name>?new_name=<new_name>
+PUT: /auth/v1/group/<group_edi_id>
 
-updateGroup(edi_token, group_name, new_name)
+updateGroup(edi_token, group_edi_id, group_details)
     edi_token: the token of the requesting client
-    group_name: the name of the group to create
-    new_name: the new name of the group
+    group_edi_id: the group EDI-ID
+    group_details: the group details
     return:
         200 OK if successful
         401 Unauthorized if the client does not provide a valid authentication token
@@ -267,19 +272,19 @@ Goal: To delete an EDI group.
 
 Use case: 
 
-1. A client sends an existing group name to the *authorization service*.
-2. The *authorization service* verifies that the requesting principal is authorized to execute the method.
+1. A client sends a group EDI-ID to the *authorization service*.
+2. The *authorization service* verifies that the requesting principal is  
+   authorized to execute the method.
 3. The *authorization service* deletes the group, along with all associated 
    access control rules.
-4. The *authorization service* returns a 200 OK to the client indicating 
-   that the group has been deleted.
+4. The *authorization service* returns a 200 OK to the client.
 
 ```
-DELETE: /auth/v1/group/<group_name>
+DELETE: /auth/v1/group/<group_edi_id>
 
-updateGroup(edi_token, group_name)
+deleteGroup(edi_token, group_name)
     edi_token: the token of the requesting client
-    group_name: the name of the group to create
+    group_edi_id: the group EDI-ID
     return:
         200 OK if successful
         401 Unauthorized if the client does not provide a valid authentication token
@@ -291,56 +296,55 @@ updateGroup(edi_token, group_name)
         authenticated: changePermission
 ```
 
-### 2e. Add User to Group <a id="2e-add-user-to-group"></a> [^](#top)
+### 2e. Add Users to Group <a id="2e-add-users-to-group"></a> [^](#top)
 Goal: To add an EDI user to a group.
 
 Use case: 
 
-1. A client sends a group name and an EDI user (EDI-ID) to the 
+1. A client sends a group EDI-ID and a profile EDI-ID to the 
    *authorization service*.
 2. The *authorization service* verifies that the requesting principal is 
    authorized to execute the method.
-3. The *authorization service* adds the user (EDI-ID) to the group.
-4. The *authorization service* returns a 200 OK indicating that the user 
-   has been added to the group.
+3. The *authorization service* adds the profile EDI-ID to the group.
+4. The *authorization service* returns a 200 OK to the client.
 
 ```
-POST: /auth/v1/group/<group_name>/<edi_id>
+POST: /auth/v1/group/<group_edi_id>/<profile_edi_id>
 
-updateGroup(edi_token, group_name, edi_id)
+addGroupUser(edi_token, group_edi_id, profile_edi_id)
     edi_token: the token of the requesting client
-    group_name: the name of the group to create
-    edi_id: the EDI-ID of the user to add to the group
+    group_edi_id: the group EDI-ID
+    profile_edi_id: the profile EDI-ID to add to the group
+    
     return:
         200 OK if successful
         401 Unauthorized if the client does not provide a valid authentication token
         403 Forbidden if client is not authorized to execute method or access resource
-        404 If the group does not exist or if the user does not exist
+        404 If the group does not exist or if one or more users do not exist
     body:
         Empty if 200 OK, error message otherwise
     permissions:
         authenticated: changePermission
 ```
-### 2f. Remove User from Group <a id="2f-remove-user-from-group"></a> [^](#top)
+### 2f. Remove User from Group <a id="2f-remove-users-from-group"></a> [^](#top)
 Goal: To remove an EDI user from a group.
 
 Use case: 
 
-1. A client sends a group name and an EDI user (EDI-ID) to the 
+1. A client sends a group EDI-ID and a profile EDI-ID to the 
    *authorization service*.
 2. The *authorization service* verifies that the requesting principal is 
    authorized to execute the method.
-3. The *authorization service* removes the user (EDI-ID) from the group.
-4. The *authorization service* returns a 200 OK indicating that the user 
-   has been removed from the group.
+3. The *authorization service* removes the profile EDI-ID from the group.
+4. The *authorization service* returns a 200 OK to the client.
 
 ```
-DELETE: /auth/v1/group/<group_name>/<edi_id>
+DELETE: /auth/v1/group/<group_edi_id>/<profile_edi_id>
 
-updateGroup(edi_token, group_name, edi_id)
+removeGroupUser(edi_token, group_edi_id, profile_edi_id)
     edi_token: the token of the requesting client
-    group_name: the name of the group to create
-    edi_id: the EDI-ID of the user to remove from the group
+    group_edi_id: the group EDI-ID
+    profile_edi_id: the profile EDI-ID to remove from the group
     return:
         200 OK if successful
         401 Unauthorized if the client does not provide a valid authentication token
