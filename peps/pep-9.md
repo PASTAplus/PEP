@@ -12,8 +12,35 @@
 * [Background](#background)
 * [Issue Statement](#issue-statement)
 * [Proposed Solution](#proposed-solution)
+    * [Access Control Rule Registry](#access-control-rule-registry)
+    * [Authorization algorithm](#authorization-algorithm)
+* [PASTA Integration](#pasta-integration)
+* [Use Cases and REST API Method Definitions](#use-cases-and-rest-api-method-definitions)
+    * [1. Add EML](#1-add-eml)
+    * [2. Add Access](#2-add-access)
+    * [3a. Create Resource](#3a-create-resource)
+    * [3b. Update Resource](#3b-update-resource)
+    * [3c. Delete Resource](#3c-delete-resource)
+    * [3d. Read Resource](#3d-read-resource)
+    * [3e. Read Resources](#3e-read-resources)
+    * [4a. Create Rule](#4a-create-rule)
+    * [4b. Update Rule](#4b-update-rule)
+    * [4c. Delete Rule](#4c-delete-rule)
+    * [4d. Read Rule](#4d-read-rule)
+    * [4e. Read Principal Rules](#4e-read-principal-rules)
+    * [5. Read Resource Rules](#5-read-resource-rules)
+    * [6. Is Authorized](#6-is-authorized)
+* [Implementation Strategy for PASTA](#implementation-strategy-for-pasta)
+    * [Principal Owner and Access Matrix Migration for Data Package Resources](#principal-owner-and-access-matrix-migration-for-data-package-resources)
+    * [Updating the Data Package Manager Service](#updating-the-data-package-manager-service)
 * [Integration with ezEML](#integration-with-ezeml)
+    * [IAM APIs Needed by ezEML](#iam-apis-needed-by-ezeml)
 * [Open issue(s)](#open-issues)
+    * [1. Will the *authorization service* support "deny" verbs in ACRs?](#1-will-the-authorization-service-support-deny-verbs-in-acrs)
+    * [2. How will the current `DataPackageManager.access_matrix` table be migrated to the *authorization service* ACR registry?](#2-how-will-the-current-datapackagemanageraccess_matrix-table-be-migrated-to-the-authorization-service-acr-registry)
+    * [3. Will the data package "principal" owner be represented in the ACR registry?](#3-will-the-data-package-principal-owner-be-represented-in-the-acr-registry)
+    * [4. How will legacy `<access>` elements that contain IdP user identifiers and group identifiers work within the *authorization service* service?](#4-how-will-legacy-elements-that-contain-idp-user-identifiers-and-group-identifiers-work-within-the-authorization-service-service)
+    * [5. Should the *authorization service* expose a UI for managing ACRs or should each client application provide its own UI?](#5-should-the-authorization-service-expose-a-ui-for-managing-acrs-or-should-each-client-application-provide-its-own-ui)
 * [References](#references)
 * [Rejection](#rejection)
 <!-- TOC -->
@@ -90,7 +117,7 @@ This service will be responsible for the following:
 
 **TODO: This section needs to be rewritten with the current model in mind**
 
-### Access Control Rule Registry
+### Access Control Rule Registry <a id="access-control-rule-registry"></a> [^](#top)
 
 The Access Control Rule (ACR) registry holds information about resources (items requiring protection), principals (actors wishing to access a resource), and rules (a condition or set of conditions that determines whether a principal is granted or denied a specific type of access (e.g., read, write, changePermission) to a resource). The registry is dynamic, changing as new resources and principals are added to the system, along with existing and new rules that govern access.
 
@@ -156,7 +183,7 @@ The following is a more realistic example of a data package resource tree: if we
 
 **Figure 4:** Resource tree for a data package with metadata and data entities.
 
-### Authorization algorithm
+### Authorization algorithm <a id="authorization-algorithm"></a> [^](#top)
 
 Premises:
 
@@ -182,7 +209,7 @@ def is_authorized(resource, principals, permission) -> bool:
                     authorized = True
     return authorized
 ```
-### PASTA Integration
+## PASTA Integration <a id="pasta-integration"></a> [^](#top)
 
 There are three primary integration points between the *authorization service* and PASTA:
 
@@ -192,11 +219,11 @@ There are three primary integration points between the *authorization service* a
 
 Each integration point is selected to minimize the impact on the existing PASTA architecture and to provide a seamless transition to the new *authorization service*.
 
-### Use Cases and REST API Method Definitions
+## Use Cases and REST API Method Definitions <a id="use-cases-and-rest-api-method-definitions"></a> [^](#top)
 
 **Note:** All API methods require the client to provide a valid authentication token (JWT) with each request. Methods that create a resource use the token subject as the principal owner of that resource. Applications that operate on a user's behalf (e.g., PASTA or ezEML) must submit the user's token in the request cookie when interacting with IAM API methods.
 
-**1. Add EML**
+### 1. Add EML <a id="1-add-eml"></a> [^](#top)
 
 Goal: To parse a valid EML document, create a corresponding data package resource tree, and add its ACRs to the ACR registry for the resources identified in the EML document. The authentication token subject defines the owner of all associated resources.
 
@@ -230,7 +257,7 @@ addEML(edi_token, eml)
 
 Notes: This use case supports the existing PASTA data package upload process. Parsing and extracting ACRs from the EML document will require supporting ACRs in both the main EML document and the additional metadata section. The principal owner of the data package is not currently represented in the existing `access_matrix`. However, this should change for consistency: the principal owner (identified by the authentication token subject) should be added to the ACR registry with the "changePermission" permission. This method should create a data package resource tree.
 
-**2. Add Access**
+### 2. Add Access <a id="2-add-access"></a> [^](#top)
 
 Goal: To parse a valid `<access>` element, create corresponding resources, and add the resource ACRs to the *authorization service* ACR registry.
 
@@ -264,7 +291,7 @@ addAccess(edi_token, access, resource_key, resource_label, resource_type):
 
 Notes: This use case supports adding ACLs for PASTA API methods through the `service.xml` file. In this case, the `service.xml` file is not a complete EML document; it consists of ACLs in the form of `<access>` elements. The principal owner of the service method (or other resource) identified by the authentication token subject should be added to the ACR registry with the "changePermission" permission; in the case of service methods, the principal owner will be "pasta."
 
-**3a. Create Resource**
+### 3a. Create Resource <a id="3a-create-resource"></a> [^](#top)
 
 Goal: To create a resource for access control in which the principal owner is defined by the authentication token subject.
 
@@ -296,7 +323,7 @@ createResource(edi_token, resource_key, resource_label, resource_type, parent_re
         authenticated: changePermission
 ```
 
-**3b. Update Resource**
+### 3b. Update Resource <a id="3b-update-resource"></a> [^](#top)
 
 Goal: To update a resource.
 
@@ -329,7 +356,7 @@ updateResource(edi_token, resource_key, resource_label, resource_type, parent_re
         authenticated: changePermission
 ```
 
-**3c. Delete Resource**
+### 3c. Delete Resource <a id="3c-delete-resource"></a> [^](#top)
 
 Goal: To delete a resource.
 
@@ -359,7 +386,7 @@ deleteResource(edi_token, resource_key)
         authenticated: changePermission
 ```
 
-**3d. Read Resource**
+### 3d. Read Resource <a id="3d-read-resource"></a> [^](#top)
 
 Goal: To read a resource.
 
@@ -395,7 +422,7 @@ readResource(edi_token, resource_key, (descendants|ancestors|all))
         authenticated: changePermission
 ```
 
-**3e. Read Resources**
+### 3e. Read Resources <a id="3e-read-resources"></a> [^](#top)
 
 Goal: Return resource keys owned by the subject identified in the authentication token.
 
@@ -421,7 +448,7 @@ getResources(edi_token)
         authenticated: changePermission
 ```
 
-**4a. Create Rule**
+### 4a. Create Rule <a id="4a-create-rule"></a> [^](#top)
 
 Goal: To create an ACR for a resource owned by the authentication token subject.
 
@@ -452,7 +479,7 @@ createRule(edi_token, resource_key, principal, permission)
         authenticated: changePermission
 ```
 
-**4b. Update Rule**
+### 4b. Update Rule <a id="4b-update-rule"></a> [^](#top)
 
 Goal: To update an ACR..
 
@@ -487,7 +514,7 @@ updateRule(edi_token, esource_key, principal, permission)
 
 Note: It is an error if the client attempts to modify the `changePermission` permission of a principal if no other principal has `changePermission` permission.
 
-**4c. Delete Rule**
+### 4c. Delete Rule <a id="4c-delete-rule"></a> [^](#top)
 
 Goal: To delete an ACR.
 
@@ -521,7 +548,7 @@ deleteRule(edi_token, resource_key, principal)
 
 Note: It is an error if the client attempts to remove the `changePermission` permission of a principal if no other principal has `changePermission` permission.
 
-**4d. Read Rule**
+### 4d. Read Rule <a id="4d-read-rule"></a> [^](#top)
 
 Goal: To read an ACR.
 
@@ -552,7 +579,7 @@ readRule(edi_token, resource_key, principal)
         authenticated: changePermission
 ```
 
-**4e. Read Principal Rules**
+### 4e. Read Principal Rules <a id="4e-read-principal-rules"></a> [^](#top)
 
 Goal: To read the rules of the principal identified by the authentication token subject and principals.
 
@@ -580,7 +607,7 @@ read_principal_rules(edi_token)
         authenticated: changePermission
 ```
 
-**5. Read Resource Rules**
+### 5. Read Resource Rules <a id="5-read-resource-rules"></a> [^](#top)
 
 Goal: To read the rules of a resource.
 
@@ -609,7 +636,7 @@ read_resource_rules(edi_token, resource_key)
         authenticated: changePermission
 ```
 
-**6. Is Authorized**
+### 6. Is Authorized <a id="6-is-authorized"></a> [^](#top)
 
 Goal: To determine if a principal identified in the authentication token subject or principals is authorized to access a resource.
 
@@ -637,11 +664,11 @@ isAuthorized(edi_token, resource_key, permission)
         authenticated: changePermission
 ```
 
-### Implementation Strategy for PASTA
+## Implementation Strategy for PASTA <a id="implementation-strategy-for-pasta"></a> [^](#top)
 
 The *authorization service* service must integrate seamlessly into PASTA's current authorization workflow. Three separate tasks must be addressed: (1) Service method ACRs for both the DPM and AM services must be migrated to the *authorization service* ACR registry; (2) the existing `access_matrix` database table, including principal owners stored in the DPM `resource_registry` database table, must be migrated to the *authorization service* ACR registry with PASTA IDs; and (3) the DPM service must be modified to use the REST API methods of the *authorization service* service (above) in lieu of its internal authorization processing.
 
-#### Principal Owner and Access Matrix Migration for Data Package Resources
+### Principal Owner and Access Matrix Migration for Data Package Resources <a id="principal-owner-and-access-matrix-migration-for-data-package-resources"></a> [^](#top)
 
 For each data package, an entry in the *authorization service* ACR registry for every data package resource, including the data package itself, will be required for the principal owner. This should be followed by migrating corresponding entries of each data package resource found in the `access_matrix` database table to the *authorization service* ACR registry. (Note that data packages that are not represented in the `access_matrix` imply a full embargo of the data package exists and all access privileges, other than for the owner, are denied.)
 
@@ -649,11 +676,11 @@ For each data package, an entry in the *authorization service* ACR registry for 
 2.
 
 
-#### Updating the Data Package Manager Service
+### Updating the Data Package Manager Service <a id="updating-the-data-package-manager-service"></a> [^](#top)
 
 ## Integration with ezEML <a id="integration-with-ezeml"></a> [^](#top)
 
-### IAM APIs Needed by ezEML
+### IAM APIs Needed by ezEML <a id="iam-apis-needed-by-ezeml"></a> [^](#top)
 
 Details TBD.
 
@@ -691,19 +718,19 @@ When data directories are combined under a single profile, there will be no way 
 
 ## Open issue(s) <a id="open-issues"></a> [^](#top)
 
-### 1. Will the *authorization service* support "deny" verbs in ACRs?
+### 1. Will the *authorization service* support "deny" verbs in ACRs? <a id="1-will-the-authorization-service-support-deny-verbs-in-acrs"></a> [^](#top)
 
 Because the "deny" verb is rarely used in practice, it will not be supported in the initial implementation of the *authorization service* service. However, this feature may be added in a future release.
 
-### 2. How will the current `DataPackageManager.access_matrix` table be migrated to the *authorization service* ACR registry?
+### 2. How will the current `DataPackageManager.access_matrix` table be migrated to the *authorization service* ACR registry? <a id="2-how-will-the-current-datapackagemanageraccess_matrix-table-be-migrated-to-the-authorization-service-acr-registry"></a> [^](#top)
 
-### 3. Will the data package "principal" owner be represented in the ACR registry?
+### 3. Will the data package "principal" owner be represented in the ACR registry? <a id="3-will-the-data-package-principal-owner-be-represented-in-the-acr-registry"></a> [^](#top)
 
 Currently, the data package owner is passed to the "isAuthorized" method through a separate parameter, `principalOwner`, which is obtained by querying the data package manager resource registry. The `principalOwner` is compared to the submitter of the resource access request to determine if the submitter is the owner of the data package, and if so, the submitter is granted "changePermission" access to the data resource in question without the need for an ACR. This is an implicit ACR that is not stored in the ACR registry.
 
-### 4. How will legacy `<access>` elements that contain IdP user identifiers and group identifiers work within the *authorization service* service?
+### 4. How will legacy `<access>` elements that contain IdP user identifiers and group identifiers work within the *authorization service* service? <a id="4-how-will-legacy-elements-that-contain-idp-user-identifiers-and-group-identifiers-work-within-the-authorization-service-service"></a> [^](#top)
 
-### 5. Should the *authorization service* expose a UI for managing ACRs or should each client application provide its own UI?
+### 5. Should the *authorization service* expose a UI for managing ACRs or should each client application provide its own UI? <a id="5-should-the-authorization-service-expose-a-ui-for-managing-acrs-or-should-each-client-application-provide-its-own-ui"></a> [^](#top)
 
 ## References <a id="references"></a> [^](#top)
 
