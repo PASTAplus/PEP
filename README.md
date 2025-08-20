@@ -10,7 +10,7 @@ A list of all PEPs can be found in the PEP [Index](index.md). The PEP Index prov
 
 ### Editing PEPs
 
-A PEP document is a plain text file formatted using the [GitHub flavored Markdown](https://github.github.com/gfm/) syntax and can be edited using any text editor. The PEP template is available [here](pep-template.md) and should be used as a starting point for new PEPs.
+A PEP document is a plain text file formatted using the [GitHub flavored Markdown](https://github.github.com/gfm/) syntax and can be edited using any text editor. The PEP template is available [here](peps/pep-template.md) and should be used as a starting point for new PEPs.
 
 ### Generating a PDF
 
