@@ -311,7 +311,7 @@ Use case:
 ```
 POST: /auth/v1/group/<group_edi_id>/<profile_edi_id>
 
-addGroupUser(edi_token, group_edi_id, profile_edi_id)
+addGroupMember(edi_token, group_edi_id, profile_edi_id)
     edi_token: the token of the requesting client
     group_edi_id: the group EDI-ID
     profile_edi_id: the profile EDI-ID to add to the group
@@ -341,7 +341,7 @@ Use case:
 ```
 DELETE: /auth/v1/group/<group_edi_id>/<profile_edi_id>
 
-removeGroupUser(edi_token, group_edi_id, profile_edi_id)
+removeGroupMember(edi_token, group_edi_id, profile_edi_id)
     edi_token: the token of the requesting client
     group_edi_id: the group EDI-ID
     profile_edi_id: the profile EDI-ID to remove from the group
