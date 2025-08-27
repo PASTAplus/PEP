@@ -20,4 +20,5 @@
 | [PEP-15](peps/pep-15.md) | Authentication with API Keys                                                                                                 | Mark Servilla  | Draft       |            |
 | [PEP-16](peps/pep-16.md) | Centralized Library for Date and Time Congruence Checking                                                                    | Colin Smith    | Draft       |            |
 | [PEP-17](peps/pep-17.md) | Supporting Automated Reading of Date and Time Values by Common Programming Languages                                         | Colin Smith    | Draft       |            |
-| [PEP-19](peps/pep-19.md) | API for Filtering EML Metadata                                         | Colin Smith    | Draft       |            |
+| [PEP-19](peps/pep-19.md) | API for Filtering EML Metadata                                                                                               | Colin Smith    | Draft       |            |
+| [PEP-20](peps/pep-20.md) | Support for Data Entity Thumbnail Images in PASTA                                                                            | Mark Servilla  | Draft       |            |
