@@ -89,6 +89,7 @@ In the above example, the `<thumbnail>` element may be repeated for multiple thu
 ## Open issue(s) <a id="open-issues"></a> [^](#top)
 
 1. The REST API endpoint addition will be addressed first, followed by the EML `<additionalMetadata>` section at some point in the future.
+2. Thumbnail uploads will not be supported through the EDI Data Portal desktop upload feature.
 
 ## References <a id="references"></a> [^](#top)
 
