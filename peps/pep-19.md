@@ -30,29 +30,30 @@ Example Request Body:
 
 ```json
 {
-  "packageId": "edi.10.2",
-  "query": [
-    "/eml:eml/dataset/licensed",
-    "/eml:eml/dataset/keywordSet"
-  ]
+   "packageId": "edi.10.2",
+   "query": {
+      "abstract": "string(/eml:eml/dataset/abstract)",
+      "keywords": "/eml:eml/dataset/keywordSet/keyword/text()",
+      "creators": "/eml:eml/dataset/creator"
+   }
 }
 ```
 
-1. **packageId**: A string identifier used to locate and fetch the specific EML document to be processed.  
-2. **query**: A list of XPaths to filter the EML document.
+1.  **packageId**: A string identifier used to locate and fetch the specific EML document to be processed.
+2.  **query**: An object where each **key** is a user-defined name for the corresponding XPath **value**. This key will be used to structure the response, allowing results to be reliably identified.
 
-The API will allow an Accept header to specify the desired response format. Supported formats will include `application/xml` and `application/json`, with `application/xml` as the default.
+The API will allow an `Accept` header to specify the desired response format. Supported formats will include `application/json` and `application/xml`, with `application/json` as the default.
 
 ### Internal Workflow
 
 Upon receiving a request, the API will perform the following steps:
 
-1. **Receive Request:** Accept the POST request.  
-2. **Retrieve Source EML:** Fetch the specified EML document, utilizing a caching layer to ensure performance. If the document is not cached, it will be retrieved from the PASTA [Read Metadata](https://pastaplus-core.readthedocs.io/en/latest/doc_tree/pasta_api/data_package_manager_api.html#read-metadata) operation.
-3. **Build Intermediate XML:** Create a new intermediate XML document in memory (e.g., with an \<eml\> root) using an XML library, such as `lxml`.
-4. **Execute & Aggregate:** Iterate through the query list. For each item, execute the XPath query and append the resulting XML node(s) into the intermediate XML document under the root element.
-5. **Serialize Final Response:** Based on the Accept header.
-6. **Return the Final Document:** Return the document in the response body.
+1.  **Receive Request:** Accept the POST request.
+2.  **Retrieve Source EML:** Fetch the specified EML document, utilizing a caching layer to ensure performance. If the document is not cached, it will be retrieved from the PASTA [Read Metadata](https://pastaplus-core.readthedocs.io/en/latest/doc_tree/pasta_api/data_package_manager_api.html#read-metadata) operation.
+3.  **Build Intermediate XML:** Create a new intermediate XML document in memory (e.g., with an `<results>` root) using an XML library, such as `lxml`.
+4.  **Execute & Aggregate:** Iterate through the key-value pairs in the `query` object. For each pair, execute the XPath query and append the resulting XML node(s) into the intermediate XML document, wrapped in an element named after the query's **key**.
+5.  **Serialize Final Response:** Based on the `Accept` header.
+6.  **Return the Final Document:** Return the document in the response body.
 
 ### JSON Serialization Strategy
 
