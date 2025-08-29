@@ -1,4 +1,4 @@
-# PEP-20: Support for Data Entity Thumbnail Images in PASTA <a id="top"></a>
+# PEP-20: Support for Data Package Resource Thumbnail Images in PASTA <a id="top"></a>
 
 - Author(s): Mark Servilla
 - Contact: mark.servilla@gmail.com
