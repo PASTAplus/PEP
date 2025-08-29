@@ -37,11 +37,12 @@ Thumbnail images will be stored in a subdirectory of the data package resource d
 
 ### REST API <a id="rest-api"></a> [^](#top)
 
-The PASTA Data Package Manager REST API will include a new endpoint for uploading a thumbnail image using a multipart/form-data POST request. The endpoint will be structured as follows:
-```
-POST: /package/thumbnail/<resource_URL>
-```
-where the `<resource_URL>` is the fully qualified encoded URL to the data package resource of which the thumbnail should be associated.
+The PASTA Data Package Manager REST API will include a new endpoint for managing thumbnail images using typical *CRUD* (create, read, upadate, and delete) actions. All endpoints will use the same URL pattern: `/package/thumbnail/<resource_URL>`, where the `<resource_URL>` is the fully qualified encoded URL to the data package resource of which the thumbnail should be associated.
+
+- Create (POST): upload a new thumbnail image by sending in the multipart/form-data of the request body.
+- Read (GET): retrieve an existing thumbnail image in the response body.
+- Update (PUT): update an existing thumbnail image by sending in the multipart/form-data of the request body.
+- Delete (DELETE): remove an existing thumbnail image from the resource thumbnail directory.
 
 To upload a thumbnail image for the above example, sending a multipart/form-data POST request to the endpoint `https://pasta.lternet.edu/package/thumbnail/https%3A%2F%2Fpasta.lternet.edu%2Fpackage%2Fdata%2Feml%2Fedi%2F100%2F1%2F23c8f9cce5a41d84ce7c2847a67070c2` with the thumbnail image embedded in the payload will associate the thumbnail image with the data package entity resource. Of course, an error will occur if the resource does not exist or if the user does not have permission to upload a thumbnail image to the resource.
 
