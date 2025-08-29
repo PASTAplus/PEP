@@ -27,7 +27,7 @@ with a data package or data entity.
 
 ## Issue Statement <a id="issue-statement"></a> [^](#top)
 
-A data package, including individual resources of the data package can be described by a variety of text-based metadata. However, a visual representation of the data package, and especially data entities, can be useful for users to quickly identify the composition of the data package. Unfortunately, there is no standard in the Ecological Metadata Language (EML) that allows for the specification of a thumbnail image for a data package or data entity. This PEP aims to address this issue by proposing a mechanism for associating a thumbnail image with a data package or its resources that are stored in PASTA.
+A data package, including individual resources of the data package can be described by a variety of text-based metadata. However, a visual representation of the data package, and especially data entities, can be useful for users to quickly identify the composition of the data package in web pages like the Data Package landing page in the EDI Data Portal or the ezCatalog application. Unfortunately, there is no standard in the Ecological Metadata Language (EML) that allows for the specification of a thumbnail image for a data package or data entity. This PEP aims to address this issue by proposing a mechanism for associating a thumbnail image with a data package or its resources that are stored in PASTA.
 
 ## Proposed Solution <a id="proposed-solution"></a> [^](#top)
 
@@ -45,7 +45,7 @@ where the `<resource_URL>` is the fully qualified encoded URL to the data packag
 
 To upload a thumbnail image for the above example, sending a multipart/form-data POST request to the endpoint `https://pasta.lternet.edu/package/thumbnail/https%3A%2F%2Fpasta.lternet.edu%2Fpackage%2Fdata%2Feml%2Fedi%2F100%2F1%2F23c8f9cce5a41d84ce7c2847a67070c2` with the thumbnail image embedded in the payload will associate the thumbnail image with the data package entity resource. Of course, an error will occur if the resource does not exist or if the user does not have permission to upload a thumbnail image to the resource.
 
-Sending a GET request to the same endpoint will return the thumbnail image in the response body.
+Sending a GET request to the same endpoint with the same resource URL will return the thumbnail image in the response body.
 
 ### EML `<additionalMetadata>` <a id="eml"></a> [^](#top)
 
