@@ -31,20 +31,20 @@ A data package, including individual resources of the data package can be descri
 
 ## Proposed Solution <a id="proposed-solution"></a> [^](#top)
 
-PASTA will support uploading and retrieving thumbnail images through a REST API or by declaring them in the `<additionalMetadata>` section of an EML document.
+PASTA will support uploading and retrieving thumbnail images for the data package and data entities of the data package through a REST API or by declaring them in the `<additionalMetadata>` section of an EML document.
 
-Thumbnail images will be stored in a subdirectory of the data package resource directory called `thumbnails`. Thumbnail image files will be named using a hash (TBD) value of the fully qualified URL to the data package resource it is associated with. For example, if a thumbnail image is associated with the data package entity resource `https://pasta.lternet.edu/package/data/eml/edi/100/1/23c8f9cce5a41d84ce7c2847a67070c2`, the thumbnail image will be stored in the directory `edi.100.1/thumbnails` under the name `32553441734140f869c78e41cc793a2d22003d5c.png`, which is the SHA-1 hash of the URL.
+Thumbnail images will be stored in a subdirectory of the data package resource directory called `thumbnails`. Thumbnail image files saved in the `thumbnails` directory will be named using a hash (TBD) value of the fully qualified URL to the data package resource it is associated with. For example, if a thumbnail image is associated with the data package entity resource `https://pasta.lternet.edu/package/data/eml/edi/100/1/23c8f9cce5a41d84ce7c2847a67070c2`, the thumbnail image will be stored in the directory `edi.100.1/thumbnails` under the name `32553441734140f869c78e41cc793a2d22003d5c.png`, which is the SHA-1 hash of the URL.
 
 ### REST API <a id="rest-api"></a> [^](#top)
 
-The PASTA Data Package Manager REST API will include a new endpoint for managing thumbnail images using typical *CRUD* (create, read, upadate, and delete) actions. All endpoints will use the same URL pattern: `/package/thumbnail/<resource_URL>`, where the `<resource_URL>` is the fully qualified encoded URL to the data package resource of which the thumbnail should be associated.
+The PASTA Data Package Manager REST API will include a new endpoint for managing thumbnail images using typical *CRUD* (create, read, update, and delete) actions. Endpoint patterns follow: for a data package level thumbnail, use  `/package/thumbnail/eml/<scope>/<identifier>/<revision>`, where as for a data entity, use `/package/thumbnail/eml/<scope>/<identifier>/<revision>/<entity_id>`.
 
 - Create (POST): upload a new thumbnail image by sending in the multipart/form-data of the request body.
 - Read (GET): retrieve an existing thumbnail image in the response body.
 - Update (PUT): update an existing thumbnail image by sending in the multipart/form-data of the request body.
 - Delete (DELETE): remove an existing thumbnail image from the resource thumbnail directory.
 
-To upload a thumbnail image for the above example, sending a multipart/form-data POST request to the endpoint `https://pasta.lternet.edu/package/thumbnail/https%3A%2F%2Fpasta.lternet.edu%2Fpackage%2Fdata%2Feml%2Fedi%2F100%2F1%2F23c8f9cce5a41d84ce7c2847a67070c2` with the thumbnail image embedded in the payload will associate the thumbnail image with the data package entity resource. Of course, an error will occur if the resource does not exist or if the user does not have permission to upload a thumbnail image to the resource.
+To upload a thumbnail image for the above example, sending a multipart/form-data POST request to the endpoint `https://pasta.lternet.edu/package/thumbnail/eml/edi/100/1/23c8f9cce5a41d84ce7c2847a67070c2` with the thumbnail image embedded in the payload will associate the thumbnail image with the data package entity resource. Of course, an error will occur if the resource does not exist or if the user does not have permission to upload a thumbnail image to the resource.
 
 Sending a GET request to the same endpoint with the same resource URL will return the thumbnail image in the response body.
 
