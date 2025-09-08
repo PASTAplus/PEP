@@ -188,7 +188,7 @@ For consistency across the broader EDI software ecosystem, our serialization con
 * **Expanding Solr**: Attempting to reconfigure and re-index the Solr search engine to capture all relevant EML elements was considered. This was not recommended due to the significant operational burden of re-indexing and the inherent limitations of a search engine for performing complex, on-demand document filtering with the precision of XPath.  
 * **Batch Processing**: Processing multiple EML documents in a single API request was considered. While this could reduce the number of API calls, it would increase the complexity of the API. Given that many client-side applications build their data objects iteratively, a single-document-per-request model is more suitable for maintaining API responsiveness.
 
-### ## Open issue(s)
+## Open issue(s)
 
 * **Dependencies**: The implementation will require specific software dependencies for XML parsing, such as `lxml`. These need to be included in the project's dependency management file.
 * **Caching**: A strategy for server-side caching of EML documents should be considered to further improve performance for frequently requested documents. This would need to include a mechanism for cache invalidation if the source documents are updated.
