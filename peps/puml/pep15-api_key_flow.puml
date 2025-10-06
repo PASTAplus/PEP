@@ -1,0 +1,22 @@
+@startuml
+
+actor Client
+participant Gatekeeper
+participant PASTA
+participant IAM
+
+autonumber
+
+Client->Gatekeeper: API Key
+Gatekeeper->IAM: API Key
+IAM->IAM: Validate API Key &\ngenerate EDI Token
+IAM-->Gatekeeper: EDI Token
+Gatekeeper->PASTA: EDI Token
+PASTA->IAM: Authorize request\nwith EDI Token
+IAM->IAM: Authorize request
+IAM-->PASTA: Request authorized
+PASTA->PASTA: Generate response
+PASTA-->Gatekeeper: response
+Gatekeeper-->Client: response
+
+@enduml
