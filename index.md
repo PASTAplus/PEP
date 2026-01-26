@@ -22,3 +22,4 @@
 | [PEP-17](peps/pep-17.md) | Supporting Automated Reading of Date and Time Values by Common Programming Languages                                         | Colin Smith    | Draft       |            |
 | [PEP-19](peps/pep-19.md) | API for Filtering EML Metadata                                                                                               | Colin Smith    | Draft       |            |
 | [PEP-20](peps/pep-20.md) | Support for Data Package Resource Thumbnail Images in PASTA                                                                  | Mark Servilla  | Draft       |            |
+| [PEP-21](peps/pep-21.md) | Declaring Resource Relationships via Sidecar Metadata Database                                                               | Colin Smith    | Draft       |            |
