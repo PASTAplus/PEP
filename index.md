@@ -20,6 +20,6 @@
 | [PEP-15](peps/pep-15.md) | Authentication with API Keys                                                                                                 | Mark Servilla  | Draft       |            |
 | [PEP-16](peps/pep-16.md) | Centralized Library for Date and Time Congruence Checking                                                                    | Colin Smith    | Draft       |            |
 | [PEP-17](peps/pep-17.md) | Supporting Automated Reading of Date and Time Values by Common Programming Languages                                         | Colin Smith    | Draft       |            |
-| [PEP-19](peps/pep-19.md) | API for Filtering EML Metadata                                                                                               | Colin Smith    | Draft       |            |
+| [PEP-19](peps/pep-19.md) | Extend ridare API for Filtering EML Metadata                                                                                               | Colin Smith    | Implemented       | 2026-01-28           |
 | [PEP-20](peps/pep-20.md) | Support for Data Package Resource Thumbnail Images in PASTA                                                                  | Mark Servilla  | Draft       |            |
 | [PEP-21](peps/pep-21.md) | Declaring Resource Relationships via Sidecar Metadata Database                                                               | Colin Smith    | Draft       |            |

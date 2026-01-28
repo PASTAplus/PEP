@@ -6,7 +6,7 @@
 - Type: Application (software)
 - Created: August 20, 2025
 - Reviewed: September 9, 2025
-- Final: [TBD]
+- Final: January 28, 2026
 
 ## Introduction
 
