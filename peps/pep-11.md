@@ -2,11 +2,11 @@
 
 - Author(s): Mark Servilla
 - Contact: mark.servilla@gmail.com
-- Status: Draft
+- Status: Implemented
 - Type: Process
 - Created: 2024-12-08
-- Reviewed:
-- Final:
+- Reviewed: NA
+- Final: 2026-03-23
 
 
 ## Introduction
@@ -113,8 +113,6 @@ mount-s3 edi-pasta-development-0c8c25f7-82f9-4350-99d8-9cd4579c8b92 \
     * Performing continuous integrity checks of science data objects
 2. It is not clear if the AWS S3 Mountpoint service, because of its archive-level constraint, can be used with AWS S3 IT.
 
-...
-
 ## References
 
 ...
@@ -122,3 +120,7 @@ mount-s3 edi-pasta-development-0c8c25f7-82f9-4350-99d8-9cd4579c8b92 \
 ## Rejection
 
 ...
+
+## Closing Notes
+
+This PEP had never gone through the review process, even though it was time-critical. As such, the PASTA data store from UNM CARC was successfully migrated to AWS S3 January 2025 without review. For this reason, PEP 11 is being closed with a state of *Implemented*.
