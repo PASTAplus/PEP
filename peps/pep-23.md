@@ -58,6 +58,8 @@ A typical user scenario is:
 1. How to display draft and published data packages?
 1. How to integrate with ezEML's publication workflow?
 1. Should a draft data package have a provisional DOI?
+1. What API changes will be required to support the merge?
+   1. For example, "publish"
 
 ## References
 
