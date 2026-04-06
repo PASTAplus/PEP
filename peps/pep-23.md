@@ -53,6 +53,16 @@ A typical user scenario is:
 2. Multiple published data packages in the same series may exist.
 3. A published data package is issued a DOI.
 
+### Rollout Plan
+
+1. **Incremental**
+
+An incremetnal release process would bring all changes into, but not beyond, the existing staging system. This would allow users to experience the "merged" system, while continuing to perform typical data package sandboxing. No changes will be added to the production environment until a complete merge is operational in the staging system.
+
+2. **Binary**
+
+A binary release process would include all changes into all systems (development, staging, and production) as they are tested and deployed, but surpress their actions until a decision is made to switch from "production + staging" to only "production" (the merged version).
+
 ## Open issue(s)
 
 1. How to display draft and published data packages?
