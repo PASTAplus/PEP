@@ -1,11 +1,20 @@
 # PEP-25: System Activity Logger
 
-## Overview
+- Author(s): Roger Dahl
+- Contact: dahl at unm edu
+- Status: Draft
+- Type: Application
+- Created: 2026-05-19
+- Reviewed:
+- Final:
+
+
+## Introduction
 
 This document describes the design and implementation plan for a replacement for the PASTA Audit Manager service. The goal is to evolve the service from a narrow audit log for internal PASTA services into a unified, high-level event logger, capable of generating meaningful usage reports for both internal operators and end users.
 
 
-## Motivation
+## Issue Statement
 
 The current Audit Manager has several limitations:
 
@@ -18,7 +27,7 @@ The current Audit Manager has several limitations:
 - No mechanism for privacy-preserving user-facing reports
 
 
-## Requirements
+## Proposed Solution
 
 ### Schema Requirements
 
@@ -161,7 +170,7 @@ A user-facing web UI will be added following the same patterns as the DataPortal
 
 - A one-time backfill script will be run to populate the new schema with historical data from the old table.
 
-## Open Questions
+## Open issue(s)
 
 - What is the acceptable staleness for the materialized view refresh interval?
 - Should geolocation happen at ingest time or at query time?
