@@ -20,7 +20,7 @@ The current Audit Manager has several limitations:
 
 - XML report responses are buffered entirely in memory, causing risk with large result sets
 - The `resource_reads` aggregation table is manually maintained in application code and can drift out of sync
-- The schema contains significant redundancy (`userAgent`, `userid`) inflating storage on a high-volume append-only table
+- The schema contains significant redundancy (`userAgent`, `ediId`) inflating storage on a high-volume append-only table
 - The user-facing web UI is limited
 - The schema conflates low-value fields (`category`, `statusCode`, `authSystem`, `groups`) with high-value ones, and lacks fields needed for future requirements (IP address, EDI token, geolocation)
 - `serviceMethod` is a single opaque string; splitting into `service` + `method` improves queryability and normalization
@@ -33,14 +33,13 @@ The current Audit Manager has several limitations:
 
 | Field        | Notes                                                                      |
 |--------------|----------------------------------------------------------------------------|
-| `oid`        | Auto-generated row ID (primary key)                                        |
+| `id`         | Auto-generated row ID (primary key)                                        |
 | `entryTime`  | Datetime timestamp, auto-generated on insert                               |
 | `service`    | Name of the originating service (split from current `serviceMethod`)       |
 | `method`     | Method name, e.g. `listRecentUploads` (split from current `serviceMethod`) |
 | `entryText`  | Nullable; JSON field carrying method-specific context; not indexed         |
 | `resourceId` | Nullable; identifies package, data object, metadata object, or report      |
-| `userId`     | EDI user identifier — normalized into lookup table                         |
-| `commonName` | Human-readable display name — normalized with `userId`                     |
+| `ediId`      | EDI-ID — normalized into lookup table                                      |
 | `userAgent`  | Full user agent string — normalized into lookup table                      |
 | `referrer`   | Full refrerer string — notes on privacy below                              |
 | `ipAddress`  | Client IP address — notes on privacy below                                 |
@@ -49,9 +48,9 @@ The current Audit Manager has several limitations:
 
 ### Functional Requirements
 
-- All records must be queryable by: `service`, `method`, `resourceId`, `entryTime` range, `userId`
+- All records must be queryable by: `service`, `method`, `resourceId`, `entryTime` range, `ediId`
 - Robot filtering must occur **before** records are submitted to the Audit Manager; the service itself does not filter robots
-- User-facing reports must anonymize identity: real `userId` and `commonName` must never be exposed; substitute with `user-<hash>` or `user-N`
+- User-facing reports must anonymize identity: real `ediId` should not be exposed; substitute with `user-<hash>` or `user-N`
 - IP addresses must never be exposed directly in user-facing reports; used only for internal geolocation enrichment
 - EDI tokens must never be exposed in any API response
 
@@ -148,8 +147,8 @@ This improves index efficiency and enables independent filtering by service or m
 
 A separate query path for user-facing reports will:
 
-- Never return raw `userId`, `commonName`, `ipAddress`, `referrer` or `ediToken`
-- Replace user identity with a stable but non-reversible hash: `user-<SHA256(userId + salt)[0:12]>`
+- Never return raw `ediId`, `ipAddress`, `referrer` or `ediToken`
+- Replace user identity with a stable but non-reversible hash: `user-<SHA256(ediId + salt)[0:12]>`
 - Expose geolocation (city, country) derived from `ipAddress`, but not the IP itself
 - Geolocation enrichment: evaluate MaxMind GeoLite2 (free tier) vs. paid alternatives as a separate spike
 
