@@ -20,7 +20,7 @@ The current Audit Manager has several limitations:
 
 - XML report responses are buffered entirely in memory, causing risk with large result sets
 - The `resource_reads` aggregation table is manually maintained in application code and can drift out of sync
-- The schema contains significant redundancy (`userAgent`, `ediId`) inflating storage on a high-volume append-only table
+- The schema contains significant redundancy (`userAgent`, duplicated identity fields) inflating storage on a high-volume append-only table
 - The user-facing web UI is limited
 - The schema conflates low-value fields (`category`, `statusCode`, `authSystem`, `groups`) with high-value ones, and lacks fields needed for future requirements (IP address, EDI token, geolocation)
 - `serviceMethod` is a single opaque string; splitting into `service` + `method` improves queryability and normalization
@@ -31,26 +31,25 @@ The current Audit Manager has several limitations:
 
 ### Schema Requirements
 
-| Field        | Notes                                                                      |
-|--------------|----------------------------------------------------------------------------|
-| `id`         | Auto-generated row ID (primary key)                                        |
-| `entryTime`  | Datetime timestamp, auto-generated on insert                               |
-| `service`    | Name of the originating service (split from current `serviceMethod`)       |
-| `method`     | Method name, e.g. `listRecentUploads` (split from current `serviceMethod`) |
-| `entryText`  | Nullable; JSON field carrying method-specific context; not indexed         |
-| `resourceId` | Nullable; identifies package, data object, metadata object, or report      |
-| `ediId`      | EDI-ID — normalized into lookup table                                      |
-| `userAgent`  | Full user agent string — normalized into lookup table                      |
-| `referrer`   | Full refrerer string — notes on privacy below                              |
-| `ipAddress`  | Client IP address — notes on privacy below                                 |
-| `ediToken`   | JSON field; stored but never exposed or indexed                            |
-| **Removed**  | `category`, `statusCode`, `authSystem`, `groups`                           |
+| Field        | Notes                                                                                                                    |
+|--------------|--------------------------------------------------------------------------------------------------------------------------|
+| `id`         | Auto-generated row ID (primary key)                                                                                      |
+| `entryTime`  | Datetime timestamp, auto-generated on insert                                                                             |
+| `service`    | Name of the originating service (split from current `serviceMethod`)                                                     |
+| `method`     | Method name, e.g. `listRecentUploads` (split from current `serviceMethod`)                                               |
+| `entryText`  | Nullable; JSON field carrying method-specific context; not indexed                                                       |
+| `resourceId` | Nullable; identifies package, data object, metadata object, or report                                                    |
+| `userAgent`  | Full user agent string — normalized into lookup table                                                                    |
+| `referrer`   | Full refrerer string — notes on privacy below                                                                            |
+| `ipAddress`  | Client IP address — notes on privacy below                                                                               |
+| `ediToken`   | Nullable `jsonb`; when present, authoritative token payload (includes `ediId`); never exposed; `ediToken->>'ediId'` is indexed for queryability |
+| **Removed**  | `category`, `statusCode`, `authSystem`, `groups`                                                                         |
 
 ### Functional Requirements
 
-- All records must be queryable by: `service`, `method`, `resourceId`, `entryTime` range, `ediId`
+- All records must be queryable by: `service`, `method`, `resourceId`, `entryTime` range, and `ediToken.ediId` (`ediToken->>'ediId'`) where present
 - Robot filtering must occur **before** records are submitted to the Audit Manager; the service itself does not filter robots
-- User-facing reports must anonymize identity: real `ediId` should not be exposed; substitute with `user-<hash>` or `user-N`
+- User-facing reports must anonymize identity: real identity (`ediToken->>'ediId'`) should not be exposed; substitute with `user-<hash>` or `user-N` and handle null token/identity as anonymous
 - IP addresses must never be exposed directly in user-facing reports; used only for internal geolocation enrichment
 - EDI tokens must never be exposed in any API response
 
@@ -116,9 +115,9 @@ Consider adding options for optional logging of referrer data under strict priva
 
 ### Schema Normalization
 
-- Partially normalize the `eventlog` table to reduce storage on the two highest-volume repeated-value columns
+- Partially normalize the `eventlog` table to reduce storage on repeated-value columns while keeping identity data in the token payload
 
-- The main `eventlog` table references these by integer FK, reducing row size significantly on a high-volume append-only table. `authSystem`, `groups`, and `category` are dropped entirely.
+- The main `eventlog` table uses an integer FK for normalized `userAgent`. Identity is stored only in nullable `ediToken` (`jsonb`) rather than duplicated in a separate `ediId` column. Queryability by `ediId` is preserved with an expression index on `ediToken->>'ediId'`. `authSystem`, `groups`, and `category` are dropped entirely.
 
 ### Replace `resource_reads` with a Materialized View
 
@@ -147,8 +146,8 @@ This improves index efficiency and enables independent filtering by service or m
 
 A separate query path for user-facing reports will:
 
-- Never return raw `ediId`, `ipAddress`, `referrer` or `ediToken`
-- Replace user identity with a stable but non-reversible hash: `user-<SHA256(ediId + salt)[0:12]>`
+- Never return raw identity, `ipAddress`, `referrer` or `ediToken`
+- Replace user identity with a stable but non-reversible hash when identity is present: `user-<SHA256((ediToken->>'ediId') + salt)[0:12]>`; otherwise bucket as anonymous
 - Expose geolocation (city, country) derived from `ipAddress`, but not the IP itself
 - Geolocation enrichment: evaluate MaxMind GeoLite2 (free tier) vs. paid alternatives as a separate spike
 
@@ -168,6 +167,8 @@ A user-facing web UI will be added following the same patterns as the DataPortal
 ## Migration plan
 
 - A one-time backfill script will be run to populate the new schema with historical data from the old table.
+- During migration, legacy `ediId` values will be copied into `ediToken` and the standalone `ediId` column will be removed.
+- Add an expression index on `ediToken->>'ediId'` (ideally a partial index where `ediToken` is not null) before switching report queries to the new schema.
 
 ## Open issue(s)
 
