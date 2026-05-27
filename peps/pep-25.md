@@ -31,23 +31,23 @@ The current Audit Manager has several limitations:
 
 ### Schema Requirements
 
-| Field        | Notes                                                                                                                                           |
-|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `id`         | Auto-generated row ID (primary key)                                                                                                             |
-| `entryTime`  | Datetime timestamp, auto-generated on insert                                                                                                    |
-| `service`    | Name of the originating service (split from current `serviceMethod`)                                                                            |
-| `method`     | Method name, e.g. `listRecentUploads` (split from current `serviceMethod`)                                                                      |
-| `entryText`  | Nullable `jsonb`; carries method-specific context; not indexed                                                                                  |
-| `resourceId` | Nullable; identifies package, data object, metadata object, or report                                                                           |
-| `userAgent`  | Full user agent string — normalized into lookup table                                                                                           |
-| `referrer`   | Full refrerer string — notes on privacy below                                                                                                   |
-| `ipAddress`  | Client IP address — notes on privacy below                                                                                                      |
-| `ediToken`   | Nullable `jsonb`; when present, authoritative token payload (includes `ediId`); never exposed; `ediToken->>'ediId'` is indexed for queryability |
-| **Removed**  | `category`, `statusCode`, `authSystem`, `groups`                                                                                                |
+| Field       | Notes                                                                                                                                           |
+|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| `id`        | Auto-generated row ID (primary key)                                                                                                             |
+| `entryTime` | Datetime timestamp, auto-generated on insert                                                                                                    |
+| `service`   | Name of the originating service (split from current `serviceMethod`)                                                                            |
+| `method`    | Method name, e.g. `listRecentUploads` (split from current `serviceMethod`)                                                                      |
+| `entryText` | Nullable `jsonb`; carries method-specific context; not indexed                                                                                  |
+| `resource`  | Nullable; identifies package, data object, metadata object, or report                                                                           |
+| `userAgent` | Full user agent string — normalized into lookup table                                                                                           |
+| `referrer`  | Full refrerer string — notes on privacy below                                                                                                   |
+| `ipAddress` | Client IP address — notes on privacy below                                                                                                      |
+| `ediToken`  | Nullable `jsonb`; when present, authoritative token payload (includes `ediId`); never exposed; `ediToken->>'ediId'` is indexed for queryability |
+| **Removed** | `category`, `statusCode`, `authSystem`, `groups`                                                                                                |
 
 ### Functional Requirements
 
-- All records must be queryable by: `service`, `method`, `resourceId`, `entryTime` range, and `ediToken.ediId` (`ediToken->>'ediId'`) where present
+- All records must be queryable by: `service`, `method`, `resource`, `entryTime` range, and `ediToken.ediId` (`ediToken->>'ediId'`) where present
 - Robot filtering must occur **before** records are submitted to the Audit Manager; the service itself does not filter robots
 - User-facing reports must anonymize identity: real identity (`ediToken->>'ediId'`) should not be exposed; substitute with `user-<hash>` or `user-N` and handle null token/identity as anonymous
 - IP addresses must never be exposed directly in user-facing reports; used only for internal geolocation enrichment
