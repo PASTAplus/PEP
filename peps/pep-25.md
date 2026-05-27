@@ -37,7 +37,7 @@ The current Audit Manager has several limitations:
 | `entryTime`  | Datetime timestamp, auto-generated on insert                                                                             |
 | `service`    | Name of the originating service (split from current `serviceMethod`)                                                     |
 | `method`     | Method name, e.g. `listRecentUploads` (split from current `serviceMethod`)                                               |
-| `entryText`  | Nullable; JSON field carrying method-specific context; not indexed                                                       |
+| `entryText`  | Nullable `jsonb`; carries method-specific context; not indexed                                                            |
 | `resourceId` | Nullable; identifies package, data object, metadata object, or report                                                    |
 | `userAgent`  | Full user agent string — normalized into lookup table                                                                    |
 | `referrer`   | Full refrerer string — notes on privacy below                                                                            |
