@@ -31,19 +31,19 @@ The current Audit Manager has several limitations:
 
 ### Schema Requirements
 
-| Field       | Notes                                                                                                                                           |
-|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `id`        | Auto-generated row ID (primary key)                                                                                                             |
-| `entryTime` | Datetime timestamp, auto-generated on insert                                                                                                    |
-| `service`   | Name of the originating service (split from current `serviceMethod`)                                                                            |
-| `method`    | Method name, e.g. `listRecentUploads` (split from current `serviceMethod`)                                                                      |
-| `entryText` | Nullable `jsonb`; carries method-specific context; not indexed                                                                                  |
-| `resource`  | Nullable; identifies package, data object, metadata object, or report                                                                           |
-| `userAgent` | Full user agent string — normalized into lookup table                                                                                           |
-| `referrer`  | Full refrerer string — notes on privacy below                                                                                                   |
-| `ipAddress` | Client IP address — notes on privacy below                                                                                                      |
-| `ediToken`  | Nullable `jsonb`; when present, authoritative token payload (includes `ediId`); never exposed; `ediToken->>'ediId'` is indexed for queryability |
-| **Removed** | `category`, `statusCode`, `authSystem`, `groups`                                                                                                |
+| Field       | Notes                                                                                                                                            |
+|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| `id`        | Auto-generated row ID (primary key)                                                                                                              |
+| `entryTime` | Datetime timestamp, auto-generated on insert                                                                                                     |
+| `service`   | Name of the originating service (split from current `serviceMethod`)                                                                             |
+| `method`    | Method name, e.g. `listRecentUploads` (split from current `serviceMethod`)                                                                       |
+| `context`   | Nullable; `jsonb`;  carries method-specific context;                                                                                             |
+| `resource`  | Nullable; identifies package, data object, metadata object, or report                                                                            |
+| `userAgent` | Nullable; Full user agent string — normalized into lookup table                                                                                  |
+| `referrer`  | Nullable; Full refrerer string — notes on privacy below                                                                                          |
+| `ipAddress` | Nullable; `inet`; Client IP address — notes on privacy below                                                                                     |
+| `ediToken`  | Nullable; `jsonb`; when present, authoritative token payload (includes `ediId`); never exposed; `ediToken->>'ediId'` is indexed for queryability |
+| **Removed** | `category`, `statusCode`, `authSystem`, `groups`                                                                                                 |
 
 ### Functional Requirements
 
