@@ -118,8 +118,10 @@ The geolocation data source will be evaluated as a separate spike; candidates in
 
 ### Web UI
 
-A user-facing web UI will be added following the same patterns as the DataPortal (Drop) UI:
+A user-facing web UI will be added following the same patterns as the Drop UI:
 
+- Only authenticated users can access the UI
+- Login is handled by redirecting to the IAM service
 - Allows users to query usage reports for a given dataset/resource
 - Displays anonymized download counts, unique user counts, time series charts, geographic distribution
 - PDF export of reports
