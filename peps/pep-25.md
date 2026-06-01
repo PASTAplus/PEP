@@ -22,7 +22,7 @@ The current Audit Manager has several limitations:
 - The `resource_reads` aggregation table is manually maintained in application code and can drift out of sync
 - The schema contains significant redundancy (`userAgent`, duplicated identity fields) inflating storage on a high-volume append-only table
 - The user-facing web UI is limited
-- The schema conflates low-value fields (`category`, `statusCode`, `authSystem`, `groups`) with high-value ones, and lacks fields needed for future requirements (IP address, EDI token, geolocation)
+- The schema mixes low-value fields (`category`, `statusCode`, `authSystem`, `groups`) with high-value ones, and lacks fields needed for future requirements (IP address, EDI token, geolocation)
 - `serviceMethod` is a single opaque string; splitting into `service` + `method` improves queryability and normalization
 - No mechanism for privacy-preserving user-facing reports
 
@@ -82,11 +82,9 @@ Compliance with GDPR, CCPA, and similar regulations is required; privacy policie
 
 - The main `eventlog` table uses an integer FK for normalized `userAgent`. Identity is stored only in nullable `ediToken` (`jsonb`) rather than duplicated in a separate `ediId` column. Queryability by `ediId` is preserved with an expression index on `ediToken->>'ediId'`.
 
-### Replace `resource_reads` with a Materialized View
+### Aggregated Counts
 
-- The hand-maintained `resource_reads` table and its associated Java synchronization logic (`ReadsManager`, re-initialization script) are replaced by a PostgreSQL materialized view:
-
-- Refreshed on a schedule (e.g. hourly via cron or pg_cron). This eliminates all application-level sync code and the re-initialization utility.
+The current `resource_reads` table is maintained by application-level code, requiring multiple database round trips per log insert. The new schema's improved indexing may make these pre-aggregated counts unnecessary — aggregate queries will be evaluated against the main table once it is populated. If query performance proves insufficient, a replacement will be implemented using database triggers, eliminating the application-level sync logic entirely.
 
 ### Streaming Responses — XML and JSON
 
@@ -111,7 +109,12 @@ A separate query path for user-facing reports will apply the privacy rules descr
 
 - Replace user identity with a stable but non-reversible hash when identity is present: `user-<SHA256((ediToken->>'ediId') + salt)[0:12]>`; otherwise bucket as anonymous
 - Expose geolocation (city, country) derived from `ipAddress`, but not the IP itself
-- Geolocation enrichment: evaluate MaxMind GeoLite2 (free tier) vs. paid alternatives as a separate spike
+
+### Geolocation Enrichment
+
+IP-to-location resolution is performed asynchronously after ingest, decoupling it from the hot path of log record insertion. A background process will periodically resolve unprocessed `ipAddress` values and store the resulting city and country in a separate lookup table keyed by IP. Report queries join against this table to expose geolocation without ever surfacing the raw IP.
+
+The geolocation data source will be evaluated as a separate spike; candidates include MaxMind GeoLite2 (free tier) and paid alternatives.
 
 ### Web UI
 
@@ -134,6 +137,4 @@ A user-facing web UI will be added following the same patterns as the DataPortal
 
 ## Open issue(s)
 
-- What is the acceptable staleness for the materialized view refresh interval?
-- Should geolocation happen at ingest time or at query time?
 - Should PDF report generation be server-side or client-side (browser print)?
