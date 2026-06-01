@@ -48,7 +48,7 @@ The current Audit Manager has several limitations:
 ### Functional Requirements
 
 - All records must be queryable by: `service`, `method`, `resource`, `entryTime` range, and `ediToken.ediId` (`ediToken->>'ediId'`) where present
-- Robot filtering must occur **before** records are submitted to the Audit Manager; the service itself does not filter robots
+- The logger will assume that robot filtering has occurred before records are submitted to the logger; the service itself does not filter robots
 - User-facing reports must anonymize identity: real identity (`ediToken->>'ediId'`) should not be exposed; substitute with `user-<hash>` or `user-N` and handle null token/identity as anonymous
 - IP addresses must never be exposed directly in user-facing reports; used only for internal geolocation enrichment
 - EDI tokens must never be exposed in any API response
@@ -61,54 +61,17 @@ Users should be able to query:
 - Geographic distribution of downloads (city-level geolocation from IP, subject to free-tier cost evaluation)
 - Nice to have: Export of reports to PDF
 
-### IP Address Field
+### Privacy-Sensitive Fields
 
-**Data Collection**: The IP address field captures the client's IP address at the time an event is logged. This data can be used for various purposes, including geolocation mapping and identifying user locations or network details during specific events.
+`ipAddress`, `referrer`, and `ediToken` (including the identity it carries) are stored for internal use only and are **never returned in any API response or user-facing report** (see also [Functional Requirements](#functional-requirements)).
 
-**Compliance with Privacy Regulations**: Ensuring compliance with privacy laws such as GDPR, CCPA, etc., requires that personal information (like IP addresses) be handled securely and not exposed publicly without adequate consent. The data should be treated confidentially for internal use only.
+| Field | Stored purpose | Exposed in reports as |
+|-------|---------------|-----------------------|
+| `ipAddress` | Geolocation enrichment (city, country) | City and country only; raw IP omitted |
+| `referrer` | Traffic-source and navigation analytics | Not exposed |
+| `ediToken` / identity | User-count aggregation | Stable anonymous hash (`user-<SHA256(ediId+salt)[0:12]>`) or `anonymous` |
 
-**Analytics Purpose**: Although primarily collected for detailed analytics within the EDI Repository system, the IP address is used to enrich geolocation details when generating user-facing reports or for other internal analytical purposes that do not compromise individual privacy.
-
-### Implementation
-
-**Anonymization**: Consider implementing a strategy to anonymize IP addresses immediately upon collection where possible. Techniques might include hashing algorithms (e.g., SHA-256) which transform the IP into a non-reversible format, or truncating parts of the IP address to lose its identifying value.
-
-**Limited Use**: Ensure that IP addresses are used only for specific internal purposes such as geolocation enrichment in reports and not for any direct user identification or tracking beyond what is necessary for system analytics and maintenance.
-
-**Transparency and Consent**: Where possible, inform users about the data collection practices including the use of their IP address, ensuring compliance with transparency requirements under privacy laws. This can be done through updated privacy policies that are clearly communicated to users before or upon using the service.
-
-### Reporting Requirements
-
-- Enrich geolocation details in reports where IP addresses have been anonymized, providing city and country information derived from the IP address but not exposing the raw IP itself.
-
-### Referrer
-
-The referrer header is used to indicate the URI of the previous web page from which a request was made.
-
-**Logging Privacy**: In compliance with privacy requirements, the referrer field should not be exposed directly to users or in public-facing reports due to potential exposure of sensitive information about previous pages visited by users. It is recommended to normalize and anonymize this data as much as possible within the system.
-
-**User Journey Analytics**: Although referrer data is collected for internal analytics, it should not be used for user identification or tracking beyond what is necessary for service improvement and usage monitoring. This could include understanding how users navigate through different services within EDI.
-
-**Compliance with Regulations**: Ensure compliance with GDPR, CCPA, and other data protection regulations that may have specific requirements regarding referrer logging. The anonymization process should be robust enough to meet these regulatory standards.
-
-#### Implementation
-
-- **Anonymization**: Implement a hashing mechanism for the referrer field similar to how user identity is handled (e.g., `user-<hash>`) to protect privacy and ensure that raw referrer data is not stored or exposed in reports.
-
-- **Internal Usage Only**: Ensure that all internal analytics tools and reports utilize the anonymized referrer data, avoiding any direct use of this information for external reporting purposes.
-
-- **Privacy by Design**: Integrate referrer logging as part of a broader privacy strategy within the application architecture to minimize unnecessary data collection and ensure compliance with data protection laws.
-
-### Reporting
-
-Users or operators might be interested in:
-
-- Anonymized counts of unique users who accessed specific resources or services, providing insights into popular paths through the system.
-- Time series analysis for resource usage, possibly filtered by referrer to understand how different sources drive traffic.
-
-### Future
-
-Consider adding options for optional logging of referrer data under strict privacy guidelines and user consent mechanisms, allowing users to control the level of information shared about their browsing history.
+Compliance with GDPR, CCPA, and similar regulations is required; privacy policies must reflect this data collection.
 
 
 ## Design Decisions
@@ -144,9 +107,8 @@ This improves index efficiency and enables independent filtering by service or m
 
 ### Privacy-Preserving User Reports
 
-A separate query path for user-facing reports will:
+A separate query path for user-facing reports will apply the privacy rules described in [Privacy-Sensitive Fields](#privacy-sensitive-fields):
 
-- Never return raw identity, `ipAddress`, `referrer` or `ediToken`
 - Replace user identity with a stable but non-reversible hash when identity is present: `user-<SHA256((ediToken->>'ediId') + salt)[0:12]>`; otherwise bucket as anonymous
 - Expose geolocation (city, country) derived from `ipAddress`, but not the IP itself
 - Geolocation enrichment: evaluate MaxMind GeoLite2 (free tier) vs. paid alternatives as a separate spike
