@@ -65,11 +65,11 @@ Users should be able to query:
 
 `ipAddress`, `referrer`, and `ediToken` (including the identity it carries) are stored for internal use only and are **never returned in any API response or user-facing report** (see also [Functional Requirements](#functional-requirements)).
 
-| Field | Stored purpose | Exposed in reports as |
-|-------|---------------|-----------------------|
-| `ipAddress` | Geolocation enrichment (city, country) | City and country only; raw IP omitted |
-| `referrer` | Traffic-source and navigation analytics | Not exposed |
-| `ediToken` / identity | User-count aggregation | Stable anonymous hash (`user-<SHA256(ediId+salt)[0:12]>`) or `anonymous` |
+| Field                 | Stored purpose                          | Exposed in reports as                                                    |
+|-----------------------|-----------------------------------------|--------------------------------------------------------------------------|
+| `ipAddress`           | Geolocation enrichment (city, country)  | City and country only; raw IP omitted                                    |
+| `referrer`            | Traffic-source and navigation analytics | Not exposed                                                              |
+| `ediToken` / identity | User-count aggregation                  | Stable anonymous hash (`user-<SHA256(ediId+salt)[0:12]>`) or `anonymous` |
 
 Compliance with GDPR, CCPA, and similar regulations is required; privacy policies must reflect this data collection.
 
@@ -80,7 +80,7 @@ Compliance with GDPR, CCPA, and similar regulations is required; privacy policie
 
 - Partially normalize the `eventlog` table to reduce storage on repeated-value columns while keeping identity data in the token payload
 
-- The main `eventlog` table uses an integer FK for normalized `userAgent`. Identity is stored only in nullable `ediToken` (`jsonb`) rather than duplicated in a separate `ediId` column. Queryability by `ediId` is preserved with an expression index on `ediToken->>'ediId'`. `authSystem`, `groups`, and `category` are dropped entirely.
+- The main `eventlog` table uses an integer FK for normalized `userAgent`. Identity is stored only in nullable `ediToken` (`jsonb`) rather than duplicated in a separate `ediId` column. Queryability by `ediId` is preserved with an expression index on `ediToken->>'ediId'`.
 
 ### Replace `resource_reads` with a Materialized View
 
@@ -136,5 +136,4 @@ A user-facing web UI will be added following the same patterns as the DataPortal
 
 - What is the acceptable staleness for the materialized view refresh interval?
 - Should geolocation happen at ingest time or at query time?
-- How to anonymize the more sensitive fields
 - Should PDF report generation be server-side or client-side (browser print)?
