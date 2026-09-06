@@ -26,8 +26,8 @@ This approach **will** affect the Data Portal and community catalogs that rely o
 
 For community catalogs based on ezCatalog, which redirects users to the Data Portal, the Data Portal will handle redirection to the login page. The catalog requires nothing else and can operate as is. If, however, the catalog exposes API-based data links to the user, IAM will block access to the data download. In this case, we propose the following:
 
-1. Allow the "human" access level permission to use the data download API for a 3-month grace period. Regardless, the Data Portal will immediately redirect users to the login page if they only meet the “human” access level for data access.
-2. Have community catalogs explicitly provide read-access to owned data entities for their "zero-member" groups.
+1. Allow the "human" access level permission to use the data download API for a 3-month grace period. Regardless, the Data Portal will immediately redirect users to the login page if they only meet the “human”  level for data access.
+2. Have community catalogs explicitly provide read-access to data packages they own for their "zero-member" groups.
 
 However, providing explicit data package read-access to a "zero-member" group means that users *will be able* to access both low and high-value resources without signing-in to IAM. Detailed user information **will not** be available for these access events. Lack of data access user information is the responsibility of the catalog that enables read-access for the data they own and control.  
 
