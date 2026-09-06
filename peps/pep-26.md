@@ -2,11 +2,11 @@
 
 - Author(s): Mark Servilla
 - Contact: mark.servilla@gmail.com
-- Status: Draft
+- Status: Implemented
 - Type: Policy
 - Created: 2026-08-24
-- Reviewed:
-- Final:
+- Reviewed: 2026-08-31
+- Final: 2026-08-31
 
 ## Introduction
 
