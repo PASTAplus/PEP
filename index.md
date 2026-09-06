@@ -27,4 +27,5 @@
 | [PEP-23](peps/pep-23.md) | PASTA Production/Staging Merge                                                                                               | Mark Servilla  | Draft       |            |
 | [PEP-24](peps/pep-24.md) | Ensuring user anonymity with API access keys                                                                                 | Mark Servilla  | Draft       |            |
 | [PEP-25](peps/pep-25.md) | System Activity Logger                                                                                                       | Roger Dahl     | Draft       |            |
-| [PEP-26](peps/pep-26.md) | Web-x as an EDI Service Documentation Application                                                                            | Mark Servilla  | Draft       |            |
+| [PEP-26](peps/pep-26.md) | Web-x as an EDI Service Documentation Application                                                                            | Mark Servilla  | Implemented | 2026-08-31 |
+| [PEP-27](peps/pep-27.md) | A "Human" Access Level for use in Authorization                                                                              | Mark Servilla  | Draft       |            |
