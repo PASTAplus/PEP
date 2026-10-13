@@ -186,11 +186,38 @@ In accordance with EDI's operational preferences, the MCP server implements a **
 
 ### 6. Revenue-Generating Opportunity & Paid Access Tiers
 
-Operating high-throughput AI agent gateways incurs real AWS cloud expenses (compute, NAT gateway bandwidth, S3 data egress, and ElastiCache). To ensure long-term financial sustainability and capture economic value from commercial AI scraping, the hosted MCP service will offer three distinct access tiers implemented via AWS API Gateway Usage Plans:
+Operating high-throughput AI agent gateways incurs real AWS cloud expenses (compute, NAT gateway bandwidth, S3 data egress, and ElastiCache). To ensure long-term financial sustainability and capture economic value from commercial AI scraping, the hosted MCP service will offer structured access tiers.
+
+#### 6.1 Enforcement Pathways: EDI IAM vs. AWS API Gateway
+
+We identify two architectural pathways for managing paid tiers and enforcing usage quotas:
+
+##### Pathway A (Recommended): Native EDI IAM Groups & Decentralized Enforcement
+- **Tier Membership in IAM**: Access tiers are represented natively as EDI IAM groups (e.g., `mcp-community`, `mcp-professional`, `mcp-enterprise`) assigned to user profiles per [PEP-7](./pep-7.md) and [PEP-9](./pep-9.md).
+- **Subscription Lifecycle**: Subscriptions purchased via the EDI Data Portal (integrated with a payment processor such as Stripe) automatically add or remove the user profile from the corresponding IAM group via webhook.
+- **Token-Encoded Entitlements**: When the user's API key is validated ([PEP-15](./pep-15.md)), the returned EDI authentication token already carries their group membership. The FastAPI MCP server extracts the tier directly from the token and enforces rate limits and tool access using the local ElastiCache Redis store.
+- **Advantages**:
+  1. *Single Source of Truth*: Leverages existing EDI user accounts, ORCID logins, and profile management without synchronizing state into external AWS services.
+  2. *Domain Granularity*: IAM can automatically grant academic exemptions or elevated tiers to recognized LTER or EDI-affiliated researchers based on institutional profile metadata.
+  3. *Vendor Independence*: Avoids cloud lock-in to AWS API Gateway usage plans, ensuring tier management remains portable across hosting environments.
+
+##### Pathway B: AWS API Gateway Usage Plans
+- Tiers are configured as native API Gateway Usage Plans with API keys provisioned directly in AWS.
+- **Advantages**: Native edge rejection of quota overages.
+- **Disadvantages**: Decouples billing/tier status from the EDI user directory, requiring bidirectional synchronization between IAM and AWS API Gateway.
+
+##### Recommended Hybrid Synthesis
+We recommend **Pathway A** for authorization and tier policy, paired with **AWS WAF** at the perimeter:
+- **EDI IAM** acts as the authoritative registry for user tiers, group memberships, and tool permissions.
+- **FastAPI MCP + Redis** enforces per-tier quotas, burst limits, and tool feature flags.
+- **AWS WAF / Edge Gateway** provides coarse volumetric bot filtering and DDoS protection, ensuring malicious traffic is dropped before consuming IAM database connections.
+
+#### 6.2 Tier Structure
 
 | Feature / Tier | Community / Academic (Free) | Professional / Institutional | Enterprise / Commercial AI |
 | :--- | :--- | :--- | :--- |
 | **Target Audience** | Academic researchers, students, LTER scientists | Research labs, universities, non-profit institutions | Commercial AI labs, LLM providers, commercial aggregators |
+| **IAM Group** | `mcp-community` | `mcp-professional` | `mcp-enterprise` |
 | **Billing Model** | Free (Requires verified EDI user account) | $50 – $250 / month subscription | $1,000+ / month base + metered data egress |
 | **Rate Limit (Burst / Sustained)** | 10 req/sec burst; 60 req/min sustained | 50 req/sec burst; 300 req/min sustained | 200 req/sec burst; 1,200 req/min sustained |
 | **Daily Quota** | 1,000 calls / day | 25,000 calls / day | 250,000+ calls / day (customizable) |
@@ -198,9 +225,9 @@ Operating high-throughput AI agent gateways incurs real AWS cloud expenses (comp
 | **Phase 2 Staging Access** | Read-only | Included (Staging evaluate/upload sandbox) | Included (High-concurrency staging pipelines) |
 | **S3 Egress Optimization** | Proxied through PASTA web servlet | Proxied through PASTA web servlet | Direct Presigned S3 URLs ([PEP-11](./pep-11.md)) |
 | **SLA & Support** | Best-effort community support | 99.5% uptime SLA, email support | 99.9% uptime SLA, dedicated support channel |
-| **Billing Gateway** | N/A | Stripe Billing or AWS Marketplace | AWS Marketplace SaaS Contract / Invoice |
+| **Billing Gateway** | N/A | Stripe Billing via EDI Portal | Invoiced / AWS Marketplace SaaS Contract |
 
-#### Monetization Impact
+#### 6.3 Monetization Impact
 By requiring commercial AI crawlers to subscribe to the Enterprise Tier, EDI transforms an uncompensated operational burden (bot scraping and DDoS remediation) into a recurring revenue stream that directly finances repository cloud infrastructure.
 
 
@@ -210,7 +237,8 @@ By requiring commercial AI crawlers to subscribe to the Enterprise Tier, EDI tra
   - Offloaded from handling high-frequency repeated searches due to MCP Redis caching.
   - Receives pre-authenticated requests bearing valid EDI API keys and explicit `EDI-MCP-Agent/1.0` headers, eliminating false-positive bot-blocking triggers.
 - **Identity and Access Management (IAM)**:
-  - Validates API keys presented by the MCP server per [PEP-15](./pep-15.md) and [PEP-27](./pep-27.md). No new authentication protocols are required in IAM.
+  - Validates API keys presented by the MCP server per [PEP-15](./pep-15.md) and [PEP-27](./pep-27.md).
+  - Acts as the central authority for monetization tier management via IAM groups (`mcp-community`, `mcp-professional`, `mcp-enterprise`). The returned EDI authentication token encodes group memberships, allowing the MCP gateway to enforce tier quotas without additional database queries.
 - **Data Package Manager**:
   - Shielded from volumetric query storms by API Gateway rate limiters.
   - Receives well-formed, standard REST calls without needing modification.
