@@ -1,0 +1,54 @@
+@startuml
+title PEP-28: Model Context Protocol (MCP) Server Architecture & Request Flow
+
+actor "AI Agent / Client\n(Claude, Cursor, Script)" as Client
+participant "AWS WAF &\nAPI Gateway" as APIGW
+participant "EDI MCP Server\n(FastAPI / FastMCP)" as MCP
+database "Amazon ElastiCache\n(Redis Cache)" as Cache
+participant "EDI Gatekeeper\n(Reverse Proxy)" as Gatekeeper
+participant "EDI IAM" as IAM
+participant "PASTA+ Core Services\n(Data Package & Audit Mgr)" as PASTA
+database "AWS S3\n(Data Entities - PEP-11)" as S3
+
+autonumber
+
+== Authenticated Request & Bot Mitigation ==
+Client -> APIGW: MCP Request (JSON-RPC 2.0 via SSE/HTTP)\nHeader: X-API-Key: <EDI-API-Key>\nUser-Agent: EDI-MCP-Agent/1.0
+note over APIGW
+  1. AWS WAF evaluates IP reputation & bot signatures
+  2. API Gateway validates Usage Plan & applies rate limits
+     (Token bucket per Tier: Free, Pro, Enterprise)
+end note
+APIGW -> MCP: Forward authorized request
+
+== Cache Evaluation ==
+alt Read Request (Search / Metadata / Report)
+  MCP -> Cache: Check cache (hash key of endpoint + params)
+  alt Cache Hit
+    Cache --> MCP: Return cached XML / JSON payload
+    MCP --> APIGW: Fast response (0 backend load)
+    APIGW --> Client: MCP Tool/Resource response
+  end
+end
+
+== Backend Dispatch & IAM Authentication ==
+MCP -> Gatekeeper: REST Request + API Key\nHeader: User-Agent: EDI-MCP-Agent/1.0\nHeader: EDI-Agent-Client-ID: <id>
+Gatekeeper -> IAM: Validate API Key (PEP-15 / PEP-27)
+IAM --> Gatekeeper: EDI Auth Token (authenticated/human level)
+Gatekeeper -> PASTA: Authorized REST call with EDI Token
+
+== Response Handling & Raw Streaming ==
+alt Small Payload (Search results, XML metadata, JSON)
+  PASTA --> Gatekeeper: REST XML / JSON response
+  Gatekeeper --> MCP: REST response
+  MCP -> Cache: Cache response (TTL: 1h - 24h)
+  MCP --> APIGW: Format as MCP Tool / Resource
+  APIGW --> Client: Tool response (JSON-RPC)
+else Large Data Entity (readDataEntity)
+  PASTA --> Gatekeeper: Stream data stream / chunked transfer
+  Gatekeeper --> MCP: Pipe raw byte stream (no memory buffering)
+  MCP --> APIGW: Stream raw bytes through MCP response
+  APIGW --> Client: Stream payload (client LLM handles budgeting/truncation)
+end
+
+@enduml
