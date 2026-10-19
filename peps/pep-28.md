@@ -29,9 +29,9 @@ A smaller subset of computationally proficient users interacts with PASTA+ progr
 Enabling AI agents to directly interact with PASTA+ via standardized MCP tools and resources bridges both interaction modes: it eliminates the heavy manual labor of portal-based searching and document inspection for the vast majority of researchers, while replacing brittle, one-off scripts with standardized, conversational agentic discovery, automated synthesis, and metadata curation.
 
 ### The Operational Challenge: Bot Traffic, Scrapers, and Repository Strain
-EDI has experienced severe operational challenges stemming from aggressive robotic scraping and distributed denial-of-service (DDoS) incidents. These bot incursions have repeatedly degraded repository performance and forced EDI engineering to devote substantial time to refactoring access control systems (e.g., establishing mandatory authentication for repository access, introducing user-managed API keys, and defining verified human authorization tiers).
+EDI has experienced severe operational challenges stemming from aggressive robotic scraping and distributed denial-of-service (DDoS) incidents. These bot incursions have repeatedly degraded repository performance and forced EDI to devote substantial time to refactoring access control systems (e.g., establishing mandatory authentication for repository access, introducing user-managed API keys, and defining verified human authorization tiers).
 
-Deploying an AI agent interface without strict architectural boundaries introduces operational risks that EDI's software architecture and systems administration team must mitigate:
+Deploying an AI agent interface without strict architectural boundaries introduces operational risks that must be mitigated:
 
 1. **Denial-of-Service from Agentic Feedback Loops**: Autonomous agents equipped with tool-calling capabilities often enter iterative reasoning loops. An unconstrained agent can trigger dozens of resource-intensive Solr queries or multi-gigabyte data entity downloads within seconds, overwhelming the PASTA+ server and egress pipelines.
 2. **"Agent Breakout" and Repository Mutation Concerns**: Allowing AI agents to invoke mutating operations (such as data package creation/update) creates the risk of unintended repository modifications, corrupted package revisions, or upload queue congestion caused by hallucinated or unvalidated agent actions.
@@ -103,7 +103,7 @@ The MCP server is engineered as a secure, EDI-managed service deployed exclusive
 
 ### 2. Bot Mitigation, Traffic Governance, and DoS Protection
 
-To alleviate the systems administrator's burden and protect the PASTA+ core cluster from automated agent surges, the hosted MCP service employs a multi-tiered defense:
+To protect the PASTA+ core cluster from automated agent surges and minimize operational disruption, the hosted MCP service employs a multi-tiered defense:
 
 1. **Mandatory EDI API Key Authentication**:
    - In adherence to EDI repository access policies and IAM security controls, anonymous requests are strictly rejected. Every MCP session must present an active EDI API key via the `X-API-Key` header or MCP connection configuration.
@@ -236,7 +236,7 @@ To enforce usage quotas cleanly without fragmenting user accounts or locking int
 | **SLA & Support** | Best-effort community support | 99.5% uptime SLA, email support | 99.9% uptime SLA, dedicated support channel |
 | **Billing Gateway** | N/A | Stripe Billing / EDI Portal recharge | Invoiced / Cloud Marketplace Contract |
 
-*Note: The rate limits, quotas, and pricing targets listed in this table represent illustrative baseline tiers. Operational thresholds, burst allowances, and quota policies will be calibrated and configured by EDI systems architects during deployment.*
+*Note: The rate limits, quotas, and pricing targets listed in this table represent illustrative baseline tiers. Operational thresholds, burst allowances, and quota policies will be calibrated during deployment.*
 
 #### 6.3 Cost Recovery and Sustainability Impact
 By aligning tiers with operational scale rather than institutional identity, EDI ensures that individual researchers and students retain free, frictionless access for interactive exploration. Simultaneously, users operating high-throughput automated synthesis pipelines or institutional batch workflows contribute proportionately to infrastructure costs, turning potential repository strain into a sustainable funding mechanism for EDI's cloud footprint.
@@ -270,7 +270,7 @@ The hosted MCP service leverages standard cloud components within EDI's managed 
 | **Intermediate Cache** | In-memory caching for metadata, query results, and quota state | Cache memory capacity and persistence needs |
 | **Data Egress** | Delivering package payloads and data streams to client agents | Outbound network bandwidth (offset by higher-tier allocations) |
 
-Specific instance types, provisioning options, and autoscaling thresholds will be defined by EDI systems architects during deployment planning. Baseline operational expenses for the core service are modest, and higher-capacity tier subscriptions are structured to recover incremental compute and network egress overhead sustainably.
+Specific instance types, provisioning options, and autoscaling thresholds will be defined during deployment planning. Baseline operational expenses for the core service are modest, and higher-capacity tier subscriptions are structured to recover incremental compute and network egress overhead sustainably.
 
 
 ### 9. Alternative Solutions Considered
@@ -316,11 +316,11 @@ Before selecting the Model Context Protocol (MCP), three alternative architectur
 ## Open issue(s)
 
 1. **Cloud Compute Runtime & Deployment Topology**:
-   The specific compute hosting environment and deployment topology for the FastAPI MCP application (e.g., containerized service vs. serverless execution) is left to the EDI systems architect and software engineering team to determine based on EDI's VPC layout, streaming requirements, and operational monitoring standards.
+   The specific compute hosting environment and deployment topology for the FastAPI MCP application (e.g., containerized service vs. serverless execution) will be determined during implementation based on EDI's VPC layout, streaming requirements, and operational monitoring standards.
 2. **Human-in-the-Loop (HITL) Token Specification for Phase 2**:
    For Phase 2 evaluation and upload tools, an exact cryptographic token mechanism (e.g., short-lived signed JWTs generated via the EDI Data Portal after human review) must be designed to verify that a human operator explicitly authorized the staging upload.
 3. **Billing Integration Platform**:
-   Whether capacity tier subscriptions should be managed via an integrated payment processor on the EDI website/portal, institutional recharge, or cloud marketplace listing will be evaluated with EDI administrative leadership.
+   Whether capacity tier subscriptions should be managed via an integrated payment processor on the EDI website/portal, institutional recharge, or cloud marketplace listing will be evaluated prior to offering paid tiers.
 4. **Agent Data Ingestion Patterns and Client Guidelines**:
    Because PASTA+ data entities can be multi-gigabyte or binary files, client-facing documentation and agent prompt templates should reinforce the standard two-stage pattern: guiding agents to inspect EML metadata and entity schemas in-context, and to generate code for out-of-band data retrieval and analysis in local execution environments, rather than attempting to return raw data payloads directly into prompt token context.
 
