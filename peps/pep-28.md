@@ -12,7 +12,7 @@
 
 The Model Context Protocol (MCP), developed by Anthropic and rapidly adopted across the artificial intelligence ecosystem, is an open standard that allows large language models (LLMs) and autonomous AI agents (such as Claude Desktop, ChatGPT, Cursor, and custom Python-based agentic workflows) to discover and interact securely with external tools, contextual resources, and specialized prompt templates. 
 
-The Environmental Data Initiative (EDI) operates the PASTA+ data repository, providing open, curated scientific and ecological data packages via a comprehensive REST API. While the PASTA+ REST API enables traditional scripted workflows in Python, R, and Java, modern scientific workflows are rapidly shifting toward autonomous agentic synthesis, automated literature-to-data cross-referencing, and intelligent metadata curation.
+The Environmental Data Initiative (EDI) operates the PASTA+ data repository, providing open, curated scientific and ecological data packages via a web-based data portal and a comprehensive REST API. While users traditionally discover and retrieve data through manual portal exploration or scripted API workflows in Python, R, and Java, modern scientific workflows are rapidly shifting toward autonomous agentic synthesis, automated literature-to-data cross-referencing, and intelligent metadata curation.
 
 This proposal describes the design, deployment, governance, and security model for an official **PASTAPlus MCP Server**. By exposing PASTA+ through the MCP standard, EDI will enable AI agents to natively query, inspect, and retrieve scientific data while maintaining strict safeguards against denial-of-service (DoS) attacks, agent runaways, unbuffered memory exhaustion, and unauthorized repository mutations. Furthermore, this document outlines a sustainable, tiered service model that accommodates users across different operational scales—from individual researchers conducting interactive exploratory queries to intensive project workflows running high-frequency automated synthesis—ensuring fair resource allocation while recovering compute and bandwidth costs proportionate to utilization.
 
@@ -20,7 +20,13 @@ This proposal describes the design, deployment, governance, and security model f
 ## Issue Statement
 
 ### The Opportunity: Agentic Data Discovery and Synthesis
-Scientific data repositories face an accessibility paradox: while millions of ecological observations, sensor streams, and taxonomy datasets are stored across tens of thousands of data packages in PASTA+, finding, synthesizing, and interpreting these datasets remains labor-intensive. Researchers currently write custom one-off scripts using `requests` or `httr` to query PASTA's Solr index and parse Ecological Metadata Language (EML) XML files. Enabling AI agents to directly interact with PASTA+ via standardized MCP tools and resources will drastically lower the barrier to data discovery, facilitate cross-site ecological synthesis, and assist data authors in validating and curating metadata.
+Scientific data repositories face an accessibility paradox: while millions of ecological observations, sensor streams, and taxonomy datasets are stored across tens of thousands of data packages in PASTA+, finding, synthesizing, and interpreting these datasets remains labor-intensive.
+
+By far the most common mode of interacting with PASTA+ is through manual navigation of the web-based EDI Data Portal. In this conventional workflow, researchers manually formulate search queries, sift through extensive lists of results, inspect individual dataset landing pages, read through complex Ecological Metadata Language (EML) documents, and download tabular data files one by one. This manual discovery and evaluation process is exceptionally labor-intensive, repetitive, and presents a severe bottleneck when researchers attempt cross-site ecological syntheses spanning dozens or hundreds of packages.
+
+A smaller subset of computationally proficient users interacts with PASTA+ programmatically by authoring one-off scripts (e.g., using `requests` in Python or `httr` in R) to query the Solr search index and parse EML XML payloads directly. While programmatic, these custom scripts represent a minor fraction of overall user interactions, require specialized programming effort, and remain brittle in the face of varying metadata structures.
+
+Enabling AI agents to directly interact with PASTA+ via standardized MCP tools and resources bridges both interaction modes: it eliminates the heavy manual labor of portal-based searching and document inspection for the vast majority of researchers, while replacing brittle, one-off scripts with standardized, conversational agentic discovery, automated synthesis, and metadata curation.
 
 ### The Operational Challenge: Bot Traffic, Scrapers, and Repository Strain
 EDI has experienced severe operational challenges stemming from aggressive robotic scraping and distributed denial-of-service (DDoS) incidents. These bot incursions have repeatedly degraded repository performance and forced EDI engineering to devote substantial time to refactoring access control systems (e.g., imposing authentication requirements in [PEP-14](./pep-14.md), introducing API keys in [PEP-15](./pep-15.md), and creating intermediate "human" access levels in [PEP-27](./pep-27.md)).
@@ -53,7 +59,7 @@ To resolve these challenges, we propose a **Hybrid Architecture** for the PASTAP
 |   | AWS WAF                            |          | Amazon API Gateway (HTTP API / REST)             |   |
 |   | - IP Reputation & Bot Filtering   |--------->| - API Key Validation (PEP-15 / PEP-27)          |   |
 |   | - Rate-based Rule Blocks (DDoS)    |          | - Usage Plans & Token-Bucket Throttling         |   |
-|   +------------------------------------+          |   (Community Free, Pro, Enterprise Tiers)       |   |
+|   +------------------------------------+          |   (Starter Free, Team, Power Tiers)             |   |
 |                                                   +------------------------+------------------------+   |
 |                                                                            |                            |
 |                                                                            v                            |
@@ -311,7 +317,7 @@ Before selecting the Model Context Protocol (MCP), three alternative architectur
 2. **Human-in-the-Loop (HITL) Token Specification for Phase 2**:
    For Phase 2 evaluation and upload tools, an exact cryptographic token mechanism (e.g., short-lived signed JWTs generated via the EDI Data Portal after human review) must be designed to verify that a human operator explicitly authorized the staging upload.
 3. **Billing Integration Platform**:
-   Whether commercial subscriptions should be billed via Stripe Billing (integrated into the EDI website/portal) or listed as a SaaS Product on the AWS Marketplace requires evaluation with EDI administrative leadership.
+   Whether capacity tier subscriptions should be billed via Stripe Billing (integrated into the EDI website/portal), institutional recharge, or listed as a SaaS Product on the AWS Marketplace requires evaluation with EDI administrative leadership.
 4. **Client-Side LLM Context Windows on Large Datasets**:
    Because full raw pass-through streaming delivers complete datasets directly to the client agent, standard client-side guidelines or helper prompts should be established in documentation to prevent agents from attempting to feed massive binary or multi-gigabyte tabular files directly into token context windows.
 
