@@ -41,7 +41,7 @@ Deploying an AI agent interface without strict architectural boundaries introduc
 
 ## Proposed Solution
 
-To resolve these challenges, we propose a **Hybrid Architecture** for the PASTAPlus MCP Server built with Python and FastAPI, governed by multi-layer bot mitigation and rate-limiting infrastructure on AWS, backed by a phased safety rollout, and monetized through tiered API Gateway usage plans.
+To resolve these challenges, we propose an **EDI-Hosted Cloud Gateway Architecture** for the PASTAPlus MCP Server built with Python and FastAPI, governed by multi-layer bot mitigation and rate-limiting infrastructure on AWS, backed by a phased safety rollout, and supported through tiered API Gateway usage plans.
 
 ```
                            +-------------------------------------------------------+
@@ -86,18 +86,20 @@ To resolve these challenges, we propose a **Hybrid Architecture** for the PASTAP
                                                                             +-------------------------+
 ```
 
-### 1. Hybrid Architecture: Dual-Distribution Model
+### 1. EDI-Hosted Cloud Gateway Architecture (Remote SSE / Streamable HTTP)
 
-The MCP server will be engineered as a single, modular Python codebase using FastAPI and the official Python MCP SDK (`mcp` / `fastmcp`), supporting two deployment modes:
+The MCP server is engineered as a secure, EDI-managed service deployed exclusively within EDI's AWS cloud infrastructure using FastAPI and the official Python MCP SDK (`mcp` / `fastmcp`), utilizing remote Server-Sent Events (SSE) and Streamable HTTP transports:
 
-1. **EDI-Hosted Cloud Gateway (AWS Managed)**:
-   - Deployed within EDI's AWS environment, exposing an endpoint over Server-Sent Events (SSE) and Streamable HTTP.
-   - Fronted by AWS WAF and Amazon API Gateway to provide centralized authentication, usage plan enforcement, bot defense, response caching, and metered billing.
-   - Serves web-based AI clients, cloud agents, and commercial consumers without requiring them to install local runtimes.
-2. **Open-Source Local Client Package (`edi-pasta-mcp`)**:
-   - Distributed via PyPI and GitHub (`pip install edi-pasta-mcp` or `uvx edi-pasta-mcp`).
-   - Runs locally on the researcher's machine over standard I/O (`stdio`), integrating seamlessly into desktop applications like Claude Desktop or Cursor.
-   - The local client requires the user to input their personal EDI API key (provisioned via the EDI IAM portal), directing requests either to the EDI-hosted gateway or directly to the PASTA+ Gatekeeper with verified authenticated credentials.
+1. **Centralized Cloud Gateway Deployment**:
+   - Exposes standard Model Context Protocol endpoints over Server-Sent Events (SSE) and Streamable HTTP (e.g., `https://mcp.edirepository.org/sse`).
+   - Fronted by AWS WAF and Amazon API Gateway to establish a unified perimeter providing mandatory API key authentication, tier quota enforcement, automated bot defense, response caching, and metered usage.
+   - Directly connects desktop AI assistants (e.g., Claude Desktop, Cursor), cloud agent environments, and research synthesis pipelines over secure HTTPS without requiring end users to install local runtimes, manage Python environments, or configure backend dependencies.
+2. **Security & Zero Client Code Distribution**:
+   - In adherence to EDI repository security policies that restrict public disclosure of repository codebase logic, EDI does not publish server or client packages to public package indexes (such as PyPI) or public source repositories.
+   - Hosting the MCP server strictly within EDI's managed AWS perimeter prevents disclosure of internal service implementations and guarantees that all agent interactions pass through AWS WAF and token-bucket throttles, eliminating any possibility of client-side bypass of rate limits or access controls.
+3. **Client Integration & Transport Compatibility**:
+   - Modern MCP-compliant desktop tools and agent frameworks connect natively to the remote SSE endpoint using HTTPS and the user's EDI API key configured in request headers (`X-API-Key: <key>`).
+   - For desktop clients or legacy environments that strictly require local standard input/output (`stdio`) process execution, users can connect through standard, open-source third-party transport bridges (such as the generic `mcp-proxy` or `@modelcontextprotocol/server-sse` runner) that tunnel local `stdio` to the EDI remote SSE gateway over HTTPS, requiring no EDI-specific software distribution.
 
 
 ### 2. Bot Mitigation, Traffic Governance, and DoS Protection
@@ -298,9 +300,10 @@ Before selecting the Model Context Protocol (MCP), three alternative architectur
 
 | Criterion | Model Context Protocol (MCP) | Direct OpenAPI Ingestion | Agent-Optimized Python SDK | LLM-Tailored REST Proxy |
 | :--- | :--- | :--- | :--- | :--- |
-| **Protocol / Transport** | JSON-RPC 2.0 (stdio / SSE) | Stateless HTTP REST | Python method calls | Stateless HTTP REST |
-| **EDI Hosting Footprint** | FastAPI container (or local stdio) | Static file hosting | PyPI package maintenance | FastAPI container |
-| **Desktop Client Support** (Claude Desktop, Cursor) | **Native out-of-the-box** | Requires custom bridges | No (requires code sandbox) | Requires custom bridges |
+| **Protocol / Transport** | JSON-RPC 2.0 (Remote SSE / HTTP) | Stateless HTTP REST | Python method calls | Stateless HTTP REST |
+| **EDI Hosting Footprint** | FastAPI container in AWS | Static file hosting | PyPI package maintenance | FastAPI container |
+| **Client Code Distribution** | **None (Zero code distributed)** | OpenAPI spec file only | Public PyPI package distribution | None |
+| **Desktop Client Support** (Claude Desktop, Cursor) | **Native out-of-the-box** (Remote SSE) | Requires custom bridges | No (requires code sandbox) | Requires custom bridges |
 | **Context Token Efficiency** | High (Structured tool schemas) | Low (Monolithic schemas in prompt) | **Very High** (Local in-memory filtering) | High (Compact JSON) |
 | **Payload Format Handling** | Handled by server tool wrappers | Raw PASTA+ XML | Parsed to DataFrames/Dicts | Translated to JSON |
 | **Support for Resources & Prompts**| **Yes** (Native primitives) | No (Tools only) | No (Tools only) | No (Tools only) |
