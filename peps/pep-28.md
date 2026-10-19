@@ -156,7 +156,7 @@ The PASTAPlus MCP server will implement the three core primitives of the Model C
 - `readDataEntitySize`
 - `readDataEntityChecksum`
 
-###### Data Access (Raw Pass-Through Streaming)
+###### Data Access & Downloads
 - `readDataEntity`
 - `readDataPackageArchive`
 
@@ -186,12 +186,24 @@ Standardized prompt templates embedded within the MCP server guide LLMs through 
 - `cross_package_synthesis`: Guides the agent in joining tabular data entities across multiple LTER or EDI packages with heterogeneous column schemas.
 
 
-### 5. Data Entity Handling & Full Raw Pass-Through Streaming
+### 5. Data Entity Handling: Out-of-Band Retrieval and Context Boundaries
 
-In accordance with EDI's operational preferences, the MCP server implements a **Full Raw Pass-Through Streaming** model for data entity retrieval:
-- **Zero In-Memory Buffering**: To prevent out-of-memory errors on both the MCP server and PASTA+ nodes, the FastAPI MCP server avoids buffering large payloads in memory and instead uses asynchronous chunked transfer streaming (`httpx.AsyncClient` streaming piped directly to `StreamingResponse`).
-- **Client-Side Context Management**: When an agent invokes `read_data_entity`, the server streams the entire data stream verbatim. The client agent application (Claude Desktop, Cursor, or user Python script) retains full responsibility for managing its LLM context window, buffering limits, or local disk persistence.
-- **Header Transparency**: The MCP server forwards `Content-Length`, `Content-Type`, and `Content-Disposition` headers so consuming agents can inspect payload size before committing tokens.
+PASTA+ data entities range from small tabular text files to multi-gigabyte CSVs, raster grids (GeoTIFF), NetCDF cubes, or binary archives. In agentic workflows, large data entities are **not** ingested as raw tokens into the LLM context window, as doing so would rapidly exhaust token limits, degrade reasoning quality, or corrupt the context with binary data.
+
+Instead, the MCP server supports a clear architectural separation between **in-context reasoning** and **out-of-band data processing**:
+
+1. **In-Context Metadata & Schema Inspection**:
+   - Consuming agents use MCP tools (`readMetadata`, `readDataEntityNames`, `readDataEntitySize`, `readDataEntityChecksum`) to inspect column definitions, units, schema, and byte sizes directly within their prompt context window.
+   - This compact structural metadata (typically a few hundred to thousand tokens) enables the agent to understand dataset schemas, formulate analytical plans, and write accurate data processing code.
+
+2. **Out-of-Band Data Consumption via Code Execution**:
+   - For actual analysis or synthesis, the agent generates executable code (such as Python using `pandas`, `duckdb`, or `polars`, or R) targeting the canonical PASTA+ data entity URL (`https://pasta.lternet.edu/package/data/eml/{scope}/{identifier}/{revision}/{entityId}`).
+   - The code executes in a local environment or sandbox, downloads the file directly to disk or memory, performs required filtering, aggregation, or joining, and returns only concise summaries, statistical tables, or preview slices back to the prompt context.
+
+3. **Non-Buffering Streaming for Direct Downloads**:
+   - When client applications, automated pipelines, or user scripts invoke `readDataEntity` or `readDataPackageArchive` through the MCP gateway, the FastAPI server acts as a non-buffering passthrough.
+   - Using asynchronous chunked transfer streaming (`httpx.AsyncClient` streaming piped directly to `StreamingResponse`), payloads pass straight from PASTA+ to client storage without accumulating in memory buffers on either the MCP gateway or PASTA+ nodes.
+   - The server forwards standard HTTP headers (`Content-Length`, `Content-Type`, and `Content-Disposition`) so client environments can inspect payload size and MIME type before initiating file transfers.
 
 
 ### 6. Sustainable Operational Model & Capacity Tiers
@@ -309,8 +321,8 @@ Before selecting the Model Context Protocol (MCP), three alternative architectur
    For Phase 2 evaluation and upload tools, an exact cryptographic token mechanism (e.g., short-lived signed JWTs generated via the EDI Data Portal after human review) must be designed to verify that a human operator explicitly authorized the staging upload.
 3. **Billing Integration Platform**:
    Whether capacity tier subscriptions should be managed via an integrated payment processor on the EDI website/portal, institutional recharge, or cloud marketplace listing will be evaluated with EDI administrative leadership.
-4. **Client-Side LLM Context Windows on Large Datasets**:
-   Because full raw pass-through streaming delivers complete datasets directly to the client agent, standard client-side guidelines or helper prompts should be established in documentation to prevent agents from attempting to feed massive binary or multi-gigabyte tabular files directly into token context windows.
+4. **Agent Data Ingestion Patterns and Client Guidelines**:
+   Because PASTA+ data entities can be multi-gigabyte or binary files, client-facing documentation and agent prompt templates should reinforce the standard two-stage pattern: guiding agents to inspect EML metadata and entity schemas in-context, and to generate code for out-of-band data retrieval and analysis in local execution environments, rather than attempting to return raw data payloads directly into prompt token context.
 
 
 ## References
