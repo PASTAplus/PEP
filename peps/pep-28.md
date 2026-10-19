@@ -1,4 +1,4 @@
-# PEP-28: Model Context Protocol (MCP) Server for the PASTAPlus REST API
+# PEP-28: Model Context Protocol (MCP) Server for the PASTA+ REST API
 
 - Author(s): Colin Smith
 - Contact: colin.smith@wisc.edu
@@ -14,7 +14,7 @@ The Model Context Protocol (MCP), developed by Anthropic and rapidly adopted acr
 
 The Environmental Data Initiative (EDI) operates the PASTA+ data repository, providing open, curated scientific and ecological data packages via a web-based data portal and a comprehensive REST API. While users traditionally discover and retrieve data through manual portal exploration or scripted API workflows, modern scientific workflows are rapidly shifting toward autonomous agentic synthesis, analysis, and intelligent metadata curation.
 
-This proposal describes the design, deployment, governance, and security model for an official **PASTAPlus MCP Server**. By exposing PASTA+ through the MCP standard, EDI will enable AI agents to natively query, inspect, and retrieve scientific data while maintaining strict safeguards against denial-of-service (DoS) attacks, agent runaways, unbuffered memory exhaustion, and unauthorized repository mutations. Furthermore, this document outlines a sustainable, tiered service model that accommodates users across different operational scales—from individual researchers conducting interactive exploratory queries to intensive project workflows running high-frequency automated synthesis—ensuring fair resource allocation while recovering compute and bandwidth costs proportionate to utilization.
+This proposal describes the design, deployment, governance, and security model for an official **PASTA+ MCP Server**. By exposing PASTA+ through the MCP standard, EDI will enable AI agents to natively query, inspect, and retrieve scientific data while maintaining strict safeguards against denial-of-service (DoS) attacks, agent runaways, unbuffered memory exhaustion, and unauthorized repository mutations. Furthermore, this document outlines a sustainable, tiered service model that accommodates users across different operational scales—from individual researchers conducting interactive exploratory queries to intensive project workflows running high-frequency automated synthesis—ensuring fair resource allocation while recovering compute and bandwidth costs proportionate to utilization.
 
 
 ## Issue Statement
@@ -41,9 +41,9 @@ Deploying an AI agent interface without strict architectural boundaries introduc
 
 ## Proposed Solution
 
-To resolve these challenges, we propose an **EDI-Hosted Cloud Gateway Architecture** for the PASTAPlus MCP Server built with Python and FastAPI, governed by multi-layer bot mitigation and rate-limiting infrastructure on AWS, backed by a phased safety rollout, and supported through structured operational capacity tiers.
+To resolve these challenges, we propose an **EDI-Hosted Cloud Gateway Architecture** for the PASTA+ MCP Server built with Python and FastAPI, governed by multi-layer bot mitigation and rate-limiting infrastructure on AWS, backed by a phased safety rollout, and supported through structured operational capacity tiers.
 
-In this architecture, client agents (such as Claude Desktop, Cursor, or custom research workflows) connect over HTTPS to an EDI-hosted cloud gateway using Server-Sent Events (SSE) or Streamable HTTP. Incoming requests pass through edge perimeter defenses—including bot filtering, API key verification, and rate limiting—before reaching the PASTAPlus MCP Server application. The MCP server executes tool requests, streams data asynchronously, and communicates with PASTA+ backend services through internal proxy routing and intermediate caching layers.
+In this architecture, client agents (such as Claude Desktop, Cursor, or custom research workflows) connect over HTTPS to an EDI-hosted cloud gateway using Server-Sent Events (SSE) or Streamable HTTP. Incoming requests pass through edge perimeter defenses—including bot filtering, API key verification, and rate limiting—before reaching the PASTA+ MCP Server application. The MCP server executes tool requests, streams data asynchronously, and communicates with PASTA+ backend services through internal proxy routing and intermediate caching layers.
 
 ### 1. EDI-Hosted Cloud Gateway Architecture (Remote SSE / Streamable HTTP)
 
@@ -96,7 +96,7 @@ In Phase 1, there is zero risk of an agent altering repository state, overwritin
 
 ### 4. MCP Primitives: Tools, Resources, and Prompts
 
-The PASTAPlus MCP server will implement the three core primitives of the Model Context Protocol:
+The PASTA+ MCP server will implement the three core primitives of the Model Context Protocol:
 
 #### 4.1 Tools (Actionable Functions)
 
@@ -192,7 +192,7 @@ To enforce usage quotas cleanly without fragmenting user accounts or locking int
 | **Daily Quota** | 1,000 calls / day | 25,000 calls / day | 250,000+ calls / day (customizable) |
 | **Caching Layer** | Aggressive Redis caching (1h – 24h) | Standard caching with bypass headers | Dedicated cache allocation / real-time read |
 | **Phase 2 Staging Access** | Read-only | Included (Staging evaluate/upload sandbox) | Included (High-concurrency staging pipelines) |
-| **S3 Egress Optimization** | Proxied through PASTA web servlet | Proxied through PASTA web servlet | Direct Presigned S3 URLs (PASTA+ S3 Object Storage) |
+| **S3 Egress Optimization** | Proxied through PASTA+ web servlet | Proxied through PASTA+ web servlet | Direct Presigned S3 URLs (PASTA+ S3 Object Storage) |
 | **SLA & Support** | Best-effort community support | 99.5% uptime SLA, email support | 99.9% uptime SLA, dedicated support channel |
 | **Billing Gateway** | N/A | Stripe Billing / EDI Portal recharge | Invoiced / Cloud Marketplace Contract |
 
@@ -216,7 +216,7 @@ By aligning tiers with operational scale rather than institutional identity, EDI
 - **System Activity Logger (Audit Manager)**:
   - The distinct `EDI-MCP-Agent/1.0` user-agent and client ID enable clean segregation of AI agent metrics from human portal downloads, preventing statistical skew in dataset usage reports.
 - **AWS S3 Object Storage**:
-  - In Power / High-Volume tiers, large data entity downloads can be served via presigned S3 URLs generated directly from EDI's cloud object storage, offloading heavy multi-gigabyte transfers completely from the PASTA application servers.
+  - In Power / High-Volume tiers, large data entity downloads can be served via presigned S3 URLs generated directly from EDI's cloud object storage, offloading heavy multi-gigabyte transfers completely from the PASTA+ application servers.
 
 
 ### 8. Cloud Infrastructure & Cost Model

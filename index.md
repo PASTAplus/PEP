@@ -29,4 +29,4 @@
 | [PEP-25](peps/pep-25.md) | System Activity Logger                                                                                                       | Roger Dahl     | Draft       |            |
 | [PEP-26](peps/pep-26.md) | Web-x as an EDI Service Documentation Application                                                                            | Mark Servilla  | Implemented | 2026-08-31 |
 | [PEP-27](peps/pep-27.md) | A "Human" Access Level for use in Authorization                                                                              | Mark Servilla  | Draft       |            |
-| [PEP-28](peps/pep-28.md) | Model Context Protocol (MCP) Server for the PASTAPlus REST API                                                               | Colin Smith    | Draft       |            |
+| [PEP-28](peps/pep-28.md) | Model Context Protocol (MCP) Server for the PASTA+ REST API                                                                  | Colin Smith    | Draft       |            |
