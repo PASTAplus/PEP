@@ -41,7 +41,7 @@ Deploying an AI agent interface without strict architectural boundaries introduc
 
 ## Proposed Solution
 
-To resolve these challenges, we propose an **EDI-Hosted Cloud Gateway Architecture** for the PASTAPlus MCP Server built with Python and FastAPI, governed by multi-layer bot mitigation and rate-limiting infrastructure on AWS, backed by a phased safety rollout, and supported through tiered API Gateway usage plans.
+To resolve these challenges, we propose an **EDI-Hosted Cloud Gateway Architecture** for the PASTAPlus MCP Server built with Python and FastAPI, governed by multi-layer bot mitigation and rate-limiting infrastructure on AWS, backed by a phased safety rollout, and supported through structured operational capacity tiers.
 
 ```
                            +-------------------------------------------------------+
@@ -56,11 +56,10 @@ To resolve these challenges, we propose an **EDI-Hosted Cloud Gateway Architectu
 | AWS Cloud Infrastructure (EDI Managed)                                                                  |
 |                                                                                                         |
 |   +------------------------------------+          +-------------------------------------------------+   |
-|   | AWS WAF                            |          | Amazon API Gateway (HTTP API / REST)             |   |
-|   | - IP Reputation & Bot Filtering   |--------->| - API Key & Identity Validation                 |   |
-|   | - Rate-based Rule Blocks (DDoS)    |          | - Usage Plans & Token-Bucket Throttling         |   |
-|   +------------------------------------+          |   (Starter Free, Team, Power Tiers)             |   |
-|                                                   +------------------------+------------------------+   |
+|   | Cloud Perimeter & WAF              |          | Edge API Gateway / Ingress Router               |   |
+|   | - IP Reputation & Bot Filtering   |--------->| - Authentication Verification                   |   |
+|   | - Volumetric DDoS Mitigation       |          | - Ingress Rate Limiting & Routing               |   |
+|   +------------------------------------+          +------------------------+------------------------+   |
 |                                                                            |                            |
 |                                                                            v                            |
 |                                                   +-------------------------------------------------+   |
@@ -71,8 +70,8 @@ To resolve these challenges, we propose an **EDI-Hosted Cloud Gateway Architectu
 |                                                                |                       |                |
 |                                            Read-Through Cache  v                       v REST Proxy     |
 |                                                   +----------------+      +-------------------------+   |
-|                                                   | ElastiCache    |      | EDI Gatekeeper          |   |
-|                                                   | (Redis Cluster)|      | (Reverse Proxy)         |   |
+|                                                   | Intermediate   |      | EDI Gatekeeper          |   |
+|                                                   | Cache (Redis)  |      | (Reverse Proxy)         |   |
 |                                                   +----------------+      +------------+------------+   |
 +----------------------------------------------------------------------------------------|----------------+
                                                                                          | Internal Traffic
@@ -92,11 +91,11 @@ The MCP server is engineered as a secure, EDI-managed service deployed exclusive
 
 1. **Centralized Cloud Gateway Deployment**:
    - Exposes standard Model Context Protocol endpoints over Server-Sent Events (SSE) and Streamable HTTP (e.g., `https://mcp.edirepository.org/sse`).
-   - Fronted by AWS WAF and Amazon API Gateway to establish a unified perimeter providing mandatory API key authentication, tier quota enforcement, automated bot defense, response caching, and metered usage.
+   - Fronted by AWS perimeter shielding (such as AWS WAF and an edge API gateway) to establish a unified perimeter providing mandatory API key authentication, tier quota enforcement, automated bot defense, response caching, and metered usage.
    - Directly connects desktop AI assistants (e.g., Claude Desktop, Cursor), cloud agent environments, and research synthesis pipelines over secure HTTPS without requiring end users to install local runtimes, manage Python environments, or configure backend dependencies.
 2. **Security & Zero Client Code Distribution**:
    - In adherence to EDI repository security policies that restrict public disclosure of repository codebase logic, EDI does not publish server or client packages to public package indexes (such as PyPI) or public source repositories.
-   - Hosting the MCP server strictly within EDI's managed AWS perimeter prevents disclosure of internal service implementations and guarantees that all agent interactions pass through AWS WAF and token-bucket throttles, eliminating any possibility of client-side bypass of rate limits or access controls.
+   - Hosting the MCP server strictly within EDI's managed AWS perimeter prevents disclosure of internal service implementations and guarantees that all agent interactions pass through perimeter controls and token-bucket throttles, eliminating any possibility of client-side bypass of rate limits or access controls.
 3. **Client Integration & Transport Compatibility**:
    - Modern MCP-compliant desktop tools and agent frameworks connect natively to the remote SSE endpoint using HTTPS and the user's EDI API key configured in request headers (`X-API-Key: <key>`).
    - For desktop clients or legacy environments that strictly require local standard input/output (`stdio`) process execution, users can connect through standard, open-source third-party transport bridges (such as the generic `mcp-proxy` or `@modelcontextprotocol/server-sse` runner) that tunnel local `stdio` to the EDI remote SSE gateway over HTTPS, requiring no EDI-specific software distribution.
@@ -108,19 +107,19 @@ To alleviate the systems administrator's burden and protect the PASTA+ core clus
 
 1. **Mandatory EDI API Key Authentication**:
    - In adherence to EDI repository access policies and IAM security controls, anonymous requests are strictly rejected. Every MCP session must present an active EDI API key via the `X-API-Key` header or MCP connection configuration.
-   - API keys are verified at the AWS API Gateway layer before any request reaches the MCP application or PASTA+ backend.
-2. **Edge Throttling and Token-Bucket Rate Limiting**:
-   - AWS API Gateway Usage Plans enforce per-key rate limits (requests per second) and burst quotas. If an agent loops maliciously or enters a runaway execution state, API Gateway immediately sheds the load with HTTP 429 ("Too Many Requests") responses at the AWS edge, ensuring 0% load reaches the PASTA+ backend.
-3. **AWS WAF Bot Control & IP Reputation**:
-   - AWS WAF sits in front of the API Gateway, applying managed bot control rule sets, blocking known malicious scanning networks, and inspecting request frequency to thwart distributed volumetric scraping attempts.
+   - API keys are verified at the cloud perimeter gateway layer before any request reaches the MCP application or PASTA+ backend.
+2. **Edge Throttling and Rate Limiting**:
+   - The perimeter gateway enforces per-key rate limits and burst quotas. If an agent loops excessively or enters a runaway execution state, requests exceeding configured thresholds are immediately shed with HTTP 429 ("Too Many Requests") responses at the edge, ensuring 0% surplus load reaches the PASTA+ backend.
+3. **AWS WAF Bot Mitigation & IP Reputation**:
+   - AWS WAF operates at the perimeter, applying managed bot control rule sets, blocking known malicious scanning networks, and inspecting request frequency to thwart distributed volumetric scraping attempts.
 4. **Agent Traffic Segregation and Header Tagging**:
    - When the MCP server proxies requests to the EDI Gatekeeper, it automatically injects:
      - `User-Agent: EDI-MCP-Agent/1.0 (AWS-Hosted; +https://edirepository.org)`
      - `EDI-Agent-Client-ID: <hashed-user-id>`
    - This header tagging allows the Gatekeeper and the PASTA+ System Activity Logger to immediately distinguish legitimate, authenticated AI agent traffic from illicit scrapers and anonymous web crawlers.
-5. **High-Performance Intermediate Caching (Amazon ElastiCache Redis)**:
-   - High-frequency, expensive read operations—including Solr searches (`searchDataPackages`), EML metadata documents (`readMetadata`), Dublin Core XML, and evaluation reports—are cached in an in-memory Redis cluster with configurable Time-To-Live (TTL, e.g., 1 hour for searches, 24 hours for immutable package revisions).
-   - Identical agent queries are served directly out of Redis in < 2ms without dispatching HTTP requests to Tomcat.
+5. **High-Performance Intermediate Caching**:
+   - High-frequency, expensive read operations—including Solr searches (`searchDataPackages`), EML metadata documents (`readMetadata`), Dublin Core XML, and evaluation reports—are cached in an intermediate in-memory store (such as Redis / Amazon ElastiCache) with configurable Time-To-Live (TTL, e.g., 1 hour for searches, 24 hours for immutable package revisions).
+   - Identical agent queries are served directly out of the cache without dispatching HTTP requests to backend PASTA+ servlets.
 
 
 ### 3. Phased Capability Scoping & Sandboxing
@@ -194,31 +193,18 @@ In accordance with EDI's operational preferences, the MCP server implements a **
 
 ### 6. Sustainable Operational Model & Capacity Tiers
 
-Operating high-throughput AI agent gateways incurs real AWS cloud expenses (compute, NAT gateway bandwidth, S3 data egress, and ElastiCache). To ensure long-term financial sustainability and equitable resource allocation across diverse scientific use cases, the hosted MCP service will offer structured capacity tiers based on workload scale.
+Operating high-throughput AI agent gateways incurs cloud infrastructure overhead (compute runtime, network data egress, and intermediate cache memory). To ensure long-term financial sustainability and equitable resource allocation across diverse scientific use cases, the hosted MCP service will offer structured capacity tiers based on workload scale.
 
-#### 6.1 Enforcement Pathways: EDI IAM vs. AWS API Gateway
+#### 6.1 Architecture for Tier Governance
 
-We identify two architectural pathways for managing service tiers and enforcing usage quotas:
+To enforce usage quotas cleanly without fragmenting user accounts or locking into rigid cloud-provider mechanisms:
 
-##### Pathway A (Recommended): Native EDI IAM Groups & Decentralized Enforcement
-- **Tier Membership in IAM**: Capacity tiers are represented natively as EDI IAM groups (e.g., `mcp-starter`, `mcp-team`, `mcp-power`) assigned to user accounts within the EDI Identity and Access Management directory.
-- **Subscription Lifecycle**: Capacity tiers upgraded via the EDI Data Portal (integrated with a billing processor such as Stripe or institutional recharge) automatically update the user profile's IAM group membership via webhook.
-- **Token-Encoded Entitlements**: When the user's API key is validated by the IAM service, the returned EDI authentication token already carries their group membership. The FastAPI MCP server extracts the tier directly from the token and enforces rate limits and tool access using the local ElastiCache Redis store.
-- **Advantages**:
-  1. *Single Source of Truth*: Leverages existing EDI user accounts, ORCID logins, and profile management without synchronizing state into external AWS services.
-  2. *Domain Granularity*: IAM can automatically assign appropriate tiers to verified research groups, LTER sites, or institutional partners based on profile metadata or grant allocations.
-  3. *Vendor Independence*: Avoids cloud lock-in to AWS API Gateway usage plans, ensuring tier management remains portable across hosting environments.
-
-##### Pathway B: AWS API Gateway Usage Plans
-- Tiers are configured as native API Gateway Usage Plans with API keys provisioned directly in AWS.
-- **Advantages**: Native edge rejection of quota overages.
-- **Disadvantages**: Decouples billing/tier status from the EDI user directory, requiring bidirectional synchronization between IAM and AWS API Gateway.
-
-##### Recommended Hybrid Synthesis
-We recommend **Pathway A** for authorization and tier policy, paired with **AWS WAF** at the perimeter:
-- **EDI IAM** acts as the authoritative registry for user tiers, group memberships, and tool permissions.
-- **FastAPI MCP + Redis** enforces per-tier quotas, burst limits, and tool feature flags.
-- **AWS WAF / Edge Gateway** provides coarse volumetric bot filtering and DDoS protection, ensuring malicious traffic is dropped before consuming IAM database connections.
+1. **Centralized Identity and Tier Authority (EDI IAM)**:
+   - Capacity tiers are represented natively within the EDI Identity and Access Management (IAM) directory (e.g., IAM groups `mcp-starter`, `mcp-team`, `mcp-power`).
+   - Maintaining tier definitions within EDI IAM preserves a single source of truth, integrates naturally with existing EDI user accounts and ORCID credentials, and avoids complex state synchronization between EDI and external cloud services.
+2. **Layered Defense & Quota Enforcement**:
+   - **Perimeter Layer (WAF & Edge Gateway)**: Evaluates incoming requests at the cloud ingress, handling coarse volumetric bot filtering, IP reputation checks, and initial request validation before requests consume internal resources.
+   - **MCP Application & Cache Layer**: Enforces per-tier quotas, rate limits, and tool permissions based on the user's authenticated IAM entitlements, leveraging the intermediate cache store for fast, stateful quota tracking.
 
 #### 6.2 Tier Structure
 
@@ -233,7 +219,9 @@ We recommend **Pathway A** for authorization and tier policy, paired with **AWS 
 | **Phase 2 Staging Access** | Read-only | Included (Staging evaluate/upload sandbox) | Included (High-concurrency staging pipelines) |
 | **S3 Egress Optimization** | Proxied through PASTA web servlet | Proxied through PASTA web servlet | Direct Presigned S3 URLs (PASTA+ S3 Object Storage) |
 | **SLA & Support** | Best-effort community support | 99.5% uptime SLA, email support | 99.9% uptime SLA, dedicated support channel |
-| **Billing Gateway** | N/A | Stripe Billing / EDI Portal recharge | Invoiced / AWS Marketplace SaaS Contract |
+| **Billing Gateway** | N/A | Stripe Billing / EDI Portal recharge | Invoiced / Cloud Marketplace Contract |
+
+*Note: The rate limits, quotas, and pricing targets listed in this table represent illustrative baseline tiers. Operational thresholds, burst allowances, and quota policies will be calibrated and configured by EDI systems architects during deployment.*
 
 #### 6.3 Cost Recovery and Sustainability Impact
 By aligning tiers with operational scale rather than institutional identity, EDI ensures that individual researchers and students retain free, frictionless access for interactive exploration. Simultaneously, users operating high-throughput automated synthesis pipelines or institutional batch workflows contribute proportionately to infrastructure costs, turning potential repository strain into a sustainable funding mechanism for EDI's cloud footprint.
@@ -248,7 +236,7 @@ By aligning tiers with operational scale rather than institutional identity, EDI
   - Validates API keys presented by the MCP server through the centralized IAM authentication service.
   - Acts as the central authority for capacity tier management via IAM groups (`mcp-starter`, `mcp-team`, `mcp-power`). The returned EDI authentication token encodes group memberships, allowing the MCP gateway to enforce tier quotas without additional database queries.
 - **Data Package Manager**:
-  - Shielded from volumetric query storms by API Gateway rate limiters.
+  - Shielded from volumetric query storms by perimeter and gateway rate limiters.
   - Receives well-formed, standard REST calls without needing modification.
 - **System Activity Logger (Audit Manager)**:
   - The distinct `EDI-MCP-Agent/1.0` user-agent and client ID enable clean segregation of AI agent metrics from human portal downloads, preventing statistical skew in dataset usage reports.
@@ -256,18 +244,18 @@ By aligning tiers with operational scale rather than institutional identity, EDI
   - In Power / High-Volume tiers, large data entity downloads can be served via presigned S3 URLs generated directly from EDI's cloud object storage, offloading heavy multi-gigabyte transfers completely from the PASTA application servers.
 
 
-### 8. Cost & Infrastructure Estimates
+### 8. Cloud Infrastructure & Cost Model
 
-| AWS Component | Purpose | Estimated Monthly Cost (USD) |
+The hosted MCP service leverages standard cloud components within EDI's managed AWS environment:
+
+| Cloud Component | Architectural Role | Operational Cost Driver |
 | :--- | :--- | :--- |
-| **Amazon API Gateway (HTTP/REST)** | Request routing, throttling, API key authentication | $30 – $100 (based on 10M–30M calls) |
-| **AWS WAF** | Bot Control rules, IP rate limiting, DDoS shielding | $15 – $40 |
-| **Amazon ElastiCache (Redis)** | Caching Solr queries, EML XML, and metadata | $40 – $120 (`cache.t4g.small` or `medium`) |
-| **Compute (Open Issue below)** | Hosting FastAPI MCP server (ECS Fargate / Lambda / App Runner) | $25 – $80 |
-| **AWS Data Egress** | Serving raw data entities to client agents | Variable ($0.09/GB; offset by higher-capacity tiers) |
-| **Total Estimated Base Overhead** | | **~$110 – $340 / month** |
+| **Edge Gateway & WAF** | Perimeter routing, TLS termination, bot filtering, and DDoS defense | Request volume and inspection rule sets |
+| **Compute Service** | Hosting the containerized FastAPI MCP application | Compute runtime hours and memory footprint |
+| **Intermediate Cache** | In-memory caching for metadata, query results, and quota state | Cache memory capacity and persistence needs |
+| **Data Egress** | Delivering package payloads and data streams to client agents | Outbound network bandwidth (offset by higher-tier allocations) |
 
-*Note: A small number of Team or Power tier subscribers completely covers the monthly infrastructure overhead of the entire MCP service, ensuring that free Starter access remains permanently sustainable for individual researchers.*
+Specific instance types, provisioning options, and autoscaling thresholds will be defined by EDI systems architects during deployment planning. Baseline operational expenses for the core service are modest, and higher-capacity tier subscriptions are structured to recover incremental compute and network egress overhead sustainably.
 
 
 ### 9. Alternative Solutions Considered
@@ -312,15 +300,12 @@ Before selecting the Model Context Protocol (MCP), three alternative architectur
 
 ## Open issue(s)
 
-1. **AWS Compute Runtime Selection**:
-   The exact AWS compute runtime for the hosted FastAPI MCP server is left open for evaluation and final selection by the EDI Lead Software Architect and Systems Administrator (Roger Dahl). The primary alternatives under consideration are:
-   - **Alternative A: AWS ECS Fargate**: Long-lived Docker containers managed under ECS with an Application Load Balancer. *Pros*: Native, persistent HTTP streaming and Server-Sent Events (SSE) support; zero timeout limits; steady memory footprint; simple VPC integration with existing PASTA services. *Cons*: Persistent baseline hosting cost even during idle periods.
-   - **Alternative B: AWS Lambda with Response Streaming**: Serverless Python functions using the AWS Lambda Web Adapter. *Pros*: Scales down to zero cost during idle periods; zero container maintenance. *Cons*: 15-minute execution hard ceiling; potential cold starts; streaming payload size restrictions through API Gateway.
-   - **Alternative C: AWS App Runner**: Fully managed container platform connected to Amazon ECR. *Pros*: Automated autoscaling, managed TLS and load balancing with lower operational overhead than ECS. *Cons*: Less flexible VPC peering and custom network configuration.
+1. **Cloud Compute Runtime & Deployment Topology**:
+   The specific compute hosting environment and deployment topology for the FastAPI MCP application (e.g., containerized service vs. serverless execution) is left to the EDI systems architect and software engineering team to determine based on EDI's VPC layout, streaming requirements, and operational monitoring standards.
 2. **Human-in-the-Loop (HITL) Token Specification for Phase 2**:
    For Phase 2 evaluation and upload tools, an exact cryptographic token mechanism (e.g., short-lived signed JWTs generated via the EDI Data Portal after human review) must be designed to verify that a human operator explicitly authorized the staging upload.
 3. **Billing Integration Platform**:
-   Whether capacity tier subscriptions should be billed via Stripe Billing (integrated into the EDI website/portal), institutional recharge, or listed as a SaaS Product on the AWS Marketplace requires evaluation with EDI administrative leadership.
+   Whether capacity tier subscriptions should be managed via an integrated payment processor on the EDI website/portal, institutional recharge, or cloud marketplace listing will be evaluated with EDI administrative leadership.
 4. **Client-Side LLM Context Windows on Large Datasets**:
    Because full raw pass-through streaming delivers complete datasets directly to the client agent, standard client-side guidelines or helper prompts should be established in documentation to prevent agents from attempting to feed massive binary or multi-gigabyte tabular files directly into token context windows.
 
