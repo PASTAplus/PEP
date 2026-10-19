@@ -288,11 +288,19 @@ Before selecting the Model Context Protocol (MCP), three alternative architectur
 ## References
 
 - [PASTA+ Core REST API Documentation](https://pastaplus-core.readthedocs.io/en/latest/index.html)
+- [PASTA+ Data Package Manager API Documentation](https://pastaplus-core.readthedocs.io/en/latest/doc_tree/pasta_api/data_package_manager_api.html)
 - [EDI Data Repository Documentation](https://edirepository.org/)
+- [EDI Data Portal](https://portal.edirepository.org/)
 - [Model Context Protocol Specification](https://modelcontextprotocol.io/)
 - [Anthropic FastMCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)
 - [Ecological Metadata Language (EML) Specification](https://eml.ecoinformatics.org/)
 - [FastAPI Framework Documentation](https://fastapi.tiangolo.com/)
+- [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
+- [HTML Server-Sent Events (SSE) Specification](https://html.spec.whatwg.org/multipage/server-sent-events.html)
+- [RFC 7519: JSON Web Token (JWT)](https://datatracker.ietf.org/doc/html/rfc7519)
+- [PEP-15: Authentication with API Keys](./pep-15.md)
+- [PEP-25: System Activity Logger](./pep-25.md)
+- [PEP-27: A "Human" Access Level for use in Authorization](./pep-27.md)
 
 
 ## Rejection
