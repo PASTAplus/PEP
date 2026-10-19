@@ -262,6 +262,45 @@ By requiring commercial AI crawlers to subscribe to the Enterprise Tier, EDI tra
 *Note: A single Enterprise subscriber ($1,000/mo) or a small cohort of Professional subscribers completely covers the monthly infrastructure overhead of the entire MCP service.*
 
 
+### 9. Alternative Solutions Considered
+
+Before selecting the Model Context Protocol (MCP), three alternative architectural patterns for enabling AI agent access to the PASTA+ REST API were evaluated:
+
+#### 9.1 Direct OpenAPI Specification Ingestion (Declarative Function Calling)
+- **Description**: Publish a comprehensive OpenAPI 3.0 / 3.1 specification (JSON/YAML) for the PASTA+ REST API, allowing agent orchestration frameworks (OpenAI GPT Actions, LangChain `OpenAPIToolkit`, Anthropic tool use) to parse endpoint schemas dynamically at runtime.
+- **Why Not Recommended**:
+  1. *Excessive Token Overhead*: PASTA+ exposes dozens of endpoints with extensive parameters and XML schema requirements. Injecting complete OpenAPI schemas into an agent's context consumes thousands of tokens per reasoning step, increasing prompt costs and saturating context windows.
+  2. *XML Processing Barrier*: LLMs struggle with generating and validating raw XML documents compared to JSON.
+  3. *Lacks Desktop Client Support*: OpenAPI specs cannot be plugged directly into widely used desktop AI clients (Claude Desktop, Cursor, Zed) without writing custom intermediate bridge code.
+  4. *Absence of Resources and Prompts*: OpenAPI only defines callable endpoints; it provides no native mechanism for exposing URI-addressable static/dynamic reference resources (`pasta://...`) or pre-built curation prompts.
+
+#### 9.2 Agent-Optimized Python Client Library ("Code-as-a-Tool")
+- **Description**: Develop and distribute an idiomatic Python library specifically designed for AI agents operating in code-execution sandboxes (e.g., Jupyter notebooks, Python REPL tools). The library would wrap PASTA+ endpoints, parse XML responses into pandas DataFrames and dictionaries, and execute data processing locally in the client's execution environment.
+- **Why Not Recommended as the Primary Solution**:
+  1. *Requires Code Execution Runtime*: This approach only functions for agents equipped with an active Python interpreter or sandboxed shell; it cannot be used by conversational or GUI-based agents lacking code execution capabilities.
+  2. *Inaccessible to Desktop Agents*: Desktop assistants like Claude Desktop cannot consume Python SDKs directly.
+  3. *Client Maintenance Burden*: Updates to API behaviors or schema handling require client-side library upgrades across user environments.
+  - *Note*: While not recommended as the primary interface, an agent-optimized Python SDK could serve as a valuable complementary tool in future development for Jupyter-based analytical workflows.
+
+#### 9.3 LLM-Tailored REST/JSON Middleware Proxy
+- **Description**: Deploy a custom REST proxy that translates PASTA+ XML endpoints into lean JSON responses and exposes an endpoint (e.g., `GET /tools/schema`) returning OpenAI/Anthropic function definitions.
+- **Why Not Recommended**:
+  1. *Non-Standard Integration*: Lacks an industry-standard client specification. Every client framework would require custom configuration to consume the custom REST proxy.
+  2. *Equivalent Hosting Overhead without Ecosystem Benefits*: Requires hosting, monitoring, and maintaining an intermediate web service similar to an MCP server, but forfeits native compatibility with the rapidly expanding MCP ecosystem.
+
+#### Summary Comparison of Alternatives
+
+| Criterion | Model Context Protocol (MCP) | Direct OpenAPI Ingestion | Agent-Optimized Python SDK | LLM-Tailored REST Proxy |
+| :--- | :--- | :--- | :--- | :--- |
+| **Protocol / Transport** | JSON-RPC 2.0 (stdio / SSE) | Stateless HTTP REST | Python method calls | Stateless HTTP REST |
+| **EDI Hosting Footprint** | FastAPI container (or local stdio) | Static file hosting | PyPI package maintenance | FastAPI container |
+| **Desktop Client Support** (Claude Desktop, Cursor) | **Native out-of-the-box** | Requires custom bridges | No (requires code sandbox) | Requires custom bridges |
+| **Context Token Efficiency** | High (Structured tool schemas) | Low (Monolithic schemas in prompt) | **Very High** (Local in-memory filtering) | High (Compact JSON) |
+| **Payload Format Handling** | Handled by server tool wrappers | Raw PASTA+ XML | Parsed to DataFrames/Dicts | Translated to JSON |
+| **Support for Resources & Prompts**| **Yes** (Native primitives) | No (Tools only) | No (Tools only) | No (Tools only) |
+| **Traffic & Rate Limit Defense** | Enforced at MCP/WAF layer | Gatekeeper / WAF only | Uncontrolled client calls | Enforced at proxy layer |
+
+
 ## Open issue(s)
 
 1. **AWS Compute Runtime Selection**:
