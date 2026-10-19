@@ -22,7 +22,7 @@ WAF -> MCP: Forward authorized request
 
 == IAM Tier Resolution & Quota Enforcement ==
 MCP -> IAM: Validate API Key (PEP-15 / PEP-27)
-IAM --> MCP: Return EDI Token with IAM Groups\n(e.g., mcp-community, mcp-professional, mcp-enterprise)
+IAM --> MCP: Return EDI Token with IAM Groups\n(e.g., mcp-starter, mcp-team, mcp-power)
 MCP -> Cache: Check per-tier rate limit & daily quota
 alt Quota Exceeded
   MCP --> Client: HTTP 429 ("Tier Quota Exceeded - Upgrade at edirepository.org")

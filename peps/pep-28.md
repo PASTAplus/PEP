@@ -14,7 +14,7 @@ The Model Context Protocol (MCP), developed by Anthropic and rapidly adopted acr
 
 The Environmental Data Initiative (EDI) operates the PASTA+ data repository, providing open, curated scientific and ecological data packages via a comprehensive REST API. While the PASTA+ REST API enables traditional scripted workflows in Python, R, and Java, modern scientific workflows are rapidly shifting toward autonomous agentic synthesis, automated literature-to-data cross-referencing, and intelligent metadata curation.
 
-This proposal describes the design, deployment, governance, and security model for an official **PASTAPlus MCP Server**. By exposing PASTA+ through the MCP standard, EDI will enable AI agents to natively query, inspect, and retrieve scientific data while maintaining strict safeguards against denial-of-service (DoS) attacks, agent runaways, unbuffered memory exhaustion, and unauthorized repository mutations. Furthermore, this document explores a sustainable revenue-generating tier model to recover hosting and egress costs from commercial AI developers and automated aggregators.
+This proposal describes the design, deployment, governance, and security model for an official **PASTAPlus MCP Server**. By exposing PASTA+ through the MCP standard, EDI will enable AI agents to natively query, inspect, and retrieve scientific data while maintaining strict safeguards against denial-of-service (DoS) attacks, agent runaways, unbuffered memory exhaustion, and unauthorized repository mutations. Furthermore, this document outlines a sustainable, tiered service model that accommodates users across different operational scales—from individual researchers conducting interactive exploratory queries to intensive project workflows running high-frequency automated synthesis—ensuring fair resource allocation while recovering compute and bandwidth costs proportionate to utilization.
 
 
 ## Issue Statement
@@ -25,12 +25,12 @@ Scientific data repositories face an accessibility paradox: while millions of ec
 ### The Operational Challenge: Bot Traffic, Scrapers, and Repository Strain
 EDI has experienced severe operational challenges stemming from aggressive robotic scraping and distributed denial-of-service (DDoS) incidents. These bot incursions have repeatedly degraded repository performance and forced EDI engineering to devote substantial time to refactoring access control systems (e.g., imposing authentication requirements in [PEP-14](./pep-14.md), introducing API keys in [PEP-15](./pep-15.md), and creating intermediate "human" access levels in [PEP-27](./pep-27.md)).
 
-Deploying an AI agent interface without strict architectural boundaries introduces grave operational risks that EDI's software architecture and systems administration team must mitigate:
+Deploying an AI agent interface without strict architectural boundaries introduces operational risks that EDI's software architecture and systems administration team must mitigate:
 
 1. **Denial-of-Service from Agentic Feedback Loops**: Autonomous agents equipped with tool-calling capabilities often enter iterative reasoning loops. An unconstrained agent can trigger dozens of resource-intensive Solr queries or multi-gigabyte data entity downloads within seconds, overwhelming the PASTA+ server and egress pipelines.
-2. **"Agent Breakout" and Repository Mutation Concerns**: Allowing AI agents to invoke mutating operations (such as data package package creation/update) creates the risk of unintended repository modifications, corrupted package revisions, or upload queue congestion caused by hallucinated or unvalidated agent actions.
+2. **"Agent Breakout" and Repository Mutation Concerns**: Allowing AI agents to invoke mutating operations (such as data package creation/update) creates the risk of unintended repository modifications, corrupted package revisions, or upload queue congestion caused by hallucinated or unvalidated agent actions.
 3. **Memory Buffering and Resource Exhaustion**: As highlighted in [PEP-25](./pep-25.md), buffering large XML payloads or data entities entirely in application memory creates high server instability. Any intermediate proxy or server must avoid in-memory buffering when serving multi-megabyte or multi-gigabyte datasets.
-4. **Lack of Cost Recovery and Commercial AI Crawling**: Commercial AI labs and third-party data aggregators systematically crawl public scientific repositories to train proprietary models. Without an authenticated, metered access gateway, EDI absorbs 100% of the compute and AWS data egress costs with zero financial return.
+4. **Supporting Diverse User Workloads Sustainably**: User workflows interact with the repository at vastly different scales. A casual researcher asking an assistant to locate a few relevant datasets generates minimal load. Conversely, an automated research lab pipeline running cross-site synthesis across hundreds of packages or performing batch metadata congruence evaluations generates intense, sustained traffic. Providing unbounded access to high-throughput agent loops risks degrading service for the broader community, while flat rate-limiting would artificially stifle productive, large-scale scientific applications. A tiered access framework allows users to scale their agentic interactions to match their workflow demands while contributing proportionally to the repository's cloud infrastructure expenses.
 
 
 ## Proposed Solution
@@ -184,21 +184,21 @@ In accordance with EDI's operational preferences, the MCP server implements a **
 - **Header Transparency**: The MCP server forwards `Content-Length`, `Content-Type`, and `Content-Disposition` headers so consuming agents can inspect payload size before committing tokens.
 
 
-### 6. Revenue-Generating Opportunity & Paid Access Tiers
+### 6. Sustainable Operational Model & Capacity Tiers
 
-Operating high-throughput AI agent gateways incurs real AWS cloud expenses (compute, NAT gateway bandwidth, S3 data egress, and ElastiCache). To ensure long-term financial sustainability and capture economic value from commercial AI scraping, the hosted MCP service will offer structured access tiers.
+Operating high-throughput AI agent gateways incurs real AWS cloud expenses (compute, NAT gateway bandwidth, S3 data egress, and ElastiCache). To ensure long-term financial sustainability and equitable resource allocation across diverse scientific use cases, the hosted MCP service will offer structured capacity tiers based on workload scale.
 
 #### 6.1 Enforcement Pathways: EDI IAM vs. AWS API Gateway
 
-We identify two architectural pathways for managing paid tiers and enforcing usage quotas:
+We identify two architectural pathways for managing service tiers and enforcing usage quotas:
 
 ##### Pathway A (Recommended): Native EDI IAM Groups & Decentralized Enforcement
-- **Tier Membership in IAM**: Access tiers are represented natively as EDI IAM groups (e.g., `mcp-community`, `mcp-professional`, `mcp-enterprise`) assigned to user profiles per [PEP-7](./pep-7.md) and [PEP-9](./pep-9.md).
-- **Subscription Lifecycle**: Subscriptions purchased via the EDI Data Portal (integrated with a payment processor such as Stripe) automatically add or remove the user profile from the corresponding IAM group via webhook.
+- **Tier Membership in IAM**: Capacity tiers are represented natively as EDI IAM groups (e.g., `mcp-starter`, `mcp-team`, `mcp-power`) assigned to user profiles per [PEP-7](./pep-7.md) and [PEP-9](./pep-9.md).
+- **Subscription Lifecycle**: Capacity tiers upgraded via the EDI Data Portal (integrated with a billing processor such as Stripe or institutional recharge) automatically update the user profile's IAM group membership via webhook.
 - **Token-Encoded Entitlements**: When the user's API key is validated ([PEP-15](./pep-15.md)), the returned EDI authentication token already carries their group membership. The FastAPI MCP server extracts the tier directly from the token and enforces rate limits and tool access using the local ElastiCache Redis store.
 - **Advantages**:
   1. *Single Source of Truth*: Leverages existing EDI user accounts, ORCID logins, and profile management without synchronizing state into external AWS services.
-  2. *Domain Granularity*: IAM can automatically grant academic exemptions or elevated tiers to recognized LTER or EDI-affiliated researchers based on institutional profile metadata.
+  2. *Domain Granularity*: IAM can automatically assign appropriate tiers to verified research groups, LTER sites, or institutional partners based on profile metadata or grant allocations.
   3. *Vendor Independence*: Avoids cloud lock-in to AWS API Gateway usage plans, ensuring tier management remains portable across hosting environments.
 
 ##### Pathway B: AWS API Gateway Usage Plans
@@ -214,21 +214,21 @@ We recommend **Pathway A** for authorization and tier policy, paired with **AWS 
 
 #### 6.2 Tier Structure
 
-| Feature / Tier | Community / Academic (Free) | Professional / Institutional | Enterprise / Commercial AI |
+| Feature / Tier | Starter / Exploratory (Free) | Researcher / Team | Power / High-Volume |
 | :--- | :--- | :--- | :--- |
-| **Target Audience** | Academic researchers, students, LTER scientists | Research labs, universities, non-profit institutions | Commercial AI labs, LLM providers, commercial aggregators |
-| **IAM Group** | `mcp-community` | `mcp-professional` | `mcp-enterprise` |
-| **Billing Model** | Free (Requires verified EDI user account) | $50 – $250 / month subscription | $1,000+ / month base + metered data egress |
+| **Target Audience** | Individual researchers, students, exploratory desktop agents | Research working groups, lab pipelines, synthesis projects | High-throughput synthesis engines, large-scale automation, institutional aggregators |
+| **IAM Group** | `mcp-starter` | `mcp-team` | `mcp-power` |
+| **Billing Model** | Free (Requires verified EDI user account) | $25 – $75 / month (or project grant fee) | $500 – $1,000+ / month base + metered data egress |
 | **Rate Limit (Burst / Sustained)** | 10 req/sec burst; 60 req/min sustained | 50 req/sec burst; 300 req/min sustained | 200 req/sec burst; 1,200 req/min sustained |
 | **Daily Quota** | 1,000 calls / day | 25,000 calls / day | 250,000+ calls / day (customizable) |
 | **Caching Layer** | Aggressive Redis caching (1h – 24h) | Standard caching with bypass headers | Dedicated cache allocation / real-time read |
 | **Phase 2 Staging Access** | Read-only | Included (Staging evaluate/upload sandbox) | Included (High-concurrency staging pipelines) |
 | **S3 Egress Optimization** | Proxied through PASTA web servlet | Proxied through PASTA web servlet | Direct Presigned S3 URLs ([PEP-11](./pep-11.md)) |
 | **SLA & Support** | Best-effort community support | 99.5% uptime SLA, email support | 99.9% uptime SLA, dedicated support channel |
-| **Billing Gateway** | N/A | Stripe Billing via EDI Portal | Invoiced / AWS Marketplace SaaS Contract |
+| **Billing Gateway** | N/A | Stripe Billing / EDI Portal recharge | Invoiced / AWS Marketplace SaaS Contract |
 
-#### 6.3 Monetization Impact
-By requiring commercial AI crawlers to subscribe to the Enterprise Tier, EDI transforms an uncompensated operational burden (bot scraping and DDoS remediation) into a recurring revenue stream that directly finances repository cloud infrastructure.
+#### 6.3 Cost Recovery and Sustainability Impact
+By aligning tiers with operational scale rather than institutional identity, EDI ensures that individual researchers and students retain free, frictionless access for interactive exploration. Simultaneously, users operating high-throughput automated synthesis pipelines or institutional batch workflows contribute proportionately to infrastructure costs, turning potential repository strain into a sustainable funding mechanism for EDI's cloud footprint.
 
 
 ### 7. Effects on Related EDI Systems
@@ -238,14 +238,14 @@ By requiring commercial AI crawlers to subscribe to the Enterprise Tier, EDI tra
   - Receives pre-authenticated requests bearing valid EDI API keys and explicit `EDI-MCP-Agent/1.0` headers, eliminating false-positive bot-blocking triggers.
 - **Identity and Access Management (IAM)**:
   - Validates API keys presented by the MCP server per [PEP-15](./pep-15.md) and [PEP-27](./pep-27.md).
-  - Acts as the central authority for monetization tier management via IAM groups (`mcp-community`, `mcp-professional`, `mcp-enterprise`). The returned EDI authentication token encodes group memberships, allowing the MCP gateway to enforce tier quotas without additional database queries.
+  - Acts as the central authority for capacity tier management via IAM groups (`mcp-starter`, `mcp-team`, `mcp-power`). The returned EDI authentication token encodes group memberships, allowing the MCP gateway to enforce tier quotas without additional database queries.
 - **Data Package Manager**:
   - Shielded from volumetric query storms by API Gateway rate limiters.
   - Receives well-formed, standard REST calls without needing modification.
 - **System Activity Logger ([PEP-25](./pep-25.md)) / Audit Manager**:
   - The distinct `EDI-MCP-Agent/1.0` user-agent and client ID enable clean segregation of AI agent metrics from human portal downloads, preventing statistical skew in dataset usage reports.
 - **AWS S3 Storage ([PEP-11](./pep-11.md))**:
-  - In Enterprise tiers, large data entity downloads can be served via presigned S3 URLs generated via PEP-11 S3 integration, offloading heavy multi-gigabyte transfers completely from the PASTA application servers.
+  - In Power / High-Volume tiers, large data entity downloads can be served via presigned S3 URLs generated via PEP-11 S3 integration, offloading heavy multi-gigabyte transfers completely from the PASTA application servers.
 
 
 ### 8. Cost & Infrastructure Estimates
@@ -256,10 +256,10 @@ By requiring commercial AI crawlers to subscribe to the Enterprise Tier, EDI tra
 | **AWS WAF** | Bot Control rules, IP rate limiting, DDoS shielding | $15 – $40 |
 | **Amazon ElastiCache (Redis)** | Caching Solr queries, EML XML, and metadata | $40 – $120 (`cache.t4g.small` or `medium`) |
 | **Compute (Open Issue below)** | Hosting FastAPI MCP server (ECS Fargate / Lambda / App Runner) | $25 – $80 |
-| **AWS Data Egress** | Serving raw data entities to client agents | Variable ($0.09/GB; offset by paid tiers) |
+| **AWS Data Egress** | Serving raw data entities to client agents | Variable ($0.09/GB; offset by higher-capacity tiers) |
 | **Total Estimated Base Overhead** | | **~$110 – $340 / month** |
 
-*Note: A single Enterprise subscriber ($1,000/mo) or a small cohort of Professional subscribers completely covers the monthly infrastructure overhead of the entire MCP service.*
+*Note: A small number of Team or Power tier subscribers completely covers the monthly infrastructure overhead of the entire MCP service, ensuring that free Starter access remains permanently sustainable for individual researchers.*
 
 
 ### 9. Alternative Solutions Considered
