@@ -12,7 +12,7 @@
 
 The Model Context Protocol (MCP), developed by Anthropic and rapidly adopted across the artificial intelligence ecosystem, is an open standard that allows large language models (LLMs) and autonomous AI agents (such as Claude Desktop, ChatGPT, Cursor, and custom Python-based agentic workflows) to discover and interact securely with external tools, contextual resources, and specialized prompt templates. 
 
-The Environmental Data Initiative (EDI) operates the PASTA+ data repository, providing open, curated scientific and ecological data packages via a web-based data portal and a comprehensive REST API. While users traditionally discover and retrieve data through manual portal exploration or scripted API workflows in Python, R, and Java, modern scientific workflows are rapidly shifting toward autonomous agentic synthesis, automated literature-to-data cross-referencing, and intelligent metadata curation.
+The Environmental Data Initiative (EDI) operates the PASTA+ data repository, providing open, curated scientific and ecological data packages via a web-based data portal and a comprehensive REST API. While users traditionally discover and retrieve data through manual portal exploration or scripted API workflows, modern scientific workflows are rapidly shifting toward autonomous agentic synthesis, analysis, and intelligent metadata curation.
 
 This proposal describes the design, deployment, governance, and security model for an official **PASTAPlus MCP Server**. By exposing PASTA+ through the MCP standard, EDI will enable AI agents to natively query, inspect, and retrieve scientific data while maintaining strict safeguards against denial-of-service (DoS) attacks, agent runaways, unbuffered memory exhaustion, and unauthorized repository mutations. Furthermore, this document outlines a sustainable, tiered service model that accommodates users across different operational scales—from individual researchers conducting interactive exploratory queries to intensive project workflows running high-frequency automated synthesis—ensuring fair resource allocation while recovering compute and bandwidth costs proportionate to utilization.
 
@@ -24,9 +24,9 @@ Scientific data repositories face an accessibility paradox: while millions of ec
 
 By far the most common mode of interacting with PASTA+ is through manual navigation of the web-based EDI Data Portal. In this conventional workflow, researchers manually formulate search queries, sift through extensive lists of results, inspect individual dataset landing pages, read through complex Ecological Metadata Language (EML) documents, and download tabular data files one by one. This manual discovery and evaluation process is exceptionally labor-intensive, repetitive, and presents a severe bottleneck when researchers attempt cross-site ecological syntheses spanning dozens or hundreds of packages.
 
-A smaller subset of computationally proficient users interacts with PASTA+ programmatically by authoring one-off scripts (e.g., using `requests` in Python or `httr` in R) to query the Solr search index and parse EML XML payloads directly. While programmatic, these custom scripts represent a minor fraction of overall user interactions, require specialized programming effort, and remain brittle in the face of varying metadata structures.
+A smaller subset of computationally proficient users interacts with PASTA+ programmatically by authoring one-off scripts to query the Solr search index and parse EML XML payloads directly. While programmatic, these custom scripts represent a minor fraction of overall user interactions, require specialized programming effort, and remain brittle in the face of varying data package content.
 
-Enabling AI agents to directly interact with PASTA+ via standardized MCP tools and resources bridges both interaction modes: it eliminates the heavy manual labor of portal-based searching and document inspection for the vast majority of researchers, while replacing brittle, one-off scripts with standardized, conversational agentic discovery, automated synthesis, and metadata curation.
+Enabling AI agents to directly interact with PASTA+ via standardized MCP tools and resources bridges both interaction modes: it reduces the heavy manual labor of portal-based searching and document inspection for the vast majority of researchers, while replacing brittle, one-off scripts with standardized, conversational agentic discovery, automated synthesis, and metadata curation.
 
 ### The Operational Challenge: Bot Traffic, Scrapers, and Repository Strain
 EDI has experienced severe operational challenges stemming from aggressive robotic scraping and distributed denial-of-service (DDoS) incidents. These bot incursions have repeatedly degraded repository performance and forced EDI to devote substantial time to refactoring access control systems (e.g., establishing mandatory authentication for repository access, introducing user-managed API keys, and defining verified human authorization tiers).
@@ -43,47 +43,7 @@ Deploying an AI agent interface without strict architectural boundaries introduc
 
 To resolve these challenges, we propose an **EDI-Hosted Cloud Gateway Architecture** for the PASTAPlus MCP Server built with Python and FastAPI, governed by multi-layer bot mitigation and rate-limiting infrastructure on AWS, backed by a phased safety rollout, and supported through structured operational capacity tiers.
 
-```
-                           +-------------------------------------------------------+
-                           |                     Client Agents                     |
-                           |   (Claude Desktop, Cursor, Custom Agent Workflows)    |
-                           +---------------------------+---------------------------+
-                                                       |
-                                      HTTPS (SSE / Streamable HTTP)
-                                         Header: X-API-Key: <key>
-                                                       v
-+---------------------------------------------------------------------------------------------------------+
-| AWS Cloud Infrastructure (EDI Managed)                                                                  |
-|                                                                                                         |
-|   +------------------------------------+          +-------------------------------------------------+   |
-|   | Cloud Perimeter & WAF              |          | Edge API Gateway / Ingress Router               |   |
-|   | - IP Reputation & Bot Filtering   |--------->| - Authentication Verification                   |   |
-|   | - Volumetric DDoS Mitigation       |          | - Ingress Rate Limiting & Routing               |   |
-|   +------------------------------------+          +------------------------+------------------------+   |
-|                                                                            |                            |
-|                                                                            v                            |
-|                                                   +-------------------------------------------------+   |
-|                                                   | PASTAPlus MCP Server (FastAPI / FastMCP)        |   |
-|                                                   | - Tool Execution & Resource Handling            |   |
-|                                                   | - Non-buffering Asynchronous Byte Streaming     |   |
-|                                                   +------------+-----------------------+------------+   |
-|                                                                |                       |                |
-|                                            Read-Through Cache  v                       v REST Proxy     |
-|                                                   +----------------+      +-------------------------+   |
-|                                                   | Intermediate   |      | EDI Gatekeeper          |   |
-|                                                   | Cache (Redis)  |      | (Reverse Proxy)         |   |
-|                                                   +----------------+      +------------+------------+   |
-+----------------------------------------------------------------------------------------|----------------+
-                                                                                         | Internal Traffic
-                                                                                         | (EDI-MCP-Agent/1.0)
-                                                                                         v
-                                                                            +-------------------------+
-                                                                            | PASTA+ Core Services    |
-                                                                            | - Data Package Manager  |
-                                                                            | - System Activity Logger|
-                                                                            | - AWS S3 Object Storage |
-                                                                            +-------------------------+
-```
+In this architecture, client agents (such as Claude Desktop, Cursor, or custom research workflows) connect over HTTPS to an EDI-hosted cloud gateway using Server-Sent Events (SSE) or Streamable HTTP. Incoming requests pass through edge perimeter defenses—including bot filtering, API key verification, and rate limiting—before reaching the PASTAPlus MCP Server application. The MCP server executes tool requests, streams data asynchronously, and communicates with PASTA+ backend services through internal proxy routing and intermediate caching layers.
 
 ### 1. EDI-Hosted Cloud Gateway Architecture (Remote SSE / Streamable HTTP)
 
@@ -197,12 +157,12 @@ Instead, the MCP server supports a clear architectural separation between **in-c
    - This compact structural metadata (typically a few hundred to thousand tokens) enables the agent to understand dataset schemas, formulate analytical plans, and write accurate data processing code.
 
 2. **Out-of-Band Data Consumption via Code Execution**:
-   - For actual analysis or synthesis, the agent generates executable code (such as Python using `pandas`, `duckdb`, or `polars`, or R) targeting the canonical PASTA+ data entity URL (`https://pasta.lternet.edu/package/data/eml/{scope}/{identifier}/{revision}/{entityId}`).
+   - For actual analysis or synthesis, the agent generates executable code targeting the canonical PASTA+ data entity URL (`https://pasta.lternet.edu/package/data/eml/{scope}/{identifier}/{revision}/{entityId}`).
    - The code executes in a local environment or sandbox, downloads the file directly to disk or memory, performs required filtering, aggregation, or joining, and returns only concise summaries, statistical tables, or preview slices back to the prompt context.
 
 3. **Non-Buffering Streaming for Direct Downloads**:
    - When client applications, automated pipelines, or user scripts invoke `readDataEntity` or `readDataPackageArchive` through the MCP gateway, the FastAPI server acts as a non-buffering passthrough.
-   - Using asynchronous chunked transfer streaming (`httpx.AsyncClient` streaming piped directly to `StreamingResponse`), payloads pass straight from PASTA+ to client storage without accumulating in memory buffers on either the MCP gateway or PASTA+ nodes.
+   - Using asynchronous chunked transfer streaming, payloads pass straight from PASTA+ to client storage without accumulating in memory buffers on either the MCP gateway or PASTA+ nodes.
    - The server forwards standard HTTP headers (`Content-Length`, `Content-Type`, and `Content-Disposition`) so client environments can inspect payload size and MIME type before initiating file transfers.
 
 
