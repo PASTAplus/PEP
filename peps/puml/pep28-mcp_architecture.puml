@@ -8,7 +8,7 @@ database "Amazon ElastiCache\n(Redis Cache & Quotas)" as Cache
 participant "EDI Gatekeeper\n(Reverse Proxy)" as Gatekeeper
 participant "EDI IAM\n(User Directory & Groups)" as IAM
 participant "PASTA+ Core Services\n(Data Package & Audit Mgr)" as PASTA
-database "AWS S3\n(Data Entities - PEP-11)" as S3
+database "AWS S3\n(Data Entities Storage)" as S3
 
 autonumber
 
@@ -21,7 +21,7 @@ end note
 WAF -> MCP: Forward authorized request
 
 == IAM Tier Resolution & Quota Enforcement ==
-MCP -> IAM: Validate API Key (PEP-15 / PEP-27)
+MCP -> IAM: Validate API Key & Authorization
 IAM --> MCP: Return EDI Token with IAM Groups\n(e.g., mcp-starter, mcp-team, mcp-power)
 MCP -> Cache: Check per-tier rate limit & daily quota
 alt Quota Exceeded

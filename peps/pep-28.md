@@ -29,13 +29,13 @@ A smaller subset of computationally proficient users interacts with PASTA+ progr
 Enabling AI agents to directly interact with PASTA+ via standardized MCP tools and resources bridges both interaction modes: it eliminates the heavy manual labor of portal-based searching and document inspection for the vast majority of researchers, while replacing brittle, one-off scripts with standardized, conversational agentic discovery, automated synthesis, and metadata curation.
 
 ### The Operational Challenge: Bot Traffic, Scrapers, and Repository Strain
-EDI has experienced severe operational challenges stemming from aggressive robotic scraping and distributed denial-of-service (DDoS) incidents. These bot incursions have repeatedly degraded repository performance and forced EDI engineering to devote substantial time to refactoring access control systems (e.g., imposing authentication requirements in [PEP-14](./pep-14.md), introducing API keys in [PEP-15](./pep-15.md), and creating intermediate "human" access levels in [PEP-27](./pep-27.md)).
+EDI has experienced severe operational challenges stemming from aggressive robotic scraping and distributed denial-of-service (DDoS) incidents. These bot incursions have repeatedly degraded repository performance and forced EDI engineering to devote substantial time to refactoring access control systems (e.g., establishing mandatory authentication for repository access, introducing user-managed API keys, and defining verified human authorization tiers).
 
 Deploying an AI agent interface without strict architectural boundaries introduces operational risks that EDI's software architecture and systems administration team must mitigate:
 
 1. **Denial-of-Service from Agentic Feedback Loops**: Autonomous agents equipped with tool-calling capabilities often enter iterative reasoning loops. An unconstrained agent can trigger dozens of resource-intensive Solr queries or multi-gigabyte data entity downloads within seconds, overwhelming the PASTA+ server and egress pipelines.
 2. **"Agent Breakout" and Repository Mutation Concerns**: Allowing AI agents to invoke mutating operations (such as data package creation/update) creates the risk of unintended repository modifications, corrupted package revisions, or upload queue congestion caused by hallucinated or unvalidated agent actions.
-3. **Memory Buffering and Resource Exhaustion**: As highlighted in [PEP-25](./pep-25.md), buffering large XML payloads or data entities entirely in application memory creates high server instability. Any intermediate proxy or server must avoid in-memory buffering when serving multi-megabyte or multi-gigabyte datasets.
+3. **Memory Buffering and Resource Exhaustion**: Buffering large XML payloads or data entities entirely in application memory creates severe server instability and out-of-memory risks. Any intermediate proxy or server must avoid in-memory buffering when serving multi-megabyte or multi-gigabyte datasets, relying instead on non-blocking asynchronous streaming.
 4. **Supporting Diverse User Workloads Sustainably**: User workflows interact with the repository at vastly different scales. A casual researcher asking an assistant to locate a few relevant datasets generates minimal load. Conversely, an automated research lab pipeline running cross-site synthesis across hundreds of packages or performing batch metadata congruence evaluations generates intense, sustained traffic. Providing unbounded access to high-throughput agent loops risks degrading service for the broader community, while flat rate-limiting would artificially stifle productive, large-scale scientific applications. A tiered access framework allows users to scale their agentic interactions to match their workflow demands while contributing proportionally to the repository's cloud infrastructure expenses.
 
 
@@ -57,7 +57,7 @@ To resolve these challenges, we propose a **Hybrid Architecture** for the PASTAP
 |                                                                                                         |
 |   +------------------------------------+          +-------------------------------------------------+   |
 |   | AWS WAF                            |          | Amazon API Gateway (HTTP API / REST)             |   |
-|   | - IP Reputation & Bot Filtering   |--------->| - API Key Validation (PEP-15 / PEP-27)          |   |
+|   | - IP Reputation & Bot Filtering   |--------->| - API Key & Identity Validation                 |   |
 |   | - Rate-based Rule Blocks (DDoS)    |          | - Usage Plans & Token-Bucket Throttling         |   |
 |   +------------------------------------+          |   (Starter Free, Team, Power Tiers)             |   |
 |                                                   +------------------------+------------------------+   |
@@ -81,8 +81,8 @@ To resolve these challenges, we propose a **Hybrid Architecture** for the PASTAP
                                                                             +-------------------------+
                                                                             | PASTA+ Core Services    |
                                                                             | - Data Package Manager  |
-                                                                            | - Audit Manager / PEP-25|
-                                                                            | - S3 Storage (PEP-11)   |
+                                                                            | - System Activity Logger|
+                                                                            | - AWS S3 Object Storage |
                                                                             +-------------------------+
 ```
 
@@ -97,7 +97,7 @@ The MCP server will be engineered as a single, modular Python codebase using Fas
 2. **Open-Source Local Client Package (`edi-pasta-mcp`)**:
    - Distributed via PyPI and GitHub (`pip install edi-pasta-mcp` or `uvx edi-pasta-mcp`).
    - Runs locally on the researcher's machine over standard I/O (`stdio`), integrating seamlessly into desktop applications like Claude Desktop or Cursor.
-   - The local client requires the user to input their personal EDI API key (obtained from IAM per [PEP-15](./pep-15.md)), directing requests either to the EDI-hosted gateway or directly to the PASTA+ Gatekeeper with verified human/authenticated credentials.
+   - The local client requires the user to input their personal EDI API key (provisioned via the EDI IAM portal), directing requests either to the EDI-hosted gateway or directly to the PASTA+ Gatekeeper with verified authenticated credentials.
 
 
 ### 2. Bot Mitigation, Traffic Governance, and DoS Protection
@@ -105,7 +105,7 @@ The MCP server will be engineered as a single, modular Python codebase using Fas
 To alleviate the systems administrator's burden and protect the PASTA+ core cluster from automated agent surges, the hosted MCP service employs a multi-tiered defense:
 
 1. **Mandatory EDI API Key Authentication**:
-   - In adherence to [PEP-14](./pep-14.md), [PEP-15](./pep-15.md), and [PEP-27](./pep-27.md), anonymous requests are strictly rejected. Every MCP session must present an active EDI API key via the `X-API-Key` header or MCP connection configuration.
+   - In adherence to EDI repository access policies and IAM security controls, anonymous requests are strictly rejected. Every MCP session must present an active EDI API key via the `X-API-Key` header or MCP connection configuration.
    - API keys are verified at the AWS API Gateway layer before any request reaches the MCP application or PASTA+ backend.
 2. **Edge Throttling and Token-Bucket Rate Limiting**:
    - AWS API Gateway Usage Plans enforce per-key rate limits (requests per second) and burst quotas. If an agent loops maliciously or enters a runaway execution state, API Gateway immediately sheds the load with HTTP 429 ("Too Many Requests") responses at the AWS edge, ensuring 0% load reaches the PASTA+ backend.
@@ -115,7 +115,7 @@ To alleviate the systems administrator's burden and protect the PASTA+ core clus
    - When the MCP server proxies requests to the EDI Gatekeeper, it automatically injects:
      - `User-Agent: EDI-MCP-Agent/1.0 (AWS-Hosted; +https://edirepository.org)`
      - `EDI-Agent-Client-ID: <hashed-user-id>`
-   - This header tagging allows the Gatekeeper and Roger Dahl's System Activity Logger ([PEP-25](./pep-25.md)) to immediately distinguish legitimate, authenticated AI agent traffic from illicit scrapers and anonymous web crawlers.
+   - This header tagging allows the Gatekeeper and the PASTA+ System Activity Logger to immediately distinguish legitimate, authenticated AI agent traffic from illicit scrapers and anonymous web crawlers.
 5. **High-Performance Intermediate Caching (Amazon ElastiCache Redis)**:
    - High-frequency, expensive read operations—including Solr searches (`searchDataPackages`), EML metadata documents (`readMetadata`), Dublin Core XML, and evaluation reports—are cached in an in-memory Redis cluster with configurable Time-To-Live (TTL, e.g., 1 hour for searches, 24 hours for immutable package revisions).
    - Identical agent queries are served directly out of Redis in < 2ms without dispatching HTTP requests to Tomcat.
@@ -185,7 +185,7 @@ Standardized prompt templates embedded within the MCP server guide LLMs through 
 ### 5. Data Entity Handling & Full Raw Pass-Through Streaming
 
 In accordance with EDI's operational preferences, the MCP server implements a **Full Raw Pass-Through Streaming** model for data entity retrieval:
-- **Zero In-Memory Buffering**: To prevent out-of-memory errors on both the MCP server and PASTA+ nodes (addressing the critical buffering vulnerability highlighted in [PEP-25](./pep-25.md)), the FastAPI MCP server uses asynchronous chunked transfer streaming (`httpx.AsyncClient` streaming piped directly to `StreamingResponse`).
+- **Zero In-Memory Buffering**: To prevent out-of-memory errors on both the MCP server and PASTA+ nodes, the FastAPI MCP server avoids buffering large payloads in memory and instead uses asynchronous chunked transfer streaming (`httpx.AsyncClient` streaming piped directly to `StreamingResponse`).
 - **Client-Side Context Management**: When an agent invokes `read_data_entity`, the server streams the entire data stream verbatim. The client agent application (Claude Desktop, Cursor, or user Python script) retains full responsibility for managing its LLM context window, buffering limits, or local disk persistence.
 - **Header Transparency**: The MCP server forwards `Content-Length`, `Content-Type`, and `Content-Disposition` headers so consuming agents can inspect payload size before committing tokens.
 
@@ -199,9 +199,9 @@ Operating high-throughput AI agent gateways incurs real AWS cloud expenses (comp
 We identify two architectural pathways for managing service tiers and enforcing usage quotas:
 
 ##### Pathway A (Recommended): Native EDI IAM Groups & Decentralized Enforcement
-- **Tier Membership in IAM**: Capacity tiers are represented natively as EDI IAM groups (e.g., `mcp-starter`, `mcp-team`, `mcp-power`) assigned to user profiles per [PEP-7](./pep-7.md) and [PEP-9](./pep-9.md).
+- **Tier Membership in IAM**: Capacity tiers are represented natively as EDI IAM groups (e.g., `mcp-starter`, `mcp-team`, `mcp-power`) assigned to user accounts within the EDI Identity and Access Management directory.
 - **Subscription Lifecycle**: Capacity tiers upgraded via the EDI Data Portal (integrated with a billing processor such as Stripe or institutional recharge) automatically update the user profile's IAM group membership via webhook.
-- **Token-Encoded Entitlements**: When the user's API key is validated ([PEP-15](./pep-15.md)), the returned EDI authentication token already carries their group membership. The FastAPI MCP server extracts the tier directly from the token and enforces rate limits and tool access using the local ElastiCache Redis store.
+- **Token-Encoded Entitlements**: When the user's API key is validated by the IAM service, the returned EDI authentication token already carries their group membership. The FastAPI MCP server extracts the tier directly from the token and enforces rate limits and tool access using the local ElastiCache Redis store.
 - **Advantages**:
   1. *Single Source of Truth*: Leverages existing EDI user accounts, ORCID logins, and profile management without synchronizing state into external AWS services.
   2. *Domain Granularity*: IAM can automatically assign appropriate tiers to verified research groups, LTER sites, or institutional partners based on profile metadata or grant allocations.
@@ -229,7 +229,7 @@ We recommend **Pathway A** for authorization and tier policy, paired with **AWS 
 | **Daily Quota** | 1,000 calls / day | 25,000 calls / day | 250,000+ calls / day (customizable) |
 | **Caching Layer** | Aggressive Redis caching (1h – 24h) | Standard caching with bypass headers | Dedicated cache allocation / real-time read |
 | **Phase 2 Staging Access** | Read-only | Included (Staging evaluate/upload sandbox) | Included (High-concurrency staging pipelines) |
-| **S3 Egress Optimization** | Proxied through PASTA web servlet | Proxied through PASTA web servlet | Direct Presigned S3 URLs ([PEP-11](./pep-11.md)) |
+| **S3 Egress Optimization** | Proxied through PASTA web servlet | Proxied through PASTA web servlet | Direct Presigned S3 URLs (PASTA+ S3 Object Storage) |
 | **SLA & Support** | Best-effort community support | 99.5% uptime SLA, email support | 99.9% uptime SLA, dedicated support channel |
 | **Billing Gateway** | N/A | Stripe Billing / EDI Portal recharge | Invoiced / AWS Marketplace SaaS Contract |
 
@@ -243,15 +243,15 @@ By aligning tiers with operational scale rather than institutional identity, EDI
   - Offloaded from handling high-frequency repeated searches due to MCP Redis caching.
   - Receives pre-authenticated requests bearing valid EDI API keys and explicit `EDI-MCP-Agent/1.0` headers, eliminating false-positive bot-blocking triggers.
 - **Identity and Access Management (IAM)**:
-  - Validates API keys presented by the MCP server per [PEP-15](./pep-15.md) and [PEP-27](./pep-27.md).
+  - Validates API keys presented by the MCP server through the centralized IAM authentication service.
   - Acts as the central authority for capacity tier management via IAM groups (`mcp-starter`, `mcp-team`, `mcp-power`). The returned EDI authentication token encodes group memberships, allowing the MCP gateway to enforce tier quotas without additional database queries.
 - **Data Package Manager**:
   - Shielded from volumetric query storms by API Gateway rate limiters.
   - Receives well-formed, standard REST calls without needing modification.
-- **System Activity Logger ([PEP-25](./pep-25.md)) / Audit Manager**:
+- **System Activity Logger (Audit Manager)**:
   - The distinct `EDI-MCP-Agent/1.0` user-agent and client ID enable clean segregation of AI agent metrics from human portal downloads, preventing statistical skew in dataset usage reports.
-- **AWS S3 Storage ([PEP-11](./pep-11.md))**:
-  - In Power / High-Volume tiers, large data entity downloads can be served via presigned S3 URLs generated via PEP-11 S3 integration, offloading heavy multi-gigabyte transfers completely from the PASTA application servers.
+- **AWS S3 Object Storage**:
+  - In Power / High-Volume tiers, large data entity downloads can be served via presigned S3 URLs generated directly from EDI's cloud object storage, offloading heavy multi-gigabyte transfers completely from the PASTA application servers.
 
 
 ### 8. Cost & Infrastructure Estimates
@@ -324,16 +324,12 @@ Before selecting the Model Context Protocol (MCP), three alternative architectur
 
 ## References
 
-- [PEP-0: PEP Purpose and Guidelines](./pep-0.md)
-- [PEP-5: Transition from Flask to FastAPI](./pep-5.md)
-- [PEP-11: AWS S3 Plan for EDI Data Resources](./pep-11.md)
-- [PEP-14: Requiring Authentication for Data Access](./pep-14.md)
-- [PEP-15: Authentication with API Keys](./pep-15.md)
-- [PEP-25: System Activity Logger](./pep-25.md)
-- [PEP-27: A "Human" Access Level for use in Authorization](./pep-27.md)
 - [PASTA+ Core REST API Documentation](https://pastaplus-core.readthedocs.io/en/latest/index.html)
+- [EDI Data Repository Documentation](https://edirepository.org/)
 - [Model Context Protocol Specification](https://modelcontextprotocol.io/)
 - [Anthropic FastMCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)
+- [Ecological Metadata Language (EML) Specification](https://eml.ecoinformatics.org/)
+- [FastAPI Framework Documentation](https://fastapi.tiangolo.com/)
 
 
 ## Rejection
