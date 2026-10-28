@@ -30,3 +30,4 @@
 | [PEP-26](peps/pep-26.md) | Web-x as an EDI Service Documentation Application                                                                            | Mark Servilla  | Implemented | 2026-08-31 |
 | [PEP-27](peps/pep-27.md) | A "Human" Access Level for use in Authorization                                                                              | Mark Servilla  | Draft       |            |
 | [PEP-28](peps/pep-28.md) | Model Context Protocol (MCP) Server for the PASTA+ REST API                                                                  | Colin Smith    | Draft       |            |
+| [PEP-29](peps/pep-29.md) | Double-blind Data Package Publication in PASTA                                                                               | Mark Servilla  | Draft       |            |
